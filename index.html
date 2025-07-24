@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Tes Pengenalan Suara</title>
+</head>
+<body>
+    <h1>Aplikasi Checker Suara</h1>
+    <button id="startButton">🎤 Mulai Mendengarkan</button>
+    <p>Hasil Dikenali: <strong id="result">...</strong></p>
+    <p>Status: <em id="status">Menunggu untuk dimulai</em></p>
+
+    <script>
+        // Cek apakah browser mendukung Web Speech API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Maaf, browser Anda tidak mendukung pengenalan suara.");
+        } else {
+            const recognition = new SpeechRecognition();
+            const startButton = document.getElementById('startButton');
+            const resultText = document.getElementById('result');
+            const statusText = document.getElementById('status');
+
+            // Pengaturan untuk pengenalan suara
+            recognition.lang = 'id-ID'; // Set bahasa ke Bahasa Indonesia
+            recognition.interimResults = false; // Hanya berikan hasil akhir
+            recognition.continuous = false; // Berhenti setelah satu frasa
+
+            startButton.addEventListener('click', () => {
+                statusText.textContent = "Mendengarkan...";
+                recognition.start();
+            });
+
+            // Event handler ketika suara berhasil dikenali
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                resultText.textContent = transcript;
+                
+                // Di sini Anda akan menambahkan logika untuk mem-parsing 'transcript'
+                // dan mengirimkannya ke backend.
+                // Contoh: parseCommand(transcript);
+            };
+
+            // Event handler untuk akhir sesi mendengarkan
+            recognition.onend = () => {
+                statusText.textContent = "Selesai mendengarkan.";
+            };
+
+            // Event handler jika terjadi error
+            recognition.onerror = (event) => {
+                statusText.textContent = 'Error: ' + event.error;
+            };
+        }
+    </script>
+</body>
+</html>
 
