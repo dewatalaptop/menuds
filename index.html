@@ -1,56 +1,175 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Tes Pengenalan Suara</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dolan Sawah Ops</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0; padding: 0;
+        background-color: #f4f6f8;
+        color: #333;
+    }
+    header {
+        background-color: #2e7d32;
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+    nav {
+        display: flex;
+        flex-wrap: wrap;
+        background-color: #1b5e20;
+    }
+    nav button {
+        flex: 1;
+        padding: 10px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    nav button:hover {
+        background-color: #43a047;
+    }
+    .container {
+        padding: 15px;
+    }
+    h2 {
+        color: #2e7d32;
+        border-bottom: 2px solid #c8e6c9;
+        padding-bottom: 5px;
+    }
+    input, textarea, select, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    button.primary {
+        background-color: #2e7d32;
+        color: white;
+        border: none;
+    }
+    button.primary:hover {
+        background-color: #388e3c;
+    }
+    .hidden { display: none; }
+    .card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+    }
+</style>
 </head>
 <body>
-    <h1>Aplikasi Checker Suara</h1>
-    <button id="startButton">🎤 Mulai Mendengarkan</button>
-    <p>Hasil Dikenali: <strong id="result">...</strong></p>
-    <p>Status: <em id="status">Menunggu untuk dimulai</em></p>
 
-    <script>
-        // Cek apakah browser mendukung Web Speech API
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Maaf, browser Anda tidak mendukung pengenalan suara.");
-        } else {
-            const recognition = new SpeechRecognition();
-            const startButton = document.getElementById('startButton');
-            const resultText = document.getElementById('result');
-            const statusText = document.getElementById('status');
+<header>Dolan Sawah Ops</header>
 
-            // Pengaturan untuk pengenalan suara
-            recognition.lang = 'id-ID'; // Set bahasa ke Bahasa Indonesia
-            recognition.interimResults = false; // Hanya berikan hasil akhir
-            recognition.continuous = false; // Berhenti setelah satu frasa
+<nav>
+    <button onclick="showSection('checker')">Checker</button>
+    <button onclick="showSection('kasir')">Kasir</button>
+    <button onclick="showSection('dapur')">Dapur</button>
+    <button onclick="showSection('admin')">Admin</button>
+</nav>
 
-            startButton.addEventListener('click', () => {
-                statusText.textContent = "Mendengarkan...";
-                recognition.start();
-            });
+<div id="checker" class="container hidden">
+    <h2>Checker</h2>
+    <div class="card">
+        <h3>Reservasi & List Belanja</h3>
+        <input type="text" id="jumlahTamu" placeholder="Jumlah Tamu">
+        <textarea id="catatanMenu" placeholder="Catatan Menu"></textarea>
+        <button class="primary">Buat List Belanja</button>
+        <button>Kirim ke WhatsApp</button>
+    </div>
+    <div class="card">
+        <h3>Belanja Susulan</h3>
+        <input type="text" id="susulanBarang" placeholder="Nama Barang">
+        <input type="number" id="susulanJumlah" placeholder="Jumlah">
+        <button class="primary">Tambah</button>
+    </div>
+    <div class="card">
+        <h3>Penerimaan Barang</h3>
+        <textarea id="penerimaan" placeholder="Catat barang yang datang"></textarea>
+        <button class="primary">Simpan</button>
+    </div>
+    <div class="card">
+        <h3>Pengiriman Makanan ke Prasmanan</h3>
+        <input type="text" id="kirimNama" placeholder="Nama Makanan">
+        <input type="number" id="kirimJumlah" placeholder="Jumlah">
+        <button class="primary">Kirim</button>
+    </div>
+    <div class="card">
+        <h3>Waste</h3>
+        <input type="text" id="wasteNama" placeholder="Nama Makanan">
+        <input type="number" id="wasteJumlah" placeholder="Jumlah Terbuang">
+        <select id="wasteAlasan">
+            <option>Alasan Waste</option>
+            <option>Basi</option>
+            <option>Rusak</option>
+            <option>Tidak Laku</option>
+        </select>
+        <button class="primary">Simpan</button>
+    </div>
+</div>
 
-            // Event handler ketika suara berhasil dikenali
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                resultText.textContent = transcript;
-                
-                // Di sini Anda akan menambahkan logika untuk mem-parsing 'transcript'
-                // dan mengirimkannya ke backend.
-                // Contoh: parseCommand(transcript);
-            };
+<div id="kasir" class="container hidden">
+    <h2>Kasir</h2>
+    <div class="card">
+        <h3>Input Penjualan</h3>
+        <input type="number" id="totalPenjualan" placeholder="Total Penjualan">
+        <textarea id="penjualanDetail" placeholder="Penjualan per menu (opsional)"></textarea>
+        <button class="primary">Simpan</button>
+    </div>
+</div>
 
-            // Event handler untuk akhir sesi mendengarkan
-            recognition.onend = () => {
-                statusText.textContent = "Selesai mendengarkan.";
-            };
+<div id="dapur" class="container hidden">
+    <h2>Dapur</h2>
+    <div class="card">
+        <h3>Menu Hari Ini</h3>
+        <textarea id="menuHariIni" placeholder="Daftar menu yang harus dimasak"></textarea>
+        <button class="primary">Simpan Status</button>
+    </div>
+</div>
 
-            // Event handler jika terjadi error
-            recognition.onerror = (event) => {
-                statusText.textContent = 'Error: ' + event.error;
-            };
-        }
-    </script>
+<div id="admin" class="container hidden">
+    <h2>Admin / Dashboard</h2>
+    <div class="card">
+        <h3>Ringkasan Harian</h3>
+        <p>Belanja: Rp <span id="ringkasanBelanja">0</span></p>
+        <p>Penjualan: Rp <span id="ringkasanPenjualan">0</span></p>
+        <p>Waste: Rp <span id="ringkasanWaste">0</span></p>
+        <p>Profit: Rp <span id="ringkasanProfit">0</span></p>
+    </div>
+</div>
+
+<script>
+function showSection(id) {
+    document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+// Simpan data otomatis
+document.querySelectorAll("input, textarea, select").forEach(el => {
+    // Load data saat halaman dibuka
+    if(localStorage.getItem(el.id)) {
+        el.value = localStorage.getItem(el.id);
+    }
+    // Simpan data saat diubah
+    el.addEventListener("input", () => {
+        localStorage.setItem(el.id, el.value);
+    });
+});
+</script>
+
 </body>
 </html>
-
