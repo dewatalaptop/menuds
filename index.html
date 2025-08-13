@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - Prototype V2</title>
+    <title>RestoApp - Prototype V2.1 (Fixed)</title>
     <style>
         /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -253,7 +253,7 @@
 
     <div class="container">
         <header>
-            <h1>RestoApp Prototype V2</h1>
+            <h1>RestoApp Prototype V2.1</h1>
         </header>
         <main>
             <div id="page-dashboard" class="page active">
@@ -476,6 +476,8 @@ const menuKeluarConfig = {
         { name: "Belut", unit: "pcs", recipe: [{ itemId: 51, qtyPerPcs: 0.2 }] }, // Asumsi 1 porsi 0.2 kg
         { name: "Paha Tepong", unit: "pcs", recipe: [{ itemId: 26, qtyPerPcs: 0.25 }] },// Asumsi 1kg isi 4
         { name: "Paha Bawah", unit: "pcs", recipe: [{ itemId: 27, qtyPerPcs: 0.125 }] },// Asumsi 1kg isi 8
+        // Paha atas merujuk ke tepong sekilo isi 6? Asumsi:
+        { name: "Paha Atas", unit: "pcs", recipe: [{ itemId: 28, qtyPerPcs: 0.167 }] },// Asumsi 1kg isi 6
         { name: "Ayam Kampung", unit: "pcs", recipe: [{ itemId: 31, qtyPerPcs: 1 }] },
         { name: "Tahu Kulit", unit: "pcs", recipe: [{ itemId: 67, qtyPerPcs: 1 }] },
         { name: "Ayam Geprek", unit: "pcs", recipe: [{ itemId: 30, qtyPerPcs: 0.15 }, { itemId: 46, qtyPerPcs: 0.05 }] }, // Asumsi 150gr fillet + 5% pack Kobe
@@ -487,6 +489,7 @@ const menuKeluarConfig = {
         { name: "Salmon Fish Cake", unit: "pcs", recipe: [{ itemId: 121, qtyPerPcs: 0.2 }] },// Asumsi 1 porsi 20% pack
         { name: "Otak-otak Singapore", unit: "pcs", recipe: [{ itemId: 120, qtyPerPcs: 0.2 }] },// Asumsi 1 porsi 20% pack
         { name: "Sosis Merah", unit: "pcs", recipe: [{ itemId: 119, qtyPerPcs: 1 }] },
+        // Nasi bakar tidak ada di bahan baku, jadi tidak bisa dibuatkan resepnya.
     ]
 };
 
@@ -499,7 +502,6 @@ const ambilGudangConfig = {
 
 // --- [ BAGIAN 2: LOGIKA & FUNGSI UTAMA ] ---
 
-// Helper untuk LocalStorage
 const DB = {
     get: (key) => JSON.parse(localStorage.getItem(key)),
     set: (key, value) => localStorage.setItem(key, JSON.stringify(value))
@@ -517,61 +519,57 @@ function initDatabase() {
     }
 }
 
-// Navigasi & Render
 function showPage(pageId, data = null) {
-    document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+    document.querySelectorAll('.page').forEach(p => {
+        const el = document.getElementById(p.id);
+        if (el) el.style.display = 'none';
+    });
+    
     const targetPage = document.getElementById(pageId);
-    
-    // Hapus konten lama sebelum render baru
-    targetPage.innerHTML = ''; 
-    
+    if (!targetPage) {
+        console.error(`Page with id "${pageId}" not found.`);
+        return;
+    }
+
     // Render konten baru berdasarkan pageId
     switch (pageId) {
         case 'page-dashboard':
-            // Dashboard tidak dirender ulang, hanya ditampilkan
+            // Tidak perlu render ulang karena statis
             break;
         case 'page-input-belanja':
-            targetPage.innerHTML = `
-                <div class="page-header"><h2>Buat List Belanja Baru</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
-                <form id="shopping-list-form"></form>
-                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="generateShoppingList()">Buat Daftar Belanja</button>`;
             renderShoppingListForm();
             break;
         case 'page-rangkuman-belanja':
-             targetPage.innerHTML = `
-                <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" onclick="showPage('page-input-belanja')">Kembali</button></div>
-                <div id="summary-container"></div>`;
             renderShoppingSummary(data);
             break;
         case 'page-input-belanja-datang':
-             targetPage.innerHTML = `
-                <div class="page-header"><h2>Input Belanja Datang</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
-                <form id="stock-in-form"></form>
-                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="processStockIn()">Konfirmasi Barang Masuk</button>`;
             renderStockInForm();
             break;
-         case 'page-input-menu-keluar':
+        case 'page-input-menu-keluar':
             renderStockOutPage(menuKeluarConfig);
             break;
         case 'page-ambil-gudang':
             renderStockOutPage(ambilGudangConfig);
             break;
         case 'page-manager-area':
-            targetPage.innerHTML = `
-                <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
-                <div class="category-group"><h3 class="category-title">Editor Database Barang</h3><div id="add-item-form"><input type="hidden" id="edit-item-id"><input type="text" id="item-name" placeholder="Nama Barang"><input type="text" id="item-category" placeholder="Kategori"><input type="text" id="item-unit" placeholder="Satuan Stok"><input type="text" id="item-purchase-unit" placeholder="Satuan Beli"><input type="number" id="item-conversion" placeholder="Konversi"><button class="btn" onclick="saveItem()">Simpan</button></div><div class="table-container"><table id="db-editor-table"><thead><tr><th>Nama</th><th>Kategori</th><th>Satuan Stok</th><th>Satuan Beli</th><th>Konversi</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
-                <div class="category-group"><h3 class="category-title">Ekspor Data untuk Analisa</h3><p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p><textarea id="data-export-area" readonly></textarea><button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button></div>`;
-            renderDbEditor();
+            renderManagerArea();
             break;
+        default:
+            // Untuk halaman yang belum diimplementasi, cukup tampilkan placeholder
+            targetPage.innerHTML = `<div class="page-header"><h2>Segera Hadir</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div><p>Fitur ini sedang dalam pengembangan.</p>`;
     }
     targetPage.style.display = 'block';
 }
 
 function renderShoppingListForm() {
+    const targetPage = document.getElementById('page-input-belanja');
+    targetPage.innerHTML = `
+        <div class="page-header"><h2>Buat List Belanja Baru</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+        <form id="shopping-list-form"></form>
+        <button class="btn" style="width: 100%; margin-top: 20px;" onclick="generateShoppingList()">Buat Daftar Belanja</button>`;
+
     const masterItems = DB.get('masterItems');
     const formContainer = document.getElementById('shopping-list-form');
-    if (!formContainer) return;
-
     const categories = [...new Set(masterItems.map(item => item.category))].sort();
     
     categories.forEach(category => {
@@ -579,17 +577,12 @@ function renderShoppingListForm() {
         masterItems.filter(item => item.category === category).forEach(item => {
             const displayUnit = item.purchaseUnit || item.unit;
             itemsHTML += `<div class="item-row">
-                <label for="item-${item.id}">${item.name}</label>
-                <input type="number" id="item-${item.id}" data-item-id="${item.id}" class="item-input" placeholder="Jumlah">
+                <label for="item-${item.id}" title="${item.name}">${item.name}</label>
+                <input type="number" id="item-${item.id}" data-item-id="${item.id}" class="item-input" placeholder="Jumlah" min="0">
                 <span>${displayUnit}</span>
             </div>`;
         });
-
-        formContainer.innerHTML += `
-            <div class="category-group">
-                <h3 class="category-title">${category}</h3>
-                ${itemsHTML}
-            </div>`;
+        formContainer.innerHTML += `<div class="category-group"><h3 class="category-title">${category}</h3>${itemsHTML}</div>`;
     });
 }
 
@@ -597,7 +590,7 @@ function generateShoppingList() {
     const inputs = document.querySelectorAll('#shopping-list-form .item-input');
     const shoppingList = {
         date: new Date().toISOString(),
-        status: 'pending', // pending, completed
+        status: 'pending',
         items: []
     };
 
@@ -623,11 +616,14 @@ function generateShoppingList() {
 }
 
 function renderShoppingSummary(shoppingList) {
+    const targetPage = document.getElementById('page-rangkuman-belanja');
+     targetPage.innerHTML = `
+        <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" onclick="showPage('page-input-belanja')">Kembali</button></div>
+        <div id="summary-container"></div>`;
+        
     const masterItems = DB.get('masterItems');
     const summaryContainer = document.getElementById('summary-container');
-    if (!summaryContainer) return;
-    summaryContainer.innerHTML = '';
-
+    
     const listItems = shoppingList.items.map(item => {
         const masterItem = masterItems.find(mi => mi.id === item.id);
         return { ...masterItem, quantity: item.quantity };
@@ -667,18 +663,22 @@ function copyCategoryList(button) {
 }
 
 function renderStockInForm() {
+    const targetPage = document.getElementById('page-input-belanja-datang');
+    targetPage.innerHTML = `
+        <div class="page-header"><h2>Input Belanja Datang</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+        <form id="stock-in-form"></form>
+        <button class="btn" style="width: 100%; margin-top: 20px;" onclick="processStockIn()">Konfirmasi Barang Masuk</button>`;
+
     const allLists = DB.get('shoppingLists');
     const pendingList = allLists.find(list => list.status === 'pending');
     const stockInForm = document.getElementById('stock-in-form');
-     if (!stockInForm) return;
 
     if (!pendingList) {
         stockInForm.innerHTML = `<p>Tidak ada list belanja yang menunggu untuk dimasukkan ke stok.</p>`;
-        document.querySelector('#page-input-belanja-datang button').style.display = 'none';
+        targetPage.querySelector('button.btn').style.display = 'none';
         return;
     }
-     document.querySelector('#page-input-belanja-datang button').style.display = 'block';
-
+    
     const masterItems = DB.get('masterItems');
     const listItems = pendingList.items.map(item => ({...masterItems.find(mi => mi.id === item.id), quantity: item.quantity }));
     const categories = [...new Set(listItems.map(item => item.category))].sort();
@@ -689,7 +689,7 @@ function renderStockInForm() {
         listItems.filter(item => item.category === category).forEach(item => {
             const displayUnit = item.purchaseUnit || item.unit;
             itemsHTML += `<div class="item-row">
-                <label for="stockin-${item.id}">${item.name}</label>
+                <label for="stockin-${item.id}" title="${item.name}">${item.name}</label>
                 <input type="number" id="stockin-${item.id}" data-item-id="${item.id}" class="item-input" value="${item.quantity}">
                 <span>${displayUnit}</span>
             </div>`;
@@ -702,10 +702,10 @@ function renderStockInForm() {
 function processStockIn() {
     let masterItems = DB.get('masterItems');
     let allLists = DB.get('shoppingLists');
-    let pendingList = allLists.find(list => list.status === 'pending');
+    let pendingListIndex = allLists.findIndex(list => list.status === 'pending');
     let transactions = DB.get('stockTransactions');
     
-    if (!pendingList) {
+    if (pendingListIndex === -1) {
         alert('Tidak ada list belanja yang perlu diproses.');
         return;
     }
@@ -720,25 +720,19 @@ function processStockIn() {
             if (itemIndex > -1) {
                 const item = masterItems[itemIndex];
                 const stockInQty = receivedQty * item.purchaseUnitConversion;
-                const oldStock = item.stock;
+                const oldStock = item.stock || 0;
                 item.stock = parseFloat((oldStock + stockInQty).toFixed(3));
                 
                 transactions.push({
-                    date: new Date().toISOString(),
-                    type: 'IN',
-                    itemId: item.id,
-                    itemName: item.name,
-                    qty: stockInQty,
-                    unit: item.unit,
-                    fromStock: oldStock,
-                    toStock: item.stock,
-                    notes: `Belanja datang (${receivedQty} ${item.purchaseUnit})`
+                    date: new Date().toISOString(), type: 'IN', itemId: item.id, itemName: item.name,
+                    qty: stockInQty, unit: item.unit, fromStock: oldStock, toStock: item.stock,
+                    notes: `Belanja datang (${receivedQty} ${item.purchaseUnit || item.unit})`
                 });
             }
         }
     });
 
-    pendingList.status = 'completed';
+    allLists[pendingListIndex].status = 'completed';
     DB.set('masterItems', masterItems);
     DB.set('shoppingLists', allLists);
     DB.set('stockTransactions', transactions);
@@ -748,8 +742,8 @@ function processStockIn() {
 }
 
 function renderStockOutPage(config) {
-    const masterItems = DB.get('masterItems');
     const targetPage = document.getElementById(config.title.includes("Menu") ? 'page-input-menu-keluar' : 'page-ambil-gudang');
+    const masterItems = DB.get('masterItems');
     let itemsToRender = [];
 
     if (config.itemIds) { // Untuk Ambil Gudang
@@ -762,13 +756,12 @@ function renderStockOutPage(config) {
     itemsToRender.forEach(item => {
         let currentStockInfo = '';
         if(config.itemIds) { // Gudang
-            currentStockInfo = `Stok: ${item.stock.toFixed(2)} ${item.unit}`;
-        } else { // Menu
-            // Bisa menampilkan stok bahan baku utama jika diperlukan
+             const stockItem = masterItems.find(mi => mi.id === item.id);
+             currentStockInfo = `Stok: ${(stockItem.stock || 0).toFixed(2)} ${stockItem.unit}`;
         }
         formHTML += `<div class="item-row">
-            <label for="stockout-${item.name || item.id}">${item.name}</label>
-            <input type="number" id="stockout-${item.name || item.id}" data-item-id="${item.id}" data-item-name="${item.name}" class="item-input" placeholder="Jumlah">
+            <label for="stockout-${item.name || item.id}" title="${item.name}">${item.name}</label>
+            <input type="number" id="stockout-${item.name || item.id}" data-item-name="${item.name}" class="item-input" placeholder="Jumlah" min="0">
             <span class="stock-display">${item.unit || 'pcs'}</span>
         </div>`;
     });
@@ -786,12 +779,7 @@ function processStockOut(title) {
     const isMenuKeluar = title.includes("Menu");
     
     const config = isMenuKeluar ? menuKeluarConfig : ambilGudangConfig;
-    let itemsToProcess = [];
-    if(isMenuKeluar) {
-        itemsToProcess = config.items;
-    } else {
-        itemsToProcess = config.itemIds.map(id => masterItems.find(item => item.id === id));
-    }
+    let itemsToProcess = isMenuKeluar ? config.items : config.itemIds.map(id => masterItems.find(item => item.id === id));
     
     itemsToProcess.forEach(item => {
         const input = document.getElementById(`stockout-${item.name || item.id}`);
@@ -799,13 +787,12 @@ function processStockOut(title) {
             const qtyOut = parseFloat(input.value);
             
             if(isMenuKeluar) {
-                // Proses resep
                 item.recipe.forEach(ingredient => {
                     const itemIndex = masterItems.findIndex(mi => mi.id === ingredient.itemId);
                     if(itemIndex > -1) {
                         const stockItem = masterItems[itemIndex];
                         const deduction = qtyOut * ingredient.qtyPerPcs;
-                        const oldStock = stockItem.stock;
+                        const oldStock = stockItem.stock || 0;
                         stockItem.stock = parseFloat((oldStock - deduction).toFixed(3));
                         
                         transactions.push({
@@ -816,11 +803,10 @@ function processStockOut(title) {
                     }
                 });
             } else {
-                // Proses ambil gudang langsung
                 const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
                 if(itemIndex > -1) {
                     const stockItem = masterItems[itemIndex];
-                    const oldStock = stockItem.stock;
+                    const oldStock = stockItem.stock || 0;
                     stockItem.stock = parseFloat((oldStock - qtyOut).toFixed(3));
                     
                      transactions.push({
@@ -839,22 +825,26 @@ function processStockOut(title) {
     showPage('page-dashboard');
 }
 
+function renderManagerArea() {
+    const targetPage = document.getElementById('page-manager-area');
+    targetPage.innerHTML = `
+        <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+        <div class="category-group"><h3 class="category-title">Editor Database Barang</h3><div id="add-item-form"><input type="hidden" id="edit-item-id"><input type="text" id="item-name" placeholder="Nama Barang" class="item-input"><input type="text" id="item-category" placeholder="Kategori" class="item-input"><input type="text" id="item-unit" placeholder="Satuan Stok" class="item-input"><input type="text" id="item-purchase-unit" placeholder="Satuan Beli" class="item-input"><input type="number" id="item-conversion" placeholder="Konversi" class="item-input"><button class="btn" onclick="saveItem()">Simpan</button></div><div class="table-container"><table id="db-editor-table"><thead><tr><th>Nama</th><th>Kategori</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
+        <div class="category-group"><h3 class="category-title">Ekspor Data untuk Analisa</h3><p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p><textarea id="data-export-area" readonly></textarea><button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button></div>`;
+    renderDbEditor();
+}
 
-// --- Alur Manager Area ---
 function renderDbEditor() {
     const masterItems = DB.get('masterItems');
     const tbody = document.getElementById('db-editor-tbody');
     if(!tbody) return;
     tbody.innerHTML = '';
-    masterItems.forEach(item => {
+    masterItems.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.name}</td>
             <td>${item.category}</td>
-            <td>${item.unit}</td>
-            <td>${item.purchaseUnit || '-'}</td>
-            <td>${item.purchaseUnitConversion || '-'}</td>
-            <td>${item.stock.toFixed(2)}</td>
+            <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
             <td>
                 <button class="action-btn edit-btn" onclick="editItem(${item.id})">E</button>
                 <button class="action-btn delete-btn" onclick="deleteItem(${item.id})">H</button>
@@ -871,8 +861,7 @@ function saveItem() {
         category: document.getElementById('item-category').value,
         unit: document.getElementById('item-unit').value,
         purchaseUnit: document.getElementById('item-purchase-unit').value,
-        purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1,
-        stock: 0 // Stok direset atau dipertahankan? Untuk simple, kita reset.
+        purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1
     };
 
     if (!newItem.name || !newItem.category || !newItem.unit) {
@@ -885,15 +874,17 @@ function saveItem() {
     if (id) {
         const itemIndex = masterItems.findIndex(item => item.id == id);
         newItem.id = parseInt(id);
-        newItem.stock = masterItems[itemIndex].stock; // Pertahankan stok saat edit
+        newItem.stock = masterItems[itemIndex].stock || 0; // Pertahankan stok saat edit
         masterItems[itemIndex] = newItem;
     } else {
         newItem.id = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
+        newItem.stock = 0;
         masterItems.push(newItem);
     }
 
     DB.set('masterItems', masterItems);
-    clearItemForm();
+    document.getElementById('add-item-form').reset();
+    document.getElementById('edit-item-id').value = '';
     renderDbEditor();
 }
 
@@ -905,6 +896,7 @@ function editItem(id) {
     document.getElementById('item-unit').value = item.unit;
     document.getElementById('item-purchase-unit').value = item.purchaseUnit;
     document.getElementById('item-conversion').value = item.purchaseUnitConversion;
+    window.scrollTo(0, 0);
 }
 
 function deleteItem(id) {
@@ -913,11 +905,6 @@ function deleteItem(id) {
     let masterItems = DB.get('masterItems').filter(item => item.id !== id);
     DB.set('masterItems', masterItems);
     renderDbEditor();
-}
-
-function clearItemForm() {
-    document.querySelector('#add-item-form').reset();
-    document.getElementById('edit-item-id').value = '';
 }
 
 function exportDataForAI() {
@@ -930,7 +917,7 @@ function exportDataForAI() {
     categories.forEach(cat => {
         exportText += `\nKategori: ${cat}\n`;
         masterItems.filter(item => item.category === cat).forEach(item => {
-            exportText += `- ${item.name}: ${item.stock.toFixed(2)} ${item.unit}\n`;
+            exportText += `- ${item.name}: ${(item.stock || 0).toFixed(2)} ${item.unit}\n`;
         });
     });
 
@@ -954,18 +941,21 @@ function exportDataForAI() {
 }
 
 function updateTime() {
-    const now = new Date();
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    document.getElementById('current-time').textContent = now.toLocaleDateString('id-ID', options);
+    const timeEl = document.getElementById('current-time');
+    if (timeEl) {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        timeEl.textContent = now.toLocaleDateString('id-ID', options);
+    }
 }
 
-// --- [ BAGIAN 4: INISIALISASI SAAT HALAMAN DIBUKA ] ---
 document.addEventListener('DOMContentLoaded', () => {
     initDatabase();
     showPage('page-dashboard');
     updateTime();
-    setInterval(updateTime, 1000); // Update waktu setiap detik
+    setInterval(updateTime, 1000);
 });
+
 </script>
 </body>
 </html>
