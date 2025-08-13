@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - Dashboard</title>
+    <title>RestoApp - Prototype V2</title>
     <style>
         /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -91,6 +91,7 @@
             justify-content: center;
             text-decoration: none;
             color: var(--text-color);
+            height: 120px;
         }
 
         .dashboard-button:hover {
@@ -160,11 +161,16 @@
 
         .item-row {
             display: grid;
-            grid-template-columns: 1fr 100px 80px;
+            grid-template-columns: 1fr 100px 100px;
             gap: 10px;
             align-items: center;
             margin-bottom: 10px;
             font-size: 0.9rem;
+        }
+        .item-row label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .item-input {
@@ -172,6 +178,11 @@
             padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
+        }
+        .stock-display {
+            font-size: 0.8rem;
+            color: #777;
+            font-style: italic;
         }
         
         /* Rangkuman Belanja */
@@ -187,6 +198,9 @@
         .copy-button:hover { background-color: #0056b3; }
 
         /* Manager Area */
+        .table-container {
+            overflow-x: auto;
+        }
         #db-editor-table {
             width: 100%;
             border-collapse: collapse;
@@ -221,6 +235,7 @@
             border: 1px dashed var(--border-color);
             border-radius: var(--border-radius);
         }
+        #add-item-form input { padding: 8px; }
         
         textarea {
             width: 100%;
@@ -238,18 +253,22 @@
 
     <div class="container">
         <header>
-            <h1>Dolan Sawah App Prototype</h1>
+            <h1>Das RestoApp Prototype V2</h1>
         </header>
         <main>
             <div id="page-dashboard" class="page active">
                 <div class="dashboard-grid">
-                    <a href="#" class="dashboard-button" onclick="alert('Fitur ini sedang dalam pengembangan.')">
+                    <a href="#" class="dashboard-button" onclick="showPage('page-input-belanja-datang')">
                         <div class="icon">📥</div>
                         <span>Input Belanja Datang</span>
                     </a>
-                    <a href="#" class="dashboard-button" onclick="alert('Fitur ini sedang dalam pengembangan.')">
-                        <div class="icon">📤</div>
+                    <a href="#" class="dashboard-button" onclick="showPage('page-input-menu-keluar')">
+                        <div class="icon">🍲</div>
                         <span>Input Menu Keluar</span>
+                    </a>
+                     <a href="#" class="dashboard-button" onclick="showPage('page-ambil-gudang')">
+                        <div class="icon">📦</div>
+                        <span>Ambil dari Gudang</span>
                     </a>
                     <a href="#" class="dashboard-button" onclick="showPage('page-input-belanja')">
                         <div class="icon">🛒</div>
@@ -268,286 +287,309 @@
                         <span>Manager Area</span>
                     </a>
                 </div>
-            </div>
-
-            <div id="page-input-belanja" class="page">
-                <div class="page-header">
-                    <h2>Buat List Belanja Baru</h2>
-                    <button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button>
-                </div>
-                <form id="shopping-list-form">
-                    </form>
-                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="generateShoppingList()">Buat Daftar Belanja</button>
-            </div>
-
-            <div id="page-rangkuman-belanja" class="page">
-                 <div class="page-header">
-                    <h2>Rangkuman Belanja Siap Kirim</h2>
-                    <button class="btn btn-secondary" onclick="showPage('page-input-belanja')">Kembali</button>
-                </div>
-                <div id="summary-container">
-                    </div>
-            </div>
-
-            <div id="page-manager-area" class="page">
-                <div class="page-header">
-                    <h2>Manager Area</h2>
-                    <button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button>
-                </div>
-
-                <div class="category-group">
-                    <h3 class="category-title">Editor Database Barang</h3>
-                    <div id="add-item-form">
-                        <input type="hidden" id="edit-item-id">
-                        <input type="text" id="item-name" placeholder="Nama Barang" class="item-input">
-                        <input type="text" id="item-category" placeholder="Kategori" class="item-input">
-                        <input type="text" id="item-unit" placeholder="Satuan (kg, pcs)" class="item-input">
-                        <button class="btn" onclick="saveItem()">Simpan Barang</button>
-                    </div>
-                    <div style="overflow-x:auto;">
-                        <table id="db-editor-table">
-                            <thead>
-                                <tr><th>Nama Barang</th><th>Kategori</th><th>Satuan</th><th>Aksi</th></tr>
-                            </thead>
-                            <tbody id="db-editor-tbody">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="category-group">
-                    <h3 class="category-title">Ekspor Data untuk Analisa</h3>
-                    <p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p>
-                    <textarea id="data-export-area" readonly></textarea>
-                    <button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button>
+                 <div style="text-align:center; margin-top: 20px; font-size: 0.8rem; color: #888;">
+                    <p>Waktu saat ini: <span id="current-time"></span></p>
                 </div>
             </div>
+
+            <div id="page-input-belanja" class="page"></div>
+            <div id="page-rangkuman-belanja" class="page"></div>
+            <div id="page-input-belanja-datang" class="page"></div>
+            <div id="page-input-menu-keluar" class="page"></div>
+            <div id="page-ambil-gudang" class="page"></div>
+            <div id="page-manager-area" class="page"></div>
 
         </main>
     </div>
 
 <script>
-// --- [ BAGIAN 1: DATABASE AWAL & INISIALISASI ] ---
+// --- [ BAGIAN 1: DATABASE AWAL & KONFIGURASI ] ---
 const initialMasterItems = [
-    // Data Anda yang sudah dirapikan akan ada di sini
+    // Data Anda yang sudah dirapikan, dengan tambahan kolom baru
+    // dan stok awal di-set 0.
+    // format: { id, name, category, unit (satuan stok), purchaseUnit (satuan beli), purchaseUnitConversion (konversi), stock }
+    
     // Sayur
-    { id: 1, name: "Kolbis", category: "Sayur", unit: "kg" },
-    { id: 2, name: "Labu Siam", category: "Sayur", unit: "kg" },
-    { id: 3, name: "Jagung Manis", category: "Sayur", unit: "kg" },
-    { id: 4, name: "Pare", category: "Sayur", unit: "kg" },
-    { id: 5, name: "Kangkung", category: "Sayur", unit: "kg" },
-    { id: 6, name: "Kentang", category: "Sayur", unit: "kg" },
-    { id: 7, name: "Wortel", category: "Sayur", unit: "kg" },
-    { id: 8, name: "Daun Bawang", category: "Sayur", unit: "kg" },
-    { id: 9, name: "Kacang Panjang", category: "Sayur", unit: "kg" },
-    { id: 10, name: "Cabe Plintir Merah", category: "Sayur", unit: "kg" },
-    { id: 11, name: "Cabe Plintir Ijo", category: "Sayur", unit: "kg" },
-    { id: 12, name: "Cabe Ceplus", category: "Sayur", unit: "kg" },
-    { id: 13, name: "Cabe Rawit Merah", category: "Sayur", unit: "kg" },
-    { id: 14, name: "Cabe Teropong Merah", category: "Sayur", unit: "kg" },
-    { id: 15, name: "Cabe Teropong Hijau", category: "Sayur", unit: "kg" },
-    { id: 16, name: "Tomat Merah", category: "Sayur", unit: "kg" },
-    { id: 17, name: "Tomat Hijau", category: "Sayur", unit: "kg" },
-    { id: 18, name: "Timun", category: "Sayur", unit: "kg" },
-    { id: 19, name: "Brokoli", category: "Sayur", unit: "kg" },
-    { id: 20, name: "Sawi Bakso", category: "Sayur", unit: "kg" },
-    { id: 21, name: "Kembang Kol", category: "Sayur", unit: "kg" },
-    { id: 22, name: "Kapri", category: "Sayur", unit: "kg" },
-    { id: 23, name: "Buncis", category: "Sayur", unit: "kg" },
-    { id: 24, name: "Seledri", category: "Sayur", unit: "kg" },
-    { id: 25, name: "Terong", category: "Sayur", unit: "kg" },
+    { id: 1, name: "Kolbis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 2, name: "Labu Siam", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 3, name: "Jagung Manis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 4, name: "Pare", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 5, name: "Kangkung", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 6, name: "Kentang", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 7, name: "Wortel", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 8, name: "Daun Bawang", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 9, name: "Kacang Panjang", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 10, name: "Cabe Plintir Merah", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 11, name: "Cabe Plintir Ijo", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 12, name: "Cabe Ceplus", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 13, name: "Cabe Rawit Merah", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 14, name: "Cabe Teropong Merah", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 15, name: "Cabe Teropong Hijau", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 16, name: "Tomat Merah", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 17, name: "Tomat Hijau", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 18, name: "Timun", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 19, name: "Brokoli", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 20, name: "Sawi Bakso", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 21, name: "Kembang Kol", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 22, name: "Kapri", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 23, name: "Buncis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 24, name: "Seledri", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 25, name: "Terong", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
 
     // Ayam
-    { id: 26, name: "Paha Tepong (1kg/4pcs)", category: "Ayam", unit: "kg" },
-    { id: 27, name: "Paha Bawah (1kg/8pcs)", category: "Ayam", unit: "kg" },
-    { id: 28, name: "Tepong (1kg/6pcs)", category: "Ayam", unit: "kg" },
-    { id: 29, name: "Fillet Paha Tepong", category: "Ayam", unit: "kg" },
-    { id: 30, name: "Fillet Dada", category: "Ayam", unit: "kg" },
+    { id: 26, name: "Paha Tepong (1kg/4pcs)", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 27, name: "Paha Bawah (1kg/8pcs)", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 28, name: "Tepong (1kg/6pcs)", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 29, name: "Fillet Paha Tepong", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 30, name: "Fillet Dada", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
 
     // Bebek dan ayam kampung
-    { id: 31, name: "Ayam Kampung", category: "Bebek dan ayam kampung", unit: "ekor" },
-    { id: 32, name: "Bebek", category: "Bebek dan ayam kampung", unit: "ekor" },
+    { id: 31, name: "Ayam Kampung", category: "Bebek dan ayam kampung", unit: "ekor", purchaseUnit: "ekor", purchaseUnitConversion: 1, stock: 0 },
+    { id: 32, name: "Bebek", category: "Bebek dan ayam kampung", unit: "ekor", purchaseUnit: "ekor", purchaseUnitConversion: 1, stock: 0 },
 
     // Keringan
-    { id: 33, name: "Blue Band (240gr)", category: "Keringan", unit: "pack" },
-    { id: 34, name: "Mie Atom Bulan", category: "Keringan", unit: "bungkus" },
-    { id: 35, name: "Bihun Padamu", category: "Keringan", unit: "bungkus" },
-    { id: 36, name: "Gula Pasir", category: "Keringan", unit: "karung" },
-    { id: 37, name: "Tepung Segitiga", category: "Keringan", unit: "pack" },
-    { id: 38, name: "Kara", category: "Keringan", unit: "pack" },
-    { id: 39, name: "Kecap", category: "Keringan", unit: "pouch" },
-    { id: 40, name: "Sunlight", category: "Keringan", unit: "pouch" },
-    { id: 41, name: "Hemart", category: "Keringan", unit: "botol" },
-    { id: 42, name: "Micin Koki", category: "Keringan", unit: "pack" },
-    { id: 43, name: "Royco Sapi", category: "Keringan", unit: "pack" },
-    { id: 44, name: "Tepung Pisang Sasa", category: "Keringan", unit: "pack" },
-    { id: 45, name: "Garam", category: "Keringan", unit: "pack" },
-    { id: 46, name: "Kobe Ayam Krispy", category: "Keringan", unit: "pack" },
-    { id: 47, name: "Telur Waringin", category: "Keringan", unit: "kg" },
-    { id: 48, name: "Tepung Tapioka (Kanji)", category: "Keringan", unit: "pack" },
+    { id: 33, name: "Blue Band", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 60, stock: 0 }, // 15kg / 240gr
+    { id: 34, name: "Mie Atom Bulan", category: "Keringan", unit: "bungkus", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },
+    { id: 35, name: "Bihun Padamu", category: "Keringan", unit: "bungkus", purchaseUnit: "bal", purchaseUnitConversion: 12, stock: 0 },
+    { id: 36, name: "Gula Pasir", category: "Keringan", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 50, stock: 0 }, // Asumsi 1 karung 50kg
+    { id: 37, name: "Tepung Segitiga", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+    { id: 38, name: "Kara", category: "Keringan", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 32, stock: 0 },
+    { id: 39, name: "Kecap", category: "Keringan", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
+    { id: 40, name: "Sunlight", category: "Keringan", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+    { id: 41, name: "Hemart", category: "Keringan", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+    { id: 42, name: "Micin Koki", category: "Keringan", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },
+    { id: 43, name: "Royco Sapi", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },// Asumsi
+    { id: 44, name: "Tepung Pisang Sasa", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
+    { id: 45, name: "Garam Kapal", category: "Keringan", unit: "pcs", purchaseUnit: "bal", purchaseUnitConversion: 40, stock: 0 },
+    { id: 46, name: "Kobe Ayam Krispy", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+    { id: 47, name: "Telur Waringin", category: "Keringan", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 48, name: "Tepung Tapioka (Kanji)", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },// Asumsi
 
     // Belanja Pusat
-    { id: 49, name: "Nila (1kg/4pcs)", category: "Belanja Pusat", unit: "kg" },
-    { id: 50, name: "Lele (1kg/6pcs)", category: "Belanja Pusat", unit: "kg" },
-    { id: 51, name: "Belut", category: "Belanja Pusat", unit: "kg" },
-    { id: 52, name: "Kecap Ikan", category: "Belanja Pusat", unit: "botol" },
-    { id: 53, name: "Cuka Dixi", category: "Belanja Pusat", unit: "botol" },
-    { id: 54, name: "Kerupuk Udang Besar", category: "Belanja Pusat", unit: "dus" },
-    { id: 55, name: "Kerupuk Bawang", category: "Belanja Pusat", unit: "kg" },
-    { id: 56, name: "Saus Tiram", category: "Belanja Pusat", unit: "botol" },
-    { id: 57, name: "Saus Inggris", category: "Belanja Pusat", unit: "botol" },
-    { id: 58, name: "Tepung Panir Coklat", category: "Belanja Pusat", unit: "pack" },
-    { id: 59, name: "Ikan Asin Jambal", category: "Belanja Pusat", unit: "kg" },
-    { id: 60, name: "Merica Gelondongan", category: "Belanja Pusat", unit: "kg" },
-    { id: 61, name: "Pala", category: "Belanja Pusat", unit: "kg" },
-    { id: 62, name: "Bawang Bombay", category: "Belanja Pusat", unit: "kg" },
-    { id: 63, name: "Tahu Pong", category: "Belanja Pusat", unit: "pcs" },
-    { id: 64, name: "Tauge", category: "Belanja Pusat", unit: "kg" },
-    { id: 65, name: "Bawang Putih", category: "Belanja Pusat", unit: "kg" },
-    { id: 66, name: "Bawang Merah", category: "Belanja Pusat", unit: "kg" },
-    { id: 67, name: "Tahu Kulit", category: "Belanja Pusat", unit: "pcs" },
-    { id: 68, name: "Tempe", category: "Belanja Pusat", unit: "pcs" },
-    { id: 69, name: "Kelapa Gelondong", category: "Belanja Pusat", unit: "pcs" },
-    { id: 70, name: "Daging Sapi Giling", category: "Belanja Pusat", unit: "kg" },
-    { id: 71, name: "Daging Ayam Giling", category: "Belanja Pusat", unit: "kg" },
-    { id: 72, name: "Mangut", category: "Belanja Pusat", unit: "kg" },
-    { id: 73, name: "Kemangi", category: "Belanja Pusat", unit: "kg" },
-    { id: 74, name: "Sereh", category: "Belanja Pusat", unit: "kg" },
-    { id: 75, name: "Teri", category: "Belanja Pusat", unit: "kg" },
-    { id: 76, name: "Kemiri", category: "Belanja Pusat", unit: "kg" },
-    { id: 77, name: "Cumi Kering", category: "Belanja Pusat", unit: "kg" },
-    { id: 78, name: "Kacang Tanah Kupas", category: "Belanja Pusat", unit: "kg" },
-    { id: 79, name: "Lengkuas", category: "Belanja Pusat", unit: "kg" },
-    { id: 80, name: "Kencur", category: "Belanja Pusat", unit: "kg" },
-    { id: 81, name: "Kunyit", category: "Belanja Pusat", unit: "kg" },
-    { id: 82, name: "Daun Melinjo", category: "Belanja Pusat", unit: "kg" },
-    { id: 83, name: "Bunga Pepaya", category: "Belanja Pusat", unit: "kg" },
-    { id: 84, name: "Daun Pepaya", category: "Belanja Pusat", unit: "kg" },
-    { id: 85, name: "Jantung Pisang", category: "Belanja Pusat", unit: "kg" },
-    { id: 86, name: "Krecek Sum", category: "Belanja Pusat", unit: "kg" },
-    { id: 87, name: "Salam", category: "Belanja Pusat", unit: "kg" },
-    { id: 88, name: "Pandan", category: "Belanja Pusat", unit: "kg" },
-    { id: 89, name: "Daun Jeruk", category: "Belanja Pusat", unit: "kg" },
-    { id: 90, name: "Bandeng", category: "Belanja Pusat", unit: "ekor" },
-    { id: 91, name: "Maizena", category: "Belanja Pusat", unit: "pack" },
-    { id: 92, name: "Daun Pisang", category: "Belanja Pusat", unit: "lempit" },
-    { id: 93, name: "Sunco", category: "Belanja Pusat", unit: "pouch" },
-    { id: 94, name: "Bumbu Rendang Indofood", category: "Belanja Pusat", unit: "pack" },
-    { id: 95, name: "Jamur Kaleng", category: "Belanja Pusat", unit: "pcs" },
-    { id: 96, name: "Jamur Putih Kering", category: "Belanja Pusat", unit: "pack" },
-    { id: 97, name: "Ebi", category: "Belanja Pusat", unit: "kg" },
-    { id: 98, name: "Tetelan", category: "Belanja Pusat", unit: "kg" },
-    { id: 99, name: "Kikil", category: "Belanja Pusat", unit: "kg" },
-    { id: 100, name: "Babat", category: "Belanja Pusat", unit: "kg" },
-    { id: 101, name: "Udang Rawakecil", category: "Belanja Pusat", unit: "kg" },
-    { id: 102, name: "Bleng", category: "Belanja Pusat", unit: "kg" },
-    { id: 103, name: "Gula Aren", category: "Belanja Pusat", unit: "kg" },
-    { id: 104, name: "Brambang Goreng", category: "Belanja Pusat", unit: "kg" },
-    { id: 105, name: "Iga Sapi Potong", category: "Belanja Pusat", unit: "kg" },
-    { id: 106, name: "Kakap Fillet", category: "Belanja Pusat", unit: "kg" },
-    { id: 107, name: "Jahe", category: "Belanja Pusat", unit: "kg" },
-    { id: 108, name: "Pisang", category: "Belanja Pusat", unit: "kg" },
-    { id: 109, name: "Tepung Beras", category: "Belanja Pusat", unit: "pack" },
-    { id: 110, name: "Adonan Gilingan Bakso", category: "Belanja Pusat", unit: "kg" },
+    { id: 49, name: "Nila", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 50, name: "Lele", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 51, name: "Belut", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 52, name: "Kecap Ikan", category: "Belanja Pusat", unit: "botol", purchaseUnit: "botol", purchaseUnitConversion: 1, stock: 0 },
+    { id: 53, name: "Cuka Dixi", category: "Belanja Pusat", unit: "botol", purchaseUnit: "botol", purchaseUnitConversion: 1, stock: 0 },
+    { id: 54, name: "Kerupuk Udang Besar", category: "Belanja Pusat", unit: "kg", purchaseUnit: "dus", purchaseUnitConversion: 5, stock: 0 },// Asumsi
+    { id: 55, name: "Kerupuk Bawang", category: "Belanja Pusat", unit: "kg", purchaseUnit: "bal", purchaseUnitConversion: 5, stock: 0 },// Asumsi
+    { id: 56, name: "Saus Tiram", category: "Belanja Pusat", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
+    { id: 57, name: "Saus Inggris", category: "Belanja Pusat", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
+    { id: 58, name: "Tepung Panir Coklat", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 10, stock: 0 },// Asumsi
+    { id: 59, name: "Ikan Asin Jambal", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 60, name: "Merica Gelondongan", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 61, name: "Pala", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 62, name: "Bawang Bombay", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 63, name: "Tahu Pong", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "kantong", purchaseUnitConversion: 50, stock: 0 },// Asumsi
+    { id: 64, name: "Tauge", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 65, name: "Bawang Putih", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 66, name: "Bawang Merah", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 67, name: "Tahu Kulit", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "kantong", purchaseUnitConversion: 50, stock: 0 },// Asumsi
+    { id: 68, name: "Tempe", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "papan", purchaseUnitConversion: 1, stock: 0 },
+    { id: 69, name: "Kelapa Gelondong", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "pcs", purchaseUnitConversion: 1, stock: 0 },
+    { id: 70, name: "Daging Sapi Giling", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 71, name: "Daging Ayam Giling", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 72, name: "Mangut", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 73, name: "Kemangi", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 74, name: "Sereh", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 75, name: "Teri", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 76, name: "Kemiri", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 77, name: "Cumi Kering", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 78, name: "Kacang Tanah Kupas", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 79, name: "Lengkuas", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 80, name: "Kencur", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 81, name: "Kunyit", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 82, name: "Daun Melinjo", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 83, name: "Bunga Pepaya", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 84, name: "Daun Pepaya", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 85, name: "Jantung Pisang", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 86, name: "Krecek Sum", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 87, name: "Salam", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 88, name: "Pandan", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 89, name: "Daun Jeruk", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 90, name: "Bandeng", category: "Belanja Pusat", unit: "ekor", purchaseUnit: "ekor", purchaseUnitConversion: 1, stock: 0 },
+    { id: 91, name: "Maizena", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 18, stock: 0 },
+    { id: 92, name: "Daun Pisang", category: "Belanja Pusat", unit: "lempit", purchaseUnit: "lempit", purchaseUnitConversion: 1, stock: 0 },
+    { id: 93, name: "Sunco", category: "Belanja Pusat", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 6, stock: 0 },
+    { id: 94, name: "Bumbu Rendang Indofood", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },// Asumsi
+    { id: 95, name: "Jamur Kaleng", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },// Asumsi
+    { id: 96, name: "Jamur Putih Kering", category: "Belanja Pusat", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 97, name: "Ebi", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 98, name: "Tetelan", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 99, name: "Kikil", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 100, name: "Babat", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 101, name: "Udang Rawakecil", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 102, name: "Bleng", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 103, name: "Gula Aren", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 104, name: "Brambang Goreng", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 105, name: "Iga Sapi Potong", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 106, name: "Kakap Fillet", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 107, name: "Jahe", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 108, name: "Pisang", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 109, name: "Tepung Beras", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },// Asumsi
+    { id: 110, name: "Adonan Gilingan Bakso", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
 
     // Supplier lainnya
-    { id: 111, name: "Gas", category: "Supplier lainnya", unit: "tabung" },
-    { id: 112, name: "Beras", category: "Supplier lainnya", unit: "sak" },
-    { id: 113, name: "Es Krim Durian AG26", category: "Supplier lainnya", unit: "pcs" },
+    { id: 111, name: "Gas", category: "Supplier lainnya", unit: "tabung", purchaseUnit: "tabung", purchaseUnitConversion: 1, stock: 0 },
+    { id: 112, name: "Beras", category: "Supplier lainnya", unit: "kg", purchaseUnit: "sak", purchaseUnitConversion: 25, stock: 0 }, // Asumsi 1 sak 25kg
+    { id: 113, name: "Es Krim Durian AG26", category: "Supplier lainnya", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 50, stock: 0 },// Asumsi
 
     // Supplier Snack dll
-    { id: 114, name: "Roti Bluder", category: "Supplier Snack dll", unit: "pack" },
+    { id: 114, name: "Roti Bluder", category: "Supplier Snack dll", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
 
     // Frozen food
-    { id: 115, name: "Chikuwa", category: "Frozen food", unit: "pack" },
-    { id: 116, name: "Dumpling", category: "Frozen food", unit: "pack" },
-    { id: 117, name: "Odeng", category: "Frozen food", unit: "pack" },
-    { id: 118, name: "Sosis Besar Salam", category: "Frozen food", unit: "pcs" },
-    { id: 119, name: "Sosis Merah", category: "Frozen food", unit: "pcs" },
-    { id: 120, name: "Otak-otak Singapore", category: "Frozen food", unit: "pack" },
-    { id: 121, name: "Salmon Fish Cake", category: "Frozen food", unit: "pack" },
-    { id: 122, name: "Mazzoni Saus Lada Hitam", category: "Frozen food", unit: "pack" },
-    { id: 123, name: "Koki Jempol Kuah Suki", category: "Frozen food", unit: "pack" },
-    { id: 124, name: "Delmonte Saus Tomat", category: "Frozen food", unit: "derigen" },
-    { id: 125, name: "Delmonte Saus Cabe", category: "Frozen food", unit: "derigen" },
+    { id: 115, name: "Chikuwa", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 116, name: "Dumpling", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 117, name: "Odeng", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 118, name: "Sosis Besar Salam", category: "Frozen food", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 10, stock: 0 },// Asumsi
+    { id: 119, name: "Sosis Merah", category: "Frozen food", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 20, stock: 0 },// Asumsi
+    { id: 120, name: "Otak-otak Singapore", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 121, name: "Salmon Fish Cake", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 122, name: "Mazzoni Saus Lada Hitam", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 123, name: "Koki Jempol Kuah Suki", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
+    { id: 124, name: "Delmonte Saus Tomat", category: "Frozen food", unit: "derigen", purchaseUnit: "derigen", purchaseUnitConversion: 1, stock: 0 },
+    { id: 125, name: "Delmonte Saus Cabe", category: "Frozen food", unit: "derigen", purchaseUnit: "derigen", purchaseUnitConversion: 1, stock: 0 },
 
     // Belanja Bar
-    { id: 126, name: "Naruna Coffee", category: "Belanja Bar", unit: "botol" },
-    { id: 127, name: "Galon Java", category: "Belanja Bar", unit: "galon" },
-    { id: 128, name: "Cleo Botol Tanggung", category: "Belanja Bar", unit: "botol" },
-    { id: 129, name: "Cleo Cup", category: "Belanja Bar", unit: "box" },
-    { id: 130, name: "Good Day Cappucino", category: "Belanja Bar", unit: "pcs" },
-    { id: 131, name: "Kopi Hitam", category: "Belanja Bar", unit: "kg" },
-    { id: 132, name: "Diamond Fresh Milk", category: "Belanja Bar", unit: "pack" },
-    { id: 133, name: "Susu Kental Manis Coklat", category: "Belanja Bar", unit: "pcs" },
-    { id: 134, name: "Susu Kental Manis Putih", category: "Belanja Bar", unit: "pcs" },
-    { id: 135, name: "Jeruk", category: "Belanja Bar", unit: "kg" },
-    { id: 136, name: "Buah Naga", category: "Belanja Bar", unit: "kg" },
-    { id: 137, name: "Alpukat", category: "Belanja Bar", unit: "kg" },
-    { id: 138, name: "Lemon", category: "Belanja Bar", unit: "kg" },
-    { id: 139, name: "Mangga", category: "Belanja Bar", unit: "kg" },
+    { id: 126, name: "Naruna Coffee", category: "Belanja Bar", unit: "botol", purchaseUnit: "botol", purchaseUnitConversion: 1, stock: 0 },
+    { id: 127, name: "Galon Java", category: "Belanja Bar", unit: "galon", purchaseUnit: "galon", purchaseUnitConversion: 1, stock: 0 },
+    { id: 128, name: "Cleo Botol Tanggung", category: "Belanja Bar", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
+    { id: 129, name: "Cleo Cup", category: "Belanja Bar", unit: "cup", purchaseUnit: "box", purchaseUnitConversion: 48, stock: 0 },
+    { id: 130, name: "Good Day Cappucino", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 30, stock: 0 },// Asumsi
+    { id: 131, name: "Kopi Hitam", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 132, name: "Diamond Fresh Milk", category: "Belanja Bar", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
+    { id: 133, name: "Susu Kental Manis Coklat", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 6, stock: 0 },// Asumsi
+    { id: 134, name: "Susu Kental Manis Putih", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 6, stock: 0 },// Asumsi
+    { id: 135, name: "Jeruk", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 136, name: "Buah Naga", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 137, name: "Alpukat", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 138, name: "Lemon", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+    { id: 139, name: "Mangga", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 }
 ];
 
+// Data untuk menu keluar (resep sederhana)
+const menuKeluarConfig = {
+    title: "Input Menu Keluar",
+    items: [
+        { name: "Nila", unit: "pcs", recipe: [{ itemId: 49, qtyPerPcs: 0.25 }] }, // Asumsi 1kg isi 4
+        { name: "Lele", unit: "pcs", recipe: [{ itemId: 50, qtyPerPcs: 0.16 }] }, // Asumsi 1kg isi 6
+        { name: "Belut", unit: "pcs", recipe: [{ itemId: 51, qtyPerPcs: 0.2 }] }, // Asumsi 1 porsi 0.2 kg
+        { name: "Paha Tepong", unit: "pcs", recipe: [{ itemId: 26, qtyPerPcs: 0.25 }] },// Asumsi 1kg isi 4
+        { name: "Paha Bawah", unit: "pcs", recipe: [{ itemId: 27, qtyPerPcs: 0.125 }] },// Asumsi 1kg isi 8
+        { name: "Ayam Kampung", unit: "pcs", recipe: [{ itemId: 31, qtyPerPcs: 1 }] },
+        { name: "Tahu Kulit", unit: "pcs", recipe: [{ itemId: 67, qtyPerPcs: 1 }] },
+        { name: "Ayam Geprek", unit: "pcs", recipe: [{ itemId: 30, qtyPerPcs: 0.15 }, { itemId: 46, qtyPerPcs: 0.05 }] }, // Asumsi 150gr fillet + 5% pack Kobe
+        { name: "Telur", unit: "pcs", recipe: [{ itemId: 47, qtyPerPcs: 0.06 }] }, // Asumsi 1 telur 60gr
+        { name: "Babat", unit: "pcs", recipe: [{ itemId: 100, qtyPerPcs: 0.1 }] }, // Asumsi 1 porsi 100gr
+        { name: "Kikil", unit: "pcs", recipe: [{ itemId: 99, qtyPerPcs: 0.1 }] }, // Asumsi 1 porsi 100gr
+        { name: "Tetelan", unit: "pcs", recipe: [{ itemId: 98, qtyPerPcs: 0.1 }] },// Asumsi 1 porsi 100gr
+        { name: "Sosis Besar", unit: "pcs", recipe: [{ itemId: 118, qtyPerPcs: 1 }] },
+        { name: "Salmon Fish Cake", unit: "pcs", recipe: [{ itemId: 121, qtyPerPcs: 0.2 }] },// Asumsi 1 porsi 20% pack
+        { name: "Otak-otak Singapore", unit: "pcs", recipe: [{ itemId: 120, qtyPerPcs: 0.2 }] },// Asumsi 1 porsi 20% pack
+        { name: "Sosis Merah", unit: "pcs", recipe: [{ itemId: 119, qtyPerPcs: 1 }] },
+    ]
+};
+
+// Data untuk pengambilan gudang
+const ambilGudangConfig = {
+    title: "Ambil Barang dari Gudang",
+    itemIds: [34, 35, 37, 44, 38, 40, 41, 42, 45, 46, 91, 93, 109, 48, 33]
+};
+
+
+// --- [ BAGIAN 2: LOGIKA & FUNGSI UTAMA ] ---
+
+// Helper untuk LocalStorage
+const DB = {
+    get: (key) => JSON.parse(localStorage.getItem(key)),
+    set: (key, value) => localStorage.setItem(key, JSON.stringify(value))
+};
 
 function initDatabase() {
-    // Cek jika master data belum ada di localStorage, maka buat
-    if (!localStorage.getItem('masterItems')) {
-        localStorage.setItem('masterItems', JSON.stringify(initialMasterItems));
+    if (!DB.get('masterItems')) {
+        DB.set('masterItems', initialMasterItems);
     }
-    // Inisialisasi data lain jika belum ada
-    if (!localStorage.getItem('shoppingLists')) {
-        localStorage.setItem('shoppingLists', JSON.stringify([]));
+    if (!DB.get('shoppingLists')) {
+        DB.set('shoppingLists', []);
     }
-}
-
-// --- [ BAGIAN 2: NAVIGASI & TAMPILAN ] ---
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
-
-    // Refresh data saat halaman tertentu dibuka
-    if (pageId === 'page-input-belanja') {
-        renderShoppingListForm();
-    }
-    if (pageId === 'page-manager-area') {
-        renderDbEditor();
+     if (!DB.get('stockTransactions')) {
+        DB.set('stockTransactions', []);
     }
 }
 
-// --- [ BAGIAN 3: LOGIKA UTAMA APLIKASI ] ---
+// Navigasi & Render
+function showPage(pageId, data = null) {
+    document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+    const targetPage = document.getElementById(pageId);
+    
+    // Hapus konten lama sebelum render baru
+    targetPage.innerHTML = ''; 
+    
+    // Render konten baru berdasarkan pageId
+    switch (pageId) {
+        case 'page-dashboard':
+            // Dashboard tidak dirender ulang, hanya ditampilkan
+            break;
+        case 'page-input-belanja':
+            targetPage.innerHTML = `
+                <div class="page-header"><h2>Buat List Belanja Baru</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+                <form id="shopping-list-form"></form>
+                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="generateShoppingList()">Buat Daftar Belanja</button>`;
+            renderShoppingListForm();
+            break;
+        case 'page-rangkuman-belanja':
+             targetPage.innerHTML = `
+                <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" onclick="showPage('page-input-belanja')">Kembali</button></div>
+                <div id="summary-container"></div>`;
+            renderShoppingSummary(data);
+            break;
+        case 'page-input-belanja-datang':
+             targetPage.innerHTML = `
+                <div class="page-header"><h2>Input Belanja Datang</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+                <form id="stock-in-form"></form>
+                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="processStockIn()">Konfirmasi Barang Masuk</button>`;
+            renderStockInForm();
+            break;
+         case 'page-input-menu-keluar':
+            renderStockOutPage(menuKeluarConfig);
+            break;
+        case 'page-ambil-gudang':
+            renderStockOutPage(ambilGudangConfig);
+            break;
+        case 'page-manager-area':
+            targetPage.innerHTML = `
+                <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+                <div class="category-group"><h3 class="category-title">Editor Database Barang</h3><div id="add-item-form"><input type="hidden" id="edit-item-id"><input type="text" id="item-name" placeholder="Nama Barang"><input type="text" id="item-category" placeholder="Kategori"><input type="text" id="item-unit" placeholder="Satuan Stok"><input type="text" id="item-purchase-unit" placeholder="Satuan Beli"><input type="number" id="item-conversion" placeholder="Konversi"><button class="btn" onclick="saveItem()">Simpan</button></div><div class="table-container"><table id="db-editor-table"><thead><tr><th>Nama</th><th>Kategori</th><th>Satuan Stok</th><th>Satuan Beli</th><th>Konversi</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
+                <div class="category-group"><h3 class="category-title">Ekspor Data untuk Analisa</h3><p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p><textarea id="data-export-area" readonly></textarea><button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button></div>`;
+            renderDbEditor();
+            break;
+    }
+    targetPage.style.display = 'block';
+}
 
-// -- Alur Input List Belanja --
 function renderShoppingListForm() {
-    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const masterItems = DB.get('masterItems');
     const formContainer = document.getElementById('shopping-list-form');
-    formContainer.innerHTML = '';
+    if (!formContainer) return;
 
-    // Kelompokkan item berdasarkan kategori
-    const categories = [...new Set(masterItems.map(item => item.category))];
+    const categories = [...new Set(masterItems.map(item => item.category))].sort();
     
     categories.forEach(category => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'category-group';
-        
-        const title = document.createElement('h3');
-        title.className = 'category-title';
-        title.textContent = category;
-        groupDiv.appendChild(title);
-
+        let itemsHTML = '';
         masterItems.filter(item => item.category === category).forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item-row';
-            itemDiv.innerHTML = `
+            const displayUnit = item.purchaseUnit || item.unit;
+            itemsHTML += `<div class="item-row">
                 <label for="item-${item.id}">${item.name}</label>
                 <input type="number" id="item-${item.id}" data-item-id="${item.id}" class="item-input" placeholder="Jumlah">
-                <span>${item.unit}</span>
-            `;
-            groupDiv.appendChild(itemDiv);
+                <span>${displayUnit}</span>
+            </div>`;
         });
 
-        formContainer.appendChild(groupDiv);
+        formContainer.innerHTML += `
+            <div class="category-group">
+                <h3 class="category-title">${category}</h3>
+                ${itemsHTML}
+            </div>`;
     });
 }
 
@@ -555,6 +597,7 @@ function generateShoppingList() {
     const inputs = document.querySelectorAll('#shopping-list-form .item-input');
     const shoppingList = {
         date: new Date().toISOString(),
+        status: 'pending', // pending, completed
         items: []
     };
 
@@ -572,18 +615,17 @@ function generateShoppingList() {
         return;
     }
     
-    // Simpan list terbaru ke localStorage
-    let allLists = JSON.parse(localStorage.getItem('shoppingLists'));
+    let allLists = DB.get('shoppingLists');
     allLists.push(shoppingList);
-    localStorage.setItem('shoppingLists', JSON.stringify(allLists));
+    DB.set('shoppingLists', allLists);
     
-    renderShoppingSummary(shoppingList);
-    showPage('page-rangkuman-belanja');
+    showPage('page-rangkuman-belanja', shoppingList);
 }
 
 function renderShoppingSummary(shoppingList) {
-    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const masterItems = DB.get('masterItems');
     const summaryContainer = document.getElementById('summary-container');
+    if (!summaryContainer) return;
     summaryContainer.innerHTML = '';
 
     const listItems = shoppingList.items.map(item => {
@@ -591,53 +633,218 @@ function renderShoppingSummary(shoppingList) {
         return { ...masterItem, quantity: item.quantity };
     });
 
-    const categories = [...new Set(listItems.map(item => item.category))];
+    const categories = [...new Set(listItems.map(item => item.category))].sort();
 
     categories.forEach(category => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'category-group';
-        
-        const title = document.createElement('h3');
-        title.className = 'category-title';
-        title.innerHTML = `${category} <button class="copy-button" onclick="copyCategoryList(this)">📋 Salin</button>`;
-        groupDiv.appendChild(title);
-        
-        const ul = document.createElement('ul');
-        ul.style.listStyleType = 'none';
-
         let categoryText = `List Belanja - ${category}:\n`;
-
+        let itemsHTML = '';
         listItems.filter(item => item.category === category).forEach(item => {
-            const li = document.createElement('li');
-            const text = `* ${item.name}: ${item.quantity} ${item.unit}`;
-            li.textContent = text;
-            ul.appendChild(li);
+            const displayUnit = item.purchaseUnit || item.unit;
+            const text = `* ${item.name}: ${item.quantity} ${displayUnit}`;
+            itemsHTML += `<li>${text}</li>`;
             categoryText += `${text}\n`;
         });
-        
-        groupDiv.appendChild(ul);
-        // Simpan teks untuk disalin di data-attribute tombol
-        title.querySelector('.copy-button').dataset.textToCopy = categoryText;
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'category-group';
+        groupDiv.innerHTML = `
+            <h3 class="category-title">${category} <button class="copy-button" data-text-to-copy="${escape(categoryText)}">📋 Salin</button></h3>
+            <ul style="list-style-type: none; padding-left: 10px;">${itemsHTML}</ul>`;
         summaryContainer.appendChild(groupDiv);
+    });
+    
+    summaryContainer.querySelectorAll('.copy-button').forEach(button => {
+        button.onclick = () => copyCategoryList(button);
     });
 }
 
 function copyCategoryList(button) {
-    const textToCopy = button.dataset.textToCopy;
+    const textToCopy = unescape(button.dataset.textToCopy);
     navigator.clipboard.writeText(textToCopy).then(() => {
         button.textContent = '✔️ Tersalin!';
-        setTimeout(() => {
-            button.textContent = '📋 Salin';
-        }, 2000);
-    }).catch(err => {
-        alert('Gagal menyalin: ' + err);
-    });
+        setTimeout(() => { button.textContent = '📋 Salin'; }, 2000);
+    }).catch(err => alert('Gagal menyalin: ' + err));
 }
 
-// -- Alur Manager Area --
+function renderStockInForm() {
+    const allLists = DB.get('shoppingLists');
+    const pendingList = allLists.find(list => list.status === 'pending');
+    const stockInForm = document.getElementById('stock-in-form');
+     if (!stockInForm) return;
+
+    if (!pendingList) {
+        stockInForm.innerHTML = `<p>Tidak ada list belanja yang menunggu untuk dimasukkan ke stok.</p>`;
+        document.querySelector('#page-input-belanja-datang button').style.display = 'none';
+        return;
+    }
+     document.querySelector('#page-input-belanja-datang button').style.display = 'block';
+
+    const masterItems = DB.get('masterItems');
+    const listItems = pendingList.items.map(item => ({...masterItems.find(mi => mi.id === item.id), quantity: item.quantity }));
+    const categories = [...new Set(listItems.map(item => item.category))].sort();
+    
+    let formHTML = '';
+    categories.forEach(category => {
+        let itemsHTML = '';
+        listItems.filter(item => item.category === category).forEach(item => {
+            const displayUnit = item.purchaseUnit || item.unit;
+            itemsHTML += `<div class="item-row">
+                <label for="stockin-${item.id}">${item.name}</label>
+                <input type="number" id="stockin-${item.id}" data-item-id="${item.id}" class="item-input" value="${item.quantity}">
+                <span>${displayUnit}</span>
+            </div>`;
+        });
+        formHTML += `<div class="category-group"><h3 class="category-title">${category}</h3>${itemsHTML}</div>`;
+    });
+    stockInForm.innerHTML = formHTML;
+}
+
+function processStockIn() {
+    let masterItems = DB.get('masterItems');
+    let allLists = DB.get('shoppingLists');
+    let pendingList = allLists.find(list => list.status === 'pending');
+    let transactions = DB.get('stockTransactions');
+    
+    if (!pendingList) {
+        alert('Tidak ada list belanja yang perlu diproses.');
+        return;
+    }
+
+    const inputs = document.querySelectorAll('#stock-in-form .item-input');
+    inputs.forEach(input => {
+        if (input.value && parseFloat(input.value) > 0) {
+            const itemId = parseInt(input.dataset.itemId);
+            const receivedQty = parseFloat(input.value);
+            
+            const itemIndex = masterItems.findIndex(item => item.id === itemId);
+            if (itemIndex > -1) {
+                const item = masterItems[itemIndex];
+                const stockInQty = receivedQty * item.purchaseUnitConversion;
+                const oldStock = item.stock;
+                item.stock = parseFloat((oldStock + stockInQty).toFixed(3));
+                
+                transactions.push({
+                    date: new Date().toISOString(),
+                    type: 'IN',
+                    itemId: item.id,
+                    itemName: item.name,
+                    qty: stockInQty,
+                    unit: item.unit,
+                    fromStock: oldStock,
+                    toStock: item.stock,
+                    notes: `Belanja datang (${receivedQty} ${item.purchaseUnit})`
+                });
+            }
+        }
+    });
+
+    pendingList.status = 'completed';
+    DB.set('masterItems', masterItems);
+    DB.set('shoppingLists', allLists);
+    DB.set('stockTransactions', transactions);
+
+    alert('Stok berhasil diperbarui!');
+    showPage('page-dashboard');
+}
+
+function renderStockOutPage(config) {
+    const masterItems = DB.get('masterItems');
+    const targetPage = document.getElementById(config.title.includes("Menu") ? 'page-input-menu-keluar' : 'page-ambil-gudang');
+    let itemsToRender = [];
+
+    if (config.itemIds) { // Untuk Ambil Gudang
+        itemsToRender = config.itemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
+    } else { // Untuk Menu Keluar
+        itemsToRender = config.items;
+    }
+
+    let formHTML = '';
+    itemsToRender.forEach(item => {
+        let currentStockInfo = '';
+        if(config.itemIds) { // Gudang
+            currentStockInfo = `Stok: ${item.stock.toFixed(2)} ${item.unit}`;
+        } else { // Menu
+            // Bisa menampilkan stok bahan baku utama jika diperlukan
+        }
+        formHTML += `<div class="item-row">
+            <label for="stockout-${item.name || item.id}">${item.name}</label>
+            <input type="number" id="stockout-${item.name || item.id}" data-item-id="${item.id}" data-item-name="${item.name}" class="item-input" placeholder="Jumlah">
+            <span class="stock-display">${item.unit || 'pcs'}</span>
+        </div>`;
+    });
+
+    targetPage.innerHTML = `
+        <div class="page-header"><h2>${config.title}</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+        <div class="category-group">${formHTML}</div>
+        <button class="btn" style="width:100%" onclick="processStockOut('${config.title}')">Proses Pengeluaran Stok</button>
+    `;
+}
+
+function processStockOut(title) {
+    let masterItems = DB.get('masterItems');
+    let transactions = DB.get('stockTransactions');
+    const isMenuKeluar = title.includes("Menu");
+    
+    const config = isMenuKeluar ? menuKeluarConfig : ambilGudangConfig;
+    let itemsToProcess = [];
+    if(isMenuKeluar) {
+        itemsToProcess = config.items;
+    } else {
+        itemsToProcess = config.itemIds.map(id => masterItems.find(item => item.id === id));
+    }
+    
+    itemsToProcess.forEach(item => {
+        const input = document.getElementById(`stockout-${item.name || item.id}`);
+        if(input && input.value && parseFloat(input.value) > 0) {
+            const qtyOut = parseFloat(input.value);
+            
+            if(isMenuKeluar) {
+                // Proses resep
+                item.recipe.forEach(ingredient => {
+                    const itemIndex = masterItems.findIndex(mi => mi.id === ingredient.itemId);
+                    if(itemIndex > -1) {
+                        const stockItem = masterItems[itemIndex];
+                        const deduction = qtyOut * ingredient.qtyPerPcs;
+                        const oldStock = stockItem.stock;
+                        stockItem.stock = parseFloat((oldStock - deduction).toFixed(3));
+                        
+                        transactions.push({
+                            date: new Date().toISOString(), type: 'OUT', itemId: stockItem.id, itemName: stockItem.name,
+                            qty: deduction, unit: stockItem.unit, fromStock: oldStock, toStock: stockItem.stock,
+                            notes: `Menu keluar: ${qtyOut} pcs ${item.name}`
+                        });
+                    }
+                });
+            } else {
+                // Proses ambil gudang langsung
+                const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
+                if(itemIndex > -1) {
+                    const stockItem = masterItems[itemIndex];
+                    const oldStock = stockItem.stock;
+                    stockItem.stock = parseFloat((oldStock - qtyOut).toFixed(3));
+                    
+                     transactions.push({
+                        date: new Date().toISOString(), type: 'OUT', itemId: stockItem.id, itemName: stockItem.name,
+                        qty: qtyOut, unit: stockItem.unit, fromStock: oldStock, toStock: stockItem.stock,
+                        notes: `Ambil dari gudang`
+                    });
+                }
+            }
+        }
+    });
+
+    DB.set('masterItems', masterItems);
+    DB.set('stockTransactions', transactions);
+    alert('Stok berhasil dikurangi!');
+    showPage('page-dashboard');
+}
+
+
+// --- Alur Manager Area ---
 function renderDbEditor() {
-    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const masterItems = DB.get('masterItems');
     const tbody = document.getElementById('db-editor-tbody');
+    if(!tbody) return;
     tbody.innerHTML = '';
     masterItems.forEach(item => {
         const row = document.createElement('tr');
@@ -645,9 +852,12 @@ function renderDbEditor() {
             <td>${item.name}</td>
             <td>${item.category}</td>
             <td>${item.unit}</td>
+            <td>${item.purchaseUnit || '-'}</td>
+            <td>${item.purchaseUnitConversion || '-'}</td>
+            <td>${item.stock.toFixed(2)}</td>
             <td>
-                <button class="action-btn edit-btn" onclick="editItem(${item.id})">Edit</button>
-                <button class="action-btn delete-btn" onclick="deleteItem(${item.id})">Hapus</button>
+                <button class="action-btn edit-btn" onclick="editItem(${item.id})">E</button>
+                <button class="action-btn delete-btn" onclick="deleteItem(${item.id})">H</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -656,106 +866,107 @@ function renderDbEditor() {
 
 function saveItem() {
     const id = document.getElementById('edit-item-id').value;
-    const name = document.getElementById('item-name').value;
-    const category = document.getElementById('item-category').value;
-    const unit = document.getElementById('item-unit').value;
+    const newItem = {
+        name: document.getElementById('item-name').value,
+        category: document.getElementById('item-category').value,
+        unit: document.getElementById('item-unit').value,
+        purchaseUnit: document.getElementById('item-purchase-unit').value,
+        purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1,
+        stock: 0 // Stok direset atau dipertahankan? Untuk simple, kita reset.
+    };
 
-    if (!name || !category || !unit) {
-        alert('Semua kolom harus diisi!');
+    if (!newItem.name || !newItem.category || !newItem.unit) {
+        alert('Nama, Kategori, dan Satuan Stok harus diisi!');
         return;
     }
 
-    let masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    let masterItems = DB.get('masterItems');
 
-    if (id) { // Edit mode
+    if (id) {
         const itemIndex = masterItems.findIndex(item => item.id == id);
-        masterItems[itemIndex] = { ...masterItems[itemIndex], name, category, unit };
-    } else { // Add mode
-        const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
-        masterItems.push({ id: newId, name, category, unit });
+        newItem.id = parseInt(id);
+        newItem.stock = masterItems[itemIndex].stock; // Pertahankan stok saat edit
+        masterItems[itemIndex] = newItem;
+    } else {
+        newItem.id = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
+        masterItems.push(newItem);
     }
 
-    localStorage.setItem('masterItems', JSON.stringify(masterItems));
+    DB.set('masterItems', masterItems);
     clearItemForm();
     renderDbEditor();
 }
 
 function editItem(id) {
-    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
-    const item = masterItems.find(item => item.id === id);
+    const item = DB.get('masterItems').find(item => item.id === id);
     document.getElementById('edit-item-id').value = item.id;
     document.getElementById('item-name').value = item.name;
     document.getElementById('item-category').value = item.category;
     document.getElementById('item-unit').value = item.unit;
+    document.getElementById('item-purchase-unit').value = item.purchaseUnit;
+    document.getElementById('item-conversion').value = item.purchaseUnitConversion;
 }
 
 function deleteItem(id) {
     if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) return;
     
-    let masterItems = JSON.parse(localStorage.getItem('masterItems'));
-    masterItems = masterItems.filter(item => item.id !== id);
-    localStorage.setItem('masterItems', JSON.stringify(masterItems));
+    let masterItems = DB.get('masterItems').filter(item => item.id !== id);
+    DB.set('masterItems', masterItems);
     renderDbEditor();
 }
 
 function clearItemForm() {
+    document.querySelector('#add-item-form').reset();
     document.getElementById('edit-item-id').value = '';
-    document.getElementById('item-name').value = '';
-    document.getElementById('item-category').value = '';
-    document.getElementById('item-unit').value = '';
 }
 
 function exportDataForAI() {
-    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
-    const shoppingLists = JSON.parse(localStorage.getItem('shoppingLists'));
+    const masterItems = DB.get('masterItems');
+    const transactions = DB.get('stockTransactions');
     
-    let exportText = `DATA RESTORAN PER TANGGAL ${new Date().toLocaleDateString('id-ID')}\n\n`;
-    exportText += "--- MASTER DATA BARANG ---\n";
-    exportText += `Total: ${masterItems.length} item\n`;
-    const categories = [...new Set(masterItems.map(item => item.category))];
+    let exportText = `DATA RESTORAN PER TANGGAL ${new Date().toLocaleString('id-ID')}\n\n`;
+    exportText += "--- DATA STOK SAAT INI ---\n";
+    const categories = [...new Set(masterItems.map(item => item.category))].sort();
     categories.forEach(cat => {
         exportText += `\nKategori: ${cat}\n`;
         masterItems.filter(item => item.category === cat).forEach(item => {
-            exportText += `- ${item.name} (Satuan: ${item.unit})\n`;
+            exportText += `- ${item.name}: ${item.stock.toFixed(2)} ${item.unit}\n`;
         });
     });
 
-    exportText += "\n\n--- DATA LIST BELANJA TERAKHIR ---\n";
-    if (shoppingLists.length > 0) {
-        const lastList = shoppingLists[shoppingLists.length - 1];
-        exportText += `Tanggal: ${new Date(lastList.date).toLocaleString('id-ID')}\n`;
-        lastList.items.forEach(item => {
-            const masterItem = masterItems.find(mi => mi.id === item.id);
-            if(masterItem) {
-                exportText += `- ${masterItem.name}: ${item.quantity} ${masterItem.unit}\n`;
-            }
+    exportText += "\n\n--- RIWAYAT TRANSAKSI STOK (50 TERAKHIR) ---\n";
+    if (transactions.length > 0) {
+        transactions.slice(-50).reverse().forEach(t => {
+            const date = new Date(t.date).toLocaleString('id-ID');
+            const qty = t.type === 'IN' ? `+${t.qty.toFixed(2)}` : `-${t.qty.toFixed(2)}`;
+            exportText += `[${date}] ${t.type} | ${t.itemName} | ${qty} ${t.unit} | Stok: ${t.toStock.toFixed(2)} | Catatan: ${t.notes}\n`;
         });
     } else {
-        exportText += "Belum ada data list belanja.\n";
+        exportText += "Belum ada transaksi stok.\n";
     }
-
-    // Anda bisa menambahkan data lain (penjualan, waste) di sini saat fiturnya sudah jadi
     
     const exportArea = document.getElementById('data-export-area');
     exportArea.value = exportText;
     
-    // Salin otomatis ke clipboard
     navigator.clipboard.writeText(exportText).then(() => {
         alert('Data untuk analisa berhasil disalin ke clipboard!');
-    }).catch(err => {
-        console.error('Gagal menyalin: ', err);
-        alert('Data siap di textarea, silakan salin manual.');
-    });
+    }).catch(() => alert('Data siap di textarea, silakan salin manual.'));
 }
 
+function updateTime() {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    document.getElementById('current-time').textContent = now.toLocaleDateString('id-ID', options);
+}
 
 // --- [ BAGIAN 4: INISIALISASI SAAT HALAMAN DIBUKA ] ---
 document.addEventListener('DOMContentLoaded', () => {
     initDatabase();
     showPage('page-dashboard');
+    updateTime();
+    setInterval(updateTime, 1000); // Update waktu setiap detik
 });
-
-
 </script>
 </body>
 </html>
+
