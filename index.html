@@ -1,175 +1,761 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dolan Sawah Ops</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0; padding: 0;
-        background-color: #f4f6f8;
-        color: #333;
-    }
-    header {
-        background-color: #2e7d32;
-        color: white;
-        text-align: center;
-        padding: 15px;
-        font-size: 20px;
-        font-weight: bold;
-    }
-    nav {
-        display: flex;
-        flex-wrap: wrap;
-        background-color: #1b5e20;
-    }
-    nav button {
-        flex: 1;
-        padding: 10px;
-        background: none;
-        border: none;
-        color: white;
-        font-size: 14px;
-        cursor: pointer;
-    }
-    nav button:hover {
-        background-color: #43a047;
-    }
-    .container {
-        padding: 15px;
-    }
-    h2 {
-        color: #2e7d32;
-        border-bottom: 2px solid #c8e6c9;
-        padding-bottom: 5px;
-    }
-    input, textarea, select, button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 5px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        font-size: 14px;
-    }
-    button.primary {
-        background-color: #2e7d32;
-        color: white;
-        border: none;
-    }
-    button.primary:hover {
-        background-color: #388e3c;
-    }
-    .hidden { display: none; }
-    .card {
-        background-color: white;
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin-bottom: 15px;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RestoApp - Dashboard</title>
+    <style>
+        /* --- Import Font --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        /* --- Reset & Global Styles --- */
+        :root {
+            --primary-color: #4a7c59; /* Muted Green */
+            --secondary-color: #f4f4f4; /* Light Gray */
+            --text-color: #333333;
+            --white-color: #ffffff;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        main {
+            padding: 20px;
+        }
+
+        /* --- Page Styles --- */
+        .page {
+            display: none; /* Hidden by default */
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* --- Dashboard Styles --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .dashboard-button {
+            background-color: var(--white-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .dashboard-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .dashboard-button .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .dashboard-button span {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* --- Form & Input Styles --- */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .page-header h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-secondary {
+             background-color: #aaa;
+        }
+
+        .btn:hover {
+            background-color: #3a6347;
+        }
+        
+        .category-group {
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+        }
+
+        .category-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 80px;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .item-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+        
+        /* Rangkuman Belanja */
+        .copy-button {
+            background-color: #007BFF;
+            color: white;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .copy-button:hover { background-color: #0056b3; }
+
+        /* Manager Area */
+        #db-editor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #db-editor-table th, #db-editor-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        #db-editor-table th {
+            background-color: #f8f8f8;
+        }
+        .action-btn {
+            padding: 5px 8px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            color: white;
+        }
+        .edit-btn { background-color: #ffc107; }
+        .delete-btn { background-color: #dc3545; }
+        #add-item-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px dashed var(--border-color);
+            border-radius: var(--border-radius);
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: monospace;
+            margin-top: 10px;
+        }
+
+    </style>
 </head>
 <body>
 
-<header>Dolan Sawah Ops</header>
+    <div class="container">
+        <header>
+            <h1>RestoApp Prototype</h1>
+        </header>
+        <main>
+            <div id="page-dashboard" class="page active">
+                <div class="dashboard-grid">
+                    <a href="#" class="dashboard-button" onclick="alert('Fitur ini sedang dalam pengembangan.')">
+                        <div class="icon">📥</div>
+                        <span>Input Belanja Datang</span>
+                    </a>
+                    <a href="#" class="dashboard-button" onclick="alert('Fitur ini sedang dalam pengembangan.')">
+                        <div class="icon">📤</div>
+                        <span>Input Menu Keluar</span>
+                    </a>
+                    <a href="#" class="dashboard-button" onclick="showPage('page-input-belanja')">
+                        <div class="icon">🛒</div>
+                        <span>Input List Belanja</span>
+                    </a>
+                    <a href="#" class="dashboard-button" onclick="alert('Fitur ini sedang dalam pengembangan.')">
+                        <div class="icon">📈</div>
+                        <span>Input Total Penjualan</span>
+                    </a>
+                    <a href="#" class="dashboard-button" onclick="alert('Fitur ini sedang dalam pengembangan.')">
+                        <div class="icon">🗑️</div>
+                        <span>Input Waste</span>
+                    </a>
+                    <a href="#" class="dashboard-button" onclick="showPage('page-manager-area')">
+                        <div class="icon">👑</div>
+                        <span>Manager Area</span>
+                    </a>
+                </div>
+            </div>
 
-<nav>
-    <button onclick="showSection('checker')">Checker</button>
-    <button onclick="showSection('kasir')">Kasir</button>
-    <button onclick="showSection('dapur')">Dapur</button>
-    <button onclick="showSection('admin')">Admin</button>
-</nav>
+            <div id="page-input-belanja" class="page">
+                <div class="page-header">
+                    <h2>Buat List Belanja Baru</h2>
+                    <button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button>
+                </div>
+                <form id="shopping-list-form">
+                    </form>
+                <button class="btn" style="width: 100%; margin-top: 20px;" onclick="generateShoppingList()">Buat Daftar Belanja</button>
+            </div>
 
-<div id="checker" class="container hidden">
-    <h2>Checker</h2>
-    <div class="card">
-        <h3>Reservasi & List Belanja</h3>
-        <input type="text" id="jumlahTamu" placeholder="Jumlah Tamu">
-        <textarea id="catatanMenu" placeholder="Catatan Menu"></textarea>
-        <button class="primary">Buat List Belanja</button>
-        <button>Kirim ke WhatsApp</button>
-    </div>
-    <div class="card">
-        <h3>Belanja Susulan</h3>
-        <input type="text" id="susulanBarang" placeholder="Nama Barang">
-        <input type="number" id="susulanJumlah" placeholder="Jumlah">
-        <button class="primary">Tambah</button>
-    </div>
-    <div class="card">
-        <h3>Penerimaan Barang</h3>
-        <textarea id="penerimaan" placeholder="Catat barang yang datang"></textarea>
-        <button class="primary">Simpan</button>
-    </div>
-    <div class="card">
-        <h3>Pengiriman Makanan ke Prasmanan</h3>
-        <input type="text" id="kirimNama" placeholder="Nama Makanan">
-        <input type="number" id="kirimJumlah" placeholder="Jumlah">
-        <button class="primary">Kirim</button>
-    </div>
-    <div class="card">
-        <h3>Waste</h3>
-        <input type="text" id="wasteNama" placeholder="Nama Makanan">
-        <input type="number" id="wasteJumlah" placeholder="Jumlah Terbuang">
-        <select id="wasteAlasan">
-            <option>Alasan Waste</option>
-            <option>Basi</option>
-            <option>Rusak</option>
-            <option>Tidak Laku</option>
-        </select>
-        <button class="primary">Simpan</button>
-    </div>
-</div>
+            <div id="page-rangkuman-belanja" class="page">
+                 <div class="page-header">
+                    <h2>Rangkuman Belanja Siap Kirim</h2>
+                    <button class="btn btn-secondary" onclick="showPage('page-input-belanja')">Kembali</button>
+                </div>
+                <div id="summary-container">
+                    </div>
+            </div>
 
-<div id="kasir" class="container hidden">
-    <h2>Kasir</h2>
-    <div class="card">
-        <h3>Input Penjualan</h3>
-        <input type="number" id="totalPenjualan" placeholder="Total Penjualan">
-        <textarea id="penjualanDetail" placeholder="Penjualan per menu (opsional)"></textarea>
-        <button class="primary">Simpan</button>
-    </div>
-</div>
+            <div id="page-manager-area" class="page">
+                <div class="page-header">
+                    <h2>Manager Area</h2>
+                    <button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button>
+                </div>
 
-<div id="dapur" class="container hidden">
-    <h2>Dapur</h2>
-    <div class="card">
-        <h3>Menu Hari Ini</h3>
-        <textarea id="menuHariIni" placeholder="Daftar menu yang harus dimasak"></textarea>
-        <button class="primary">Simpan Status</button>
-    </div>
-</div>
+                <div class="category-group">
+                    <h3 class="category-title">Editor Database Barang</h3>
+                    <div id="add-item-form">
+                        <input type="hidden" id="edit-item-id">
+                        <input type="text" id="item-name" placeholder="Nama Barang" class="item-input">
+                        <input type="text" id="item-category" placeholder="Kategori" class="item-input">
+                        <input type="text" id="item-unit" placeholder="Satuan (kg, pcs)" class="item-input">
+                        <button class="btn" onclick="saveItem()">Simpan Barang</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table id="db-editor-table">
+                            <thead>
+                                <tr><th>Nama Barang</th><th>Kategori</th><th>Satuan</th><th>Aksi</th></tr>
+                            </thead>
+                            <tbody id="db-editor-tbody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
 
-<div id="admin" class="container hidden">
-    <h2>Admin / Dashboard</h2>
-    <div class="card">
-        <h3>Ringkasan Harian</h3>
-        <p>Belanja: Rp <span id="ringkasanBelanja">0</span></p>
-        <p>Penjualan: Rp <span id="ringkasanPenjualan">0</span></p>
-        <p>Waste: Rp <span id="ringkasanWaste">0</span></p>
-        <p>Profit: Rp <span id="ringkasanProfit">0</span></p>
+                <div class="category-group">
+                    <h3 class="category-title">Ekspor Data untuk Analisa</h3>
+                    <p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p>
+                    <textarea id="data-export-area" readonly></textarea>
+                    <button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button>
+                </div>
+            </div>
+
+        </main>
     </div>
-</div>
 
 <script>
-function showSection(id) {
-    document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+// --- [ BAGIAN 1: DATABASE AWAL & INISIALISASI ] ---
+const initialMasterItems = [
+    // Data Anda yang sudah dirapikan akan ada di sini
+    // Sayur
+    { id: 1, name: "Kolbis", category: "Sayur", unit: "kg" },
+    { id: 2, name: "Labu Siam", category: "Sayur", unit: "kg" },
+    { id: 3, name: "Jagung Manis", category: "Sayur", unit: "kg" },
+    { id: 4, name: "Pare", category: "Sayur", unit: "kg" },
+    { id: 5, name: "Kangkung", category: "Sayur", unit: "kg" },
+    { id: 6, name: "Kentang", category: "Sayur", unit: "kg" },
+    { id: 7, name: "Wortel", category: "Sayur", unit: "kg" },
+    { id: 8, name: "Daun Bawang", category: "Sayur", unit: "kg" },
+    { id: 9, name: "Kacang Panjang", category: "Sayur", unit: "kg" },
+    { id: 10, name: "Cabe Plintir Merah", category: "Sayur", unit: "kg" },
+    { id: 11, name: "Cabe Plintir Ijo", category: "Sayur", unit: "kg" },
+    { id: 12, name: "Cabe Ceplus", category: "Sayur", unit: "kg" },
+    { id: 13, name: "Cabe Rawit Merah", category: "Sayur", unit: "kg" },
+    { id: 14, name: "Cabe Teropong Merah", category: "Sayur", unit: "kg" },
+    { id: 15, name: "Cabe Teropong Hijau", category: "Sayur", unit: "kg" },
+    { id: 16, name: "Tomat Merah", category: "Sayur", unit: "kg" },
+    { id: 17, name: "Tomat Hijau", category: "Sayur", unit: "kg" },
+    { id: 18, name: "Timun", category: "Sayur", unit: "kg" },
+    { id: 19, name: "Brokoli", category: "Sayur", unit: "kg" },
+    { id: 20, name: "Sawi Bakso", category: "Sayur", unit: "kg" },
+    { id: 21, name: "Kembang Kol", category: "Sayur", unit: "kg" },
+    { id: 22, name: "Kapri", category: "Sayur", unit: "kg" },
+    { id: 23, name: "Buncis", category: "Sayur", unit: "kg" },
+    { id: 24, name: "Seledri", category: "Sayur", unit: "kg" },
+    { id: 25, name: "Terong", category: "Sayur", unit: "kg" },
+
+    // Ayam
+    { id: 26, name: "Paha Tepong (1kg/4pcs)", category: "Ayam", unit: "kg" },
+    { id: 27, name: "Paha Bawah (1kg/8pcs)", category: "Ayam", unit: "kg" },
+    { id: 28, name: "Tepong (1kg/6pcs)", category: "Ayam", unit: "kg" },
+    { id: 29, name: "Fillet Paha Tepong", category: "Ayam", unit: "kg" },
+    { id: 30, name: "Fillet Dada", category: "Ayam", unit: "kg" },
+
+    // Bebek dan ayam kampung
+    { id: 31, name: "Ayam Kampung", category: "Bebek dan ayam kampung", unit: "ekor" },
+    { id: 32, name: "Bebek", category: "Bebek dan ayam kampung", unit: "ekor" },
+
+    // Keringan
+    { id: 33, name: "Blue Band (240gr)", category: "Keringan", unit: "pack" },
+    { id: 34, name: "Mie Atom Bulan", category: "Keringan", unit: "bungkus" },
+    { id: 35, name: "Bihun Padamu", category: "Keringan", unit: "bungkus" },
+    { id: 36, name: "Gula Pasir", category: "Keringan", unit: "karung" },
+    { id: 37, name: "Tepung Segitiga", category: "Keringan", unit: "pack" },
+    { id: 38, name: "Kara", category: "Keringan", unit: "pack" },
+    { id: 39, name: "Kecap", category: "Keringan", unit: "pouch" },
+    { id: 40, name: "Sunlight", category: "Keringan", unit: "pouch" },
+    { id: 41, name: "Hemart", category: "Keringan", unit: "botol" },
+    { id: 42, name: "Micin Koki", category: "Keringan", unit: "pack" },
+    { id: 43, name: "Royco Sapi", category: "Keringan", unit: "pack" },
+    { id: 44, name: "Tepung Pisang Sasa", category: "Keringan", unit: "pack" },
+    { id: 45, name: "Garam", category: "Keringan", unit: "pack" },
+    { id: 46, name: "Kobe Ayam Krispy", category: "Keringan", unit: "pack" },
+    { id: 47, name: "Telur Waringin", category: "Keringan", unit: "kg" },
+    { id: 48, name: "Tepung Tapioka (Kanji)", category: "Keringan", unit: "pack" },
+
+    // Belanja Pusat
+    { id: 49, name: "Nila (1kg/4pcs)", category: "Belanja Pusat", unit: "kg" },
+    { id: 50, name: "Lele (1kg/6pcs)", category: "Belanja Pusat", unit: "kg" },
+    { id: 51, name: "Belut", category: "Belanja Pusat", unit: "kg" },
+    { id: 52, name: "Kecap Ikan", category: "Belanja Pusat", unit: "botol" },
+    { id: 53, name: "Cuka Dixi", category: "Belanja Pusat", unit: "botol" },
+    { id: 54, name: "Kerupuk Udang Besar", category: "Belanja Pusat", unit: "dus" },
+    { id: 55, name: "Kerupuk Bawang", category: "Belanja Pusat", unit: "kg" },
+    { id: 56, name: "Saus Tiram", category: "Belanja Pusat", unit: "botol" },
+    { id: 57, name: "Saus Inggris", category: "Belanja Pusat", unit: "botol" },
+    { id: 58, name: "Tepung Panir Coklat", category: "Belanja Pusat", unit: "pack" },
+    { id: 59, name: "Ikan Asin Jambal", category: "Belanja Pusat", unit: "kg" },
+    { id: 60, name: "Merica Gelondongan", category: "Belanja Pusat", unit: "kg" },
+    { id: 61, name: "Pala", category: "Belanja Pusat", unit: "kg" },
+    { id: 62, name: "Bawang Bombay", category: "Belanja Pusat", unit: "kg" },
+    { id: 63, name: "Tahu Pong", category: "Belanja Pusat", unit: "pcs" },
+    { id: 64, name: "Tauge", category: "Belanja Pusat", unit: "kg" },
+    { id: 65, name: "Bawang Putih", category: "Belanja Pusat", unit: "kg" },
+    { id: 66, name: "Bawang Merah", category: "Belanja Pusat", unit: "kg" },
+    { id: 67, name: "Tahu Kulit", category: "Belanja Pusat", unit: "pcs" },
+    { id: 68, name: "Tempe", category: "Belanja Pusat", unit: "pcs" },
+    { id: 69, name: "Kelapa Gelondong", category: "Belanja Pusat", unit: "pcs" },
+    { id: 70, name: "Daging Sapi Giling", category: "Belanja Pusat", unit: "kg" },
+    { id: 71, name: "Daging Ayam Giling", category: "Belanja Pusat", unit: "kg" },
+    { id: 72, name: "Mangut", category: "Belanja Pusat", unit: "kg" },
+    { id: 73, name: "Kemangi", category: "Belanja Pusat", unit: "kg" },
+    { id: 74, name: "Sereh", category: "Belanja Pusat", unit: "kg" },
+    { id: 75, name: "Teri", category: "Belanja Pusat", unit: "kg" },
+    { id: 76, name: "Kemiri", category: "Belanja Pusat", unit: "kg" },
+    { id: 77, name: "Cumi Kering", category: "Belanja Pusat", unit: "kg" },
+    { id: 78, name: "Kacang Tanah Kupas", category: "Belanja Pusat", unit: "kg" },
+    { id: 79, name: "Lengkuas", category: "Belanja Pusat", unit: "kg" },
+    { id: 80, name: "Kencur", category: "Belanja Pusat", unit: "kg" },
+    { id: 81, name: "Kunyit", category: "Belanja Pusat", unit: "kg" },
+    { id: 82, name: "Daun Melinjo", category: "Belanja Pusat", unit: "kg" },
+    { id: 83, name: "Bunga Pepaya", category: "Belanja Pusat", unit: "kg" },
+    { id: 84, name: "Daun Pepaya", category: "Belanja Pusat", unit: "kg" },
+    { id: 85, name: "Jantung Pisang", category: "Belanja Pusat", unit: "kg" },
+    { id: 86, name: "Krecek Sum", category: "Belanja Pusat", unit: "kg" },
+    { id: 87, name: "Salam", category: "Belanja Pusat", unit: "kg" },
+    { id: 88, name: "Pandan", category: "Belanja Pusat", unit: "kg" },
+    { id: 89, name: "Daun Jeruk", category: "Belanja Pusat", unit: "kg" },
+    { id: 90, name: "Bandeng", category: "Belanja Pusat", unit: "ekor" },
+    { id: 91, name: "Maizena", category: "Belanja Pusat", unit: "pack" },
+    { id: 92, name: "Daun Pisang", category: "Belanja Pusat", unit: "lempit" },
+    { id: 93, name: "Sunco", category: "Belanja Pusat", unit: "pouch" },
+    { id: 94, name: "Bumbu Rendang Indofood", category: "Belanja Pusat", unit: "pack" },
+    { id: 95, name: "Jamur Kaleng", category: "Belanja Pusat", unit: "pcs" },
+    { id: 96, name: "Jamur Putih Kering", category: "Belanja Pusat", unit: "pack" },
+    { id: 97, name: "Ebi", category: "Belanja Pusat", unit: "kg" },
+    { id: 98, name: "Tetelan", category: "Belanja Pusat", unit: "kg" },
+    { id: 99, name: "Kikil", category: "Belanja Pusat", unit: "kg" },
+    { id: 100, name: "Babat", category: "Belanja Pusat", unit: "kg" },
+    { id: 101, name: "Udang Rawakecil", category: "Belanja Pusat", unit: "kg" },
+    { id: 102, name: "Bleng", category: "Belanja Pusat", unit: "kg" },
+    { id: 103, name: "Gula Aren", category: "Belanja Pusat", unit: "kg" },
+    { id: 104, name: "Brambang Goreng", category: "Belanja Pusat", unit: "kg" },
+    { id: 105, name: "Iga Sapi Potong", category: "Belanja Pusat", unit: "kg" },
+    { id: 106, name: "Kakap Fillet", category: "Belanja Pusat", unit: "kg" },
+    { id: 107, name: "Jahe", category: "Belanja Pusat", unit: "kg" },
+    { id: 108, name: "Pisang", category: "Belanja Pusat", unit: "kg" },
+    { id: 109, name: "Tepung Beras", category: "Belanja Pusat", unit: "pack" },
+    { id: 110, name: "Adonan Gilingan Bakso", category: "Belanja Pusat", unit: "kg" },
+
+    // Supplier lainnya
+    { id: 111, name: "Gas", category: "Supplier lainnya", unit: "tabung" },
+    { id: 112, name: "Beras", category: "Supplier lainnya", unit: "sak" },
+    { id: 113, name: "Es Krim Durian AG26", category: "Supplier lainnya", unit: "pcs" },
+
+    // Supplier Snack dll
+    { id: 114, name: "Roti Bluder", category: "Supplier Snack dll", unit: "pack" },
+
+    // Frozen food
+    { id: 115, name: "Chikuwa", category: "Frozen food", unit: "pack" },
+    { id: 116, name: "Dumpling", category: "Frozen food", unit: "pack" },
+    { id: 117, name: "Odeng", category: "Frozen food", unit: "pack" },
+    { id: 118, name: "Sosis Besar Salam", category: "Frozen food", unit: "pcs" },
+    { id: 119, name: "Sosis Merah", category: "Frozen food", unit: "pcs" },
+    { id: 120, name: "Otak-otak Singapore", category: "Frozen food", unit: "pack" },
+    { id: 121, name: "Salmon Fish Cake", category: "Frozen food", unit: "pack" },
+    { id: 122, name: "Mazzoni Saus Lada Hitam", category: "Frozen food", unit: "pack" },
+    { id: 123, name: "Koki Jempol Kuah Suki", category: "Frozen food", unit: "pack" },
+    { id: 124, name: "Delmonte Saus Tomat", category: "Frozen food", unit: "derigen" },
+    { id: 125, name: "Delmonte Saus Cabe", category: "Frozen food", unit: "derigen" },
+
+    // Belanja Bar
+    { id: 126, name: "Naruna Coffee", category: "Belanja Bar", unit: "botol" },
+    { id: 127, name: "Galon Java", category: "Belanja Bar", unit: "galon" },
+    { id: 128, name: "Cleo Botol Tanggung", category: "Belanja Bar", unit: "botol" },
+    { id: 129, name: "Cleo Cup", category: "Belanja Bar", unit: "box" },
+    { id: 130, name: "Good Day Cappucino", category: "Belanja Bar", unit: "pcs" },
+    { id: 131, name: "Kopi Hitam", category: "Belanja Bar", unit: "kg" },
+    { id: 132, name: "Diamond Fresh Milk", category: "Belanja Bar", unit: "pack" },
+    { id: 133, name: "Susu Kental Manis Coklat", category: "Belanja Bar", unit: "pcs" },
+    { id: 134, name: "Susu Kental Manis Putih", category: "Belanja Bar", unit: "pcs" },
+    { id: 135, name: "Jeruk", category: "Belanja Bar", unit: "kg" },
+    { id: 136, name: "Buah Naga", category: "Belanja Bar", unit: "kg" },
+    { id: 137, name: "Alpukat", category: "Belanja Bar", unit: "kg" },
+    { id: 138, name: "Lemon", category: "Belanja Bar", unit: "kg" },
+    { id: 139, name: "Mangga", category: "Belanja Bar", unit: "kg" },
+];
+
+
+function initDatabase() {
+    // Cek jika master data belum ada di localStorage, maka buat
+    if (!localStorage.getItem('masterItems')) {
+        localStorage.setItem('masterItems', JSON.stringify(initialMasterItems));
+    }
+    // Inisialisasi data lain jika belum ada
+    if (!localStorage.getItem('shoppingLists')) {
+        localStorage.setItem('shoppingLists', JSON.stringify([]));
+    }
 }
 
-// Simpan data otomatis
-document.querySelectorAll("input, textarea, select").forEach(el => {
-    // Load data saat halaman dibuka
-    if(localStorage.getItem(el.id)) {
-        el.value = localStorage.getItem(el.id);
-    }
-    // Simpan data saat diubah
-    el.addEventListener("input", () => {
-        localStorage.setItem(el.id, el.value);
+// --- [ BAGIAN 2: NAVIGASI & TAMPILAN ] ---
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
     });
-});
-</script>
+    document.getElementById(pageId).classList.add('active');
 
+    // Refresh data saat halaman tertentu dibuka
+    if (pageId === 'page-input-belanja') {
+        renderShoppingListForm();
+    }
+    if (pageId === 'page-manager-area') {
+        renderDbEditor();
+    }
+}
+
+// --- [ BAGIAN 3: LOGIKA UTAMA APLIKASI ] ---
+
+// -- Alur Input List Belanja --
+function renderShoppingListForm() {
+    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const formContainer = document.getElementById('shopping-list-form');
+    formContainer.innerHTML = '';
+
+    // Kelompokkan item berdasarkan kategori
+    const categories = [...new Set(masterItems.map(item => item.category))];
+    
+    categories.forEach(category => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'category-group';
+        
+        const title = document.createElement('h3');
+        title.className = 'category-title';
+        title.textContent = category;
+        groupDiv.appendChild(title);
+
+        masterItems.filter(item => item.category === category).forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item-row';
+            itemDiv.innerHTML = `
+                <label for="item-${item.id}">${item.name}</label>
+                <input type="number" id="item-${item.id}" data-item-id="${item.id}" class="item-input" placeholder="Jumlah">
+                <span>${item.unit}</span>
+            `;
+            groupDiv.appendChild(itemDiv);
+        });
+
+        formContainer.appendChild(groupDiv);
+    });
+}
+
+function generateShoppingList() {
+    const inputs = document.querySelectorAll('#shopping-list-form .item-input');
+    const shoppingList = {
+        date: new Date().toISOString(),
+        items: []
+    };
+
+    inputs.forEach(input => {
+        if (input.value && parseFloat(input.value) > 0) {
+            shoppingList.items.push({
+                id: parseInt(input.dataset.itemId),
+                quantity: parseFloat(input.value)
+            });
+        }
+    });
+
+    if(shoppingList.items.length === 0) {
+        alert('Mohon isi minimal satu barang belanja.');
+        return;
+    }
+    
+    // Simpan list terbaru ke localStorage
+    let allLists = JSON.parse(localStorage.getItem('shoppingLists'));
+    allLists.push(shoppingList);
+    localStorage.setItem('shoppingLists', JSON.stringify(allLists));
+    
+    renderShoppingSummary(shoppingList);
+    showPage('page-rangkuman-belanja');
+}
+
+function renderShoppingSummary(shoppingList) {
+    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const summaryContainer = document.getElementById('summary-container');
+    summaryContainer.innerHTML = '';
+
+    const listItems = shoppingList.items.map(item => {
+        const masterItem = masterItems.find(mi => mi.id === item.id);
+        return { ...masterItem, quantity: item.quantity };
+    });
+
+    const categories = [...new Set(listItems.map(item => item.category))];
+
+    categories.forEach(category => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'category-group';
+        
+        const title = document.createElement('h3');
+        title.className = 'category-title';
+        title.innerHTML = `${category} <button class="copy-button" onclick="copyCategoryList(this)">📋 Salin</button>`;
+        groupDiv.appendChild(title);
+        
+        const ul = document.createElement('ul');
+        ul.style.listStyleType = 'none';
+
+        let categoryText = `List Belanja - ${category}:\n`;
+
+        listItems.filter(item => item.category === category).forEach(item => {
+            const li = document.createElement('li');
+            const text = `* ${item.name}: ${item.quantity} ${item.unit}`;
+            li.textContent = text;
+            ul.appendChild(li);
+            categoryText += `${text}\n`;
+        });
+        
+        groupDiv.appendChild(ul);
+        // Simpan teks untuk disalin di data-attribute tombol
+        title.querySelector('.copy-button').dataset.textToCopy = categoryText;
+        summaryContainer.appendChild(groupDiv);
+    });
+}
+
+function copyCategoryList(button) {
+    const textToCopy = button.dataset.textToCopy;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        button.textContent = '✔️ Tersalin!';
+        setTimeout(() => {
+            button.textContent = '📋 Salin';
+        }, 2000);
+    }).catch(err => {
+        alert('Gagal menyalin: ' + err);
+    });
+}
+
+// -- Alur Manager Area --
+function renderDbEditor() {
+    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const tbody = document.getElementById('db-editor-tbody');
+    tbody.innerHTML = '';
+    masterItems.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.category}</td>
+            <td>${item.unit}</td>
+            <td>
+                <button class="action-btn edit-btn" onclick="editItem(${item.id})">Edit</button>
+                <button class="action-btn delete-btn" onclick="deleteItem(${item.id})">Hapus</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function saveItem() {
+    const id = document.getElementById('edit-item-id').value;
+    const name = document.getElementById('item-name').value;
+    const category = document.getElementById('item-category').value;
+    const unit = document.getElementById('item-unit').value;
+
+    if (!name || !category || !unit) {
+        alert('Semua kolom harus diisi!');
+        return;
+    }
+
+    let masterItems = JSON.parse(localStorage.getItem('masterItems'));
+
+    if (id) { // Edit mode
+        const itemIndex = masterItems.findIndex(item => item.id == id);
+        masterItems[itemIndex] = { ...masterItems[itemIndex], name, category, unit };
+    } else { // Add mode
+        const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
+        masterItems.push({ id: newId, name, category, unit });
+    }
+
+    localStorage.setItem('masterItems', JSON.stringify(masterItems));
+    clearItemForm();
+    renderDbEditor();
+}
+
+function editItem(id) {
+    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const item = masterItems.find(item => item.id === id);
+    document.getElementById('edit-item-id').value = item.id;
+    document.getElementById('item-name').value = item.name;
+    document.getElementById('item-category').value = item.category;
+    document.getElementById('item-unit').value = item.unit;
+}
+
+function deleteItem(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) return;
+    
+    let masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    masterItems = masterItems.filter(item => item.id !== id);
+    localStorage.setItem('masterItems', JSON.stringify(masterItems));
+    renderDbEditor();
+}
+
+function clearItemForm() {
+    document.getElementById('edit-item-id').value = '';
+    document.getElementById('item-name').value = '';
+    document.getElementById('item-category').value = '';
+    document.getElementById('item-unit').value = '';
+}
+
+function exportDataForAI() {
+    const masterItems = JSON.parse(localStorage.getItem('masterItems'));
+    const shoppingLists = JSON.parse(localStorage.getItem('shoppingLists'));
+    
+    let exportText = `DATA RESTORAN PER TANGGAL ${new Date().toLocaleDateString('id-ID')}\n\n`;
+    exportText += "--- MASTER DATA BARANG ---\n";
+    exportText += `Total: ${masterItems.length} item\n`;
+    const categories = [...new Set(masterItems.map(item => item.category))];
+    categories.forEach(cat => {
+        exportText += `\nKategori: ${cat}\n`;
+        masterItems.filter(item => item.category === cat).forEach(item => {
+            exportText += `- ${item.name} (Satuan: ${item.unit})\n`;
+        });
+    });
+
+    exportText += "\n\n--- DATA LIST BELANJA TERAKHIR ---\n";
+    if (shoppingLists.length > 0) {
+        const lastList = shoppingLists[shoppingLists.length - 1];
+        exportText += `Tanggal: ${new Date(lastList.date).toLocaleString('id-ID')}\n`;
+        lastList.items.forEach(item => {
+            const masterItem = masterItems.find(mi => mi.id === item.id);
+            if(masterItem) {
+                exportText += `- ${masterItem.name}: ${item.quantity} ${masterItem.unit}\n`;
+            }
+        });
+    } else {
+        exportText += "Belum ada data list belanja.\n";
+    }
+
+    // Anda bisa menambahkan data lain (penjualan, waste) di sini saat fiturnya sudah jadi
+    
+    const exportArea = document.getElementById('data-export-area');
+    exportArea.value = exportText;
+    
+    // Salin otomatis ke clipboard
+    navigator.clipboard.writeText(exportText).then(() => {
+        alert('Data untuk analisa berhasil disalin ke clipboard!');
+    }).catch(err => {
+        console.error('Gagal menyalin: ', err);
+        alert('Data siap di textarea, silakan salin manual.');
+    });
+}
+
+
+// --- [ BAGIAN 4: INISIALISASI SAAT HALAMAN DIBUKA ] ---
+document.addEventListener('DOMContentLoaded', () => {
+    initDatabase();
+    showPage('page-dashboard');
+});
+
+
+</script>
 </body>
 </html>
