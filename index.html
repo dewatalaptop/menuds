@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - Prototype V2.3 (Fixed)</title>
+    <title>RestoApp - Prototype V2.4 (Fixed)</title>
     <style>
         /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -253,24 +253,24 @@
 
     <div class="container">
         <header>
-            <h1>RestoApp Prototype V2.3</h1>
+            <h1>RestoApp Prototype V2.4</h1>
         </header>
         <main>
             <div id="page-dashboard" class="page active">
                 <div class="dashboard-grid">
-                    <a href="#" class="dashboard-button" onclick="showPage('page-input-belanja-datang')">
+                    <a href="#" class="dashboard-button" onclick="renderStockInForm(); showPage('page-input-belanja-datang')">
                         <div class="icon">📥</div>
                         <span>Input Belanja Datang</span>
                     </a>
-                    <a href="#" class="dashboard-button" onclick="showPage('page-input-menu-keluar')">
+                    <a href="#" class="dashboard-button" onclick="renderStockOutPage('menu'); showPage('page-input-menu-keluar')">
                         <div class="icon">🍲</div>
                         <span>Input Menu Keluar</span>
                     </a>
-                     <a href="#" class="dashboard-button" onclick="showPage('page-ambil-gudang')">
+                     <a href="#" class="dashboard-button" onclick="renderStockOutPage('gudang'); showPage('page-ambil-gudang')">
                         <div class="icon">📦</div>
                         <span>Ambil dari Gudang</span>
                     </a>
-                    <a href="#" class="dashboard-button" onclick="showPage('page-input-belanja')">
+                    <a href="#" class="dashboard-button" onclick="renderShoppingListForm(); showPage('page-input-belanja')">
                         <div class="icon">🛒</div>
                         <span>Input List Belanja</span>
                     </a>
@@ -282,7 +282,7 @@
                         <div class="icon">🗑️</div>
                         <span>Input Waste</span>
                     </a>
-                    <a href="#" class="dashboard-button" onclick="showPage('page-manager-area')">
+                    <a href="#" class="dashboard-button" onclick="renderManagerArea(); showPage('page-manager-area')">
                         <div class="icon">👑</div>
                         <span>Manager Area</span>
                     </a>
@@ -519,19 +519,15 @@ function initDatabase() {
 
 // --- FUNGSI NAVIGASI & RENDER ---
 function showPage(pageId, data = null) {
-    document.querySelectorAll('.page').forEach(p => {
-        p.classList.remove('active');
-    });
-    
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+}
+
+function renderAndShow(pageId, data = null){
     const targetPage = document.getElementById(pageId);
     if (!targetPage) return;
+    targetPage.innerHTML = ''; // Selalu bersihkan sebelum render
 
-    // Hapus konten HANYA jika bukan dashboard
-    if (pageId !== 'page-dashboard') {
-        targetPage.innerHTML = '';
-    }
-
-    // Render konten baru berdasarkan pageId
     switch (pageId) {
         case 'page-input-belanja':
             renderShoppingListForm(targetPage);
@@ -552,7 +548,7 @@ function showPage(pageId, data = null) {
             renderManagerArea(targetPage);
             break;
     }
-    targetPage.classList.add('active');
+    showPage(pageId);
 }
 
 function renderShoppingListForm(targetPage) {
@@ -579,9 +575,33 @@ function renderShoppingListForm(targetPage) {
     });
 }
 
+function generateShoppingList() {
+    const inputs = document.querySelectorAll('#shopping-list-form .item-input');
+    const shoppingList = { date: new Date().toISOString(), status: 'pending', items: [] };
+
+    inputs.forEach(input => {
+        if (input.value && parseFloat(input.value) > 0) {
+            shoppingList.items.push({ id: parseInt(input.dataset.itemId), quantity: parseFloat(input.value) });
+        }
+    });
+
+    if(shoppingList.items.length === 0) return alert('Mohon isi minimal satu barang belanja.');
+    
+    let allLists = DB.get('shoppingLists');
+    allLists.push(shoppingList);
+    DB.set('shoppingLists', allLists);
+    
+    renderAndShow('page-rangkuman-belanja', shoppingList);
+}
+
+
+// --- Kode lainnya tetap sama persis seperti V2.2 ---
+// ... (semua fungsi render, proses, manager area, dll) ...
+
+// --- PASTE SEMUA FUNGSI DARI V2.2 DI SINI, KECUALI showPage() DAN generateShoppingList() ---
 function renderShoppingSummary(targetPage, shoppingList) {
      targetPage.innerHTML = `
-        <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" onclick="showPage('page-input-belanja')">Kembali</button></div>
+        <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" onclick="renderAndShow('page-input-belanja')">Kembali</button></div>
         <div id="summary-container"></div>`;
         
     const masterItems = DB.get('masterItems');
@@ -611,6 +631,14 @@ function renderShoppingSummary(targetPage, shoppingList) {
     summaryContainer.querySelectorAll('.copy-button').forEach(button => {
         button.onclick = () => copyCategoryList(button);
     });
+}
+
+function copyCategoryList(button) {
+    const textToCopy = unescape(button.dataset.textToCopy);
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        button.textContent = '✔️ Tersalin!';
+        setTimeout(() => { button.textContent = '📋 Salin'; }, 2000);
+    }).catch(err => alert('Gagal menyalin: ' + err));
 }
 
 function renderStockInForm(targetPage) {
@@ -647,74 +675,6 @@ function renderStockInForm(targetPage) {
         formHTML += `<div class="category-group"><h3 class="category-title">${category}</h3>${itemsHTML}</div>`;
     });
     stockInForm.innerHTML = formHTML;
-}
-
-function renderStockOutPage(targetPage, config) {
-    const masterItems = DB.get('masterItems');
-    let itemsToRender = [];
-
-    if (config.itemIds) { // Untuk Ambil Gudang
-        itemsToRender = config.itemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
-    } else { // Untuk Menu Keluar
-        itemsToRender = config.items;
-    }
-
-    let formHTML = '';
-    itemsToRender.forEach(item => {
-        let currentStockInfo = '';
-        if(config.itemIds) { // Gudang
-             const stockItem = masterItems.find(mi => mi.id === item.id);
-             currentStockInfo = `Stok: ${(stockItem.stock || 0).toFixed(2)} ${stockItem.unit}`;
-        }
-        formHTML += `<div class="item-row">
-            <label for="stockout-${item.name || item.id}" title="${item.name}">${item.name}</label>
-            <input type="number" id="stockout-${item.name || item.id}" data-item-name="${item.name}" class="item-input" placeholder="Jumlah" min="0">
-            <span class="stock-display">${item.unit || 'pcs'}</span>
-        </div>`;
-    });
-
-    targetPage.innerHTML = `
-        <div class="page-header"><h2>${config.title}</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
-        <div class="category-group">${formHTML}</div>
-        <button class="btn" style="width:100%" onclick="processStockOut('${config.title}')">Proses Pengeluaran Stok</button>
-    `;
-}
-
-function renderManagerArea(targetPage) {
-    targetPage.innerHTML = `
-        <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
-        <div class="category-group"><h3 class="category-title">Editor Database Barang</h3><div id="add-item-form"><input type="hidden" id="edit-item-id"><input type="text" id="item-name" placeholder="Nama Barang"><input type="text" id="item-category" placeholder="Kategori"><input type="text" id="item-unit" placeholder="Satuan Stok"><input type="text" id="item-purchase-unit" placeholder="Satuan Beli"><input type="number" id="item-conversion" placeholder="Konversi"><button class="btn" onclick="saveItem()">Simpan</button></div><div class="table-container"><table id="db-editor-table"><thead><tr><th>Nama</th><th>Kategori</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
-        <div class="category-group"><h3 class="category-title">Ekspor Data untuk Analisa</h3><p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p><textarea id="data-export-area" readonly></textarea><button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button></div>`;
-    renderDbEditor();
-}
-
-// --- FUNGSI PROSES DATA (LOGIKA INTI) ---
-
-function generateShoppingList() {
-    const inputs = document.querySelectorAll('#shopping-list-form .item-input');
-    const shoppingList = { date: new Date().toISOString(), status: 'pending', items: [] };
-
-    inputs.forEach(input => {
-        if (input.value && parseFloat(input.value) > 0) {
-            shoppingList.items.push({ id: parseInt(input.dataset.itemId), quantity: parseFloat(input.value) });
-        }
-    });
-
-    if(shoppingList.items.length === 0) return alert('Mohon isi minimal satu barang belanja.');
-    
-    let allLists = DB.get('shoppingLists');
-    allLists.push(shoppingList);
-    DB.set('shoppingLists', allLists);
-    
-    showPage('page-rangkuman-belanja', shoppingList);
-}
-
-function copyCategoryList(button) {
-    const textToCopy = unescape(button.dataset.textToCopy);
-    navigator.clipboard.writeText(textToCopy).then(() => {
-        button.textContent = '✔️ Tersalin!';
-        setTimeout(() => { button.textContent = '📋 Salin'; }, 2000);
-    }).catch(err => alert('Gagal menyalin: ' + err));
 }
 
 function processStockIn() {
@@ -756,10 +716,38 @@ function processStockIn() {
     showPage('page-dashboard');
 }
 
-function processStockOut(title) {
+
+function renderStockOutPage(targetPage, configType) {
+    const config = configType === 'menu' ? menuKeluarConfig : ambilGudangConfig;
+    const masterItems = DB.get('masterItems');
+    let itemsToRender = [];
+
+    if (config.itemIds) { // Untuk Ambil Gudang
+        itemsToRender = config.itemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
+    } else { // Untuk Menu Keluar
+        itemsToRender = config.items;
+    }
+
+    let formHTML = '';
+    itemsToRender.forEach(item => {
+        formHTML += `<div class="item-row">
+            <label for="stockout-${item.name || item.id}" title="${item.name}">${item.name}</label>
+            <input type="number" id="stockout-${item.name || item.id}" class="item-input" placeholder="Jumlah" min="0">
+            <span class="stock-display">${item.unit || 'pcs'}</span>
+        </div>`;
+    });
+
+    targetPage.innerHTML = `
+        <div class="page-header"><h2>${config.title}</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+        <div class="category-group">${formHTML}</div>
+        <button class="btn" style="width:100%" onclick="processStockOut('${configType}')">Proses Pengeluaran Stok</button>
+    `;
+}
+
+function processStockOut(configType) {
     let masterItems = DB.get('masterItems');
     let transactions = DB.get('stockTransactions');
-    const isMenuKeluar = title.includes("Menu");
+    const isMenuKeluar = configType === 'menu';
     
     const config = isMenuKeluar ? menuKeluarConfig : ambilGudangConfig;
     let itemsToProcess = isMenuKeluar ? config.items : config.itemIds.map(id => masterItems.find(item => item.id === id));
@@ -819,6 +807,15 @@ function processStockOut(title) {
     } catch (error) {
         console.error(error.message); // Tidak melanjutkan jika ada error stok
     }
+}
+
+
+function renderManagerArea(targetPage) {
+    targetPage.innerHTML = `
+        <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" onclick="showPage('page-dashboard')">Kembali</button></div>
+        <div class="category-group"><h3 class="category-title">Editor Database Barang</h3><div id="add-item-form"><input type="hidden" id="edit-item-id"><input type="text" id="item-name" placeholder="Nama Barang" class="item-input"><input type="text" id="item-category" placeholder="Kategori" class="item-input"><input type="text" id="item-unit" placeholder="Satuan Stok" class="item-input"><input type="text" id="item-purchase-unit" placeholder="Satuan Beli" class="item-input"><input type="number" id="item-conversion" placeholder="Konversi" class="item-input"><button class="btn" onclick="saveItem()">Simpan</button></div><div class="table-container"><table id="db-editor-table"><thead><tr><th>Nama</th><th>Kategori</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
+        <div class="category-group"><h3 class="category-title">Ekspor Data untuk Analisa</h3><p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p><textarea id="data-export-area" readonly></textarea><button class="btn" onclick="exportDataForAI()">Generate & Salin Data</button></div>`;
+    renderDbEditor();
 }
 
 function renderDbEditor() {
@@ -941,12 +938,12 @@ function updateTime() {
 // --- [ BAGIAN 4: INISIALISASI SAAT HALAMAN DIBUKA ] ---
 document.addEventListener('DOMContentLoaded', () => {
     initDatabase();
-    showPage('page-dashboard'); 
+    showPage('page-dashboard');
     updateTime();
     setInterval(updateTime, 1000);
     
-    // Assign functions to window object to be accessible from dynamically created HTML
     window.showPage = showPage;
+    window.renderAndShow = renderAndShow;
     window.generateShoppingList = generateShoppingList;
     window.processStockIn = processStockIn;
     window.processStockOut = processStockOut;
@@ -954,6 +951,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.editItem = editItem;
     window.deleteItem = deleteItem;
     window.exportDataForAI = exportDataForAI;
+    window.renderShoppingListForm = renderShoppingListForm;
+    window.renderStockInForm = renderStockInForm;
+    window.renderStockOutPage = renderStockOutPage;
+    window.renderManagerArea = renderManagerArea;
 });
 
 </script>
