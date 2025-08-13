@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V3.0 (Stable)</title>
+    <title>RestoApp - V3.1 (Stable)</title>
     <style>
         /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -84,23 +84,28 @@
         }
 
         /* --- Toast Notification --- */
-        .toast {
+        #toast-container {
             position: fixed;
             top: 20px;
             right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
             background-color: #333;
             color: white;
             padding: 15px 25px;
             border-radius: 8px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
             opacity: 0;
-            transform: translateY(-20px);
+            transform: translateX(100%);
             transition: opacity 0.3s, transform 0.3s;
         }
         .toast.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(0);
         }
         .toast.success { background-color: var(--primary-color); }
         .toast.error { background-color: var(--danger-color); }
@@ -149,6 +154,7 @@
         .dashboard-button span {
             font-weight: 500;
             font-size: 0.9rem;
+            pointer-events: none; /* Agar klik tetap terdeteksi di parent */
         }
         
         .page-header {
@@ -276,7 +282,7 @@
             ⚠️ <strong>Peringatan:</strong> Aplikasi ini menyimpan data di browser Anda. Membersihkan cache akan menghapus semua data.
         </div>
         <header>
-            <h1>RestoApp V3.0</h1>
+            <h1>RestoApp V3.1</h1>
         </header>
         <main id="main-content">
             <div id="page-dashboard" class="page active">
@@ -326,18 +332,6 @@
     </div>
 
 <script>
-// --- [ BAGIAN 1: DATABASE AWAL & KONFIGURASI ] ---
-const App = {
-    // ... (Semua konstanta data seperti initialMasterItems, dll, dipindahkan ke sini)
-// ... (Sisa kode JavaScript akan berada di dalam objek App ini)
-
-// ... KODE LENGKAP JAVASCRIPT ADA DI BAWAH ...
-};
-// --- END OF APP OBJECT ---
-
-// --- KODE LENGKAP JAVASCRIPT UNTUK DITEMPATKAN DI SINI ---
-// (Karena keterbatasan panjang, kode JS lengkapnya akan menggantikan placeholder ini)
-// Kode di bawah ini adalah kelanjutan dari script tag di atas.
 const App = {
     data: {
         initialMasterItems: [
@@ -367,56 +361,48 @@ const App = {
             { id: 23, name: "Buncis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 24, name: "Seledri", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 25, name: "Terong", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-        
-            // Ayam
             { id: 26, name: "Paha Tepong (1kg/4pcs)", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 27, name: "Paha Bawah (1kg/8pcs)", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 28, name: "Tepong (1kg/6pcs)", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 29, name: "Fillet Paha Tepong", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 30, name: "Fillet Dada", category: "Ayam", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-        
-            // Bebek dan ayam kampung
             { id: 31, name: "Ayam Kampung", category: "Bebek dan ayam kampung", unit: "ekor", purchaseUnit: "ekor", purchaseUnitConversion: 1, stock: 0 },
             { id: 32, name: "Bebek", category: "Bebek dan ayam kampung", unit: "ekor", purchaseUnit: "ekor", purchaseUnitConversion: 1, stock: 0 },
-        
-            // Keringan
-            { id: 33, name: "Blue Band", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 60, stock: 0 }, // 15kg / 240gr
+            { id: 33, name: "Blue Band", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 60, stock: 0 },
             { id: 34, name: "Mie Atom Bulan", category: "Keringan", unit: "bungkus", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },
             { id: 35, name: "Bihun Padamu", category: "Keringan", unit: "bungkus", purchaseUnit: "bal", purchaseUnitConversion: 12, stock: 0 },
-            { id: 36, name: "Gula Pasir", category: "Keringan", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 50, stock: 0 }, // Asumsi 1 karung 50kg
+            { id: 36, name: "Gula Pasir", category: "Keringan", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 50, stock: 0 },
             { id: 37, name: "Tepung Segitiga", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
             { id: 38, name: "Kara", category: "Keringan", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 32, stock: 0 },
-            { id: 39, name: "Kecap", category: "Keringan", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
+            { id: 39, name: "Kecap", category: "Keringan", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
             { id: 40, name: "Sunlight", category: "Keringan", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
             { id: 41, name: "Hemart", category: "Keringan", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
             { id: 42, name: "Micin Koki", category: "Keringan", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },
-            { id: 43, name: "Royco Sapi", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },// Asumsi
+            { id: 43, name: "Royco Sapi", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
             { id: 44, name: "Tepung Pisang Sasa", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
             { id: 45, name: "Garam Kapal", category: "Keringan", unit: "pcs", purchaseUnit: "bal", purchaseUnitConversion: 40, stock: 0 },
             { id: 46, name: "Kobe Ayam Krispy", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
             { id: 47, name: "Telur Waringin", category: "Keringan", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 48, name: "Tepung Tapioka (Kanji)", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },// Asumsi
-        
-            // Belanja Pusat
+            { id: 48, name: "Tepung Tapioka (Kanji)", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },
             { id: 49, name: "Nila", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 50, name: "Lele", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 51, name: "Belut", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 52, name: "Kecap Ikan", category: "Belanja Pusat", unit: "botol", purchaseUnit: "botol", purchaseUnitConversion: 1, stock: 0 },
             { id: 53, name: "Cuka Dixi", category: "Belanja Pusat", unit: "botol", purchaseUnit: "botol", purchaseUnitConversion: 1, stock: 0 },
-            { id: 54, name: "Kerupuk Udang Besar", category: "Belanja Pusat", unit: "kg", purchaseUnit: "dus", purchaseUnitConversion: 5, stock: 0 },// Asumsi
-            { id: 55, name: "Kerupuk Bawang", category: "Belanja Pusat", unit: "kg", purchaseUnit: "bal", purchaseUnitConversion: 5, stock: 0 },// Asumsi
-            { id: 56, name: "Saus Tiram", category: "Belanja Pusat", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
-            { id: 57, name: "Saus Inggris", category: "Belanja Pusat", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
-            { id: 58, name: "Tepung Panir Coklat", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 10, stock: 0 },// Asumsi
+            { id: 54, name: "Kerupuk Udang Besar", category: "Belanja Pusat", unit: "kg", purchaseUnit: "dus", purchaseUnitConversion: 5, stock: 0 },
+            { id: 55, name: "Kerupuk Bawang", category: "Belanja Pusat", unit: "kg", purchaseUnit: "bal", purchaseUnitConversion: 5, stock: 0 },
+            { id: 56, name: "Saus Tiram", category: "Belanja Pusat", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+            { id: 57, name: "Saus Inggris", category: "Belanja Pusat", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+            { id: 58, name: "Tepung Panir Coklat", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 10, stock: 0 },
             { id: 59, name: "Ikan Asin Jambal", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 60, name: "Merica Gelondongan", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 61, name: "Pala", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 62, name: "Bawang Bombay", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 63, name: "Tahu Pong", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "kantong", purchaseUnitConversion: 50, stock: 0 },// Asumsi
+            { id: 63, name: "Tahu Pong", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "kantong", purchaseUnitConversion: 50, stock: 0 },
             { id: 64, name: "Tauge", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 65, name: "Bawang Putih", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 66, name: "Bawang Merah", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 67, name: "Tahu Kulit", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "kantong", purchaseUnitConversion: 50, stock: 0 },// Asumsi
+            { id: 67, name: "Tahu Kulit", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "kantong", purchaseUnitConversion: 50, stock: 0 },
             { id: 68, name: "Tempe", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "papan", purchaseUnitConversion: 1, stock: 0 },
             { id: 69, name: "Kelapa Gelondong", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "pcs", purchaseUnitConversion: 1, stock: 0 },
             { id: 70, name: "Daging Sapi Giling", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -443,8 +429,8 @@ const App = {
             { id: 91, name: "Maizena", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 18, stock: 0 },
             { id: 92, name: "Daun Pisang", category: "Belanja Pusat", unit: "lempit", purchaseUnit: "lempit", purchaseUnitConversion: 1, stock: 0 },
             { id: 93, name: "Sunco", category: "Belanja Pusat", unit: "pouch", purchaseUnit: "dus", purchaseUnitConversion: 6, stock: 0 },
-            { id: 94, name: "Bumbu Rendang Indofood", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },// Asumsi
-            { id: 95, name: "Jamur Kaleng", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },// Asumsi
+            { id: 94, name: "Bumbu Rendang Indofood", category: "Belanja Pusat", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
+            { id: 95, name: "Jamur Kaleng", category: "Belanja Pusat", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
             { id: 96, name: "Jamur Putih Kering", category: "Belanja Pusat", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 97, name: "Ebi", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 98, name: "Tetelan", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -458,40 +444,32 @@ const App = {
             { id: 106, name: "Kakap Fillet", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 107, name: "Jahe", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 108, name: "Pisang", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 109, name: "Tepung Beras", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },// Asumsi
+            { id: 109, name: "Tepung Beras", category: "Keringan", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 20, stock: 0 },
             { id: 110, name: "Adonan Gilingan Bakso", category: "Belanja Pusat", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-        
-            // Supplier lainnya
             { id: 111, name: "Gas", category: "Supplier lainnya", unit: "tabung", purchaseUnit: "tabung", purchaseUnitConversion: 1, stock: 0 },
-            { id: 112, name: "Beras", category: "Supplier lainnya", unit: "kg", purchaseUnit: "sak", purchaseUnitConversion: 25, stock: 0 }, // Asumsi 1 sak 25kg
-            { id: 113, name: "Es Krim Durian AG26", category: "Supplier lainnya", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 50, stock: 0 },// Asumsi
-        
-            // Supplier Snack dll
+            { id: 112, name: "Beras", category: "Supplier lainnya", unit: "kg", purchaseUnit: "sak", purchaseUnitConversion: 25, stock: 0 }, 
+            { id: 113, name: "Es Krim Durian AG26", category: "Supplier lainnya", unit: "pcs", purchaseUnit: "dus", purchaseUnitConversion: 50, stock: 0 },
             { id: 114, name: "Roti Bluder", category: "Supplier Snack dll", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
-        
-            // Frozen food
             { id: 115, name: "Chikuwa", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 116, name: "Dumpling", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 117, name: "Odeng", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
-            { id: 118, name: "Sosis Besar Salam", category: "Frozen food", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 10, stock: 0 },// Asumsi
-            { id: 119, name: "Sosis Merah", category: "Frozen food", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 20, stock: 0 },// Asumsi
+            { id: 118, name: "Sosis Besar Salam", category: "Frozen food", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 10, stock: 0 },
+            { id: 119, name: "Sosis Merah", category: "Frozen food", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 20, stock: 0 },
             { id: 120, name: "Otak-otak Singapore", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 121, name: "Salmon Fish Cake", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 122, name: "Mazzoni Saus Lada Hitam", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 123, name: "Koki Jempol Kuah Suki", category: "Frozen food", unit: "pack", purchaseUnit: "pack", purchaseUnitConversion: 1, stock: 0 },
             { id: 124, name: "Delmonte Saus Tomat", category: "Frozen food", unit: "derigen", purchaseUnit: "derigen", purchaseUnitConversion: 1, stock: 0 },
             { id: 125, name: "Delmonte Saus Cabe", category: "Frozen food", unit: "derigen", purchaseUnit: "derigen", purchaseUnitConversion: 1, stock: 0 },
-        
-            // Belanja Bar
             { id: 126, name: "Naruna Coffee", category: "Belanja Bar", unit: "botol", purchaseUnit: "botol", purchaseUnitConversion: 1, stock: 0 },
             { id: 127, name: "Galon Java", category: "Belanja Bar", unit: "galon", purchaseUnit: "galon", purchaseUnitConversion: 1, stock: 0 },
             { id: 128, name: "Cleo Botol Tanggung", category: "Belanja Bar", unit: "botol", purchaseUnit: "dus", purchaseUnitConversion: 24, stock: 0 },
             { id: 129, name: "Cleo Cup", category: "Belanja Bar", unit: "cup", purchaseUnit: "box", purchaseUnitConversion: 48, stock: 0 },
-            { id: 130, name: "Good Day Cappucino", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 30, stock: 0 },// Asumsi
+            { id: 130, name: "Good Day Cappucino", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 30, stock: 0 },
             { id: 131, name: "Kopi Hitam", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 132, name: "Diamond Fresh Milk", category: "Belanja Bar", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },// Asumsi
-            { id: 133, name: "Susu Kental Manis Coklat", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 6, stock: 0 },// Asumsi
-            { id: 134, name: "Susu Kental Manis Putih", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 6, stock: 0 },// Asumsi
+            { id: 132, name: "Diamond Fresh Milk", category: "Belanja Bar", unit: "pack", purchaseUnit: "dus", purchaseUnitConversion: 12, stock: 0 },
+            { id: 133, name: "Susu Kental Manis Coklat", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 6, stock: 0 },
+            { id: 134, name: "Susu Kental Manis Putih", category: "Belanja Bar", unit: "pcs", purchaseUnit: "pack", purchaseUnitConversion: 6, stock: 0 },
             { id: 135, name: "Jeruk", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 136, name: "Buah Naga", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 137, name: "Alpukat", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -499,23 +477,15 @@ const App = {
             { id: 139, name: "Mangga", category: "Belanja Bar", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 }
         ],
         initialRecipes: {
-            "Nila": { unit: "pcs", ingredients: [{ itemId: 49, qty: 0.25 }] },
-            "Lele": { unit: "pcs", ingredients: [{ itemId: 50, qty: 0.16 }] },
-            "Belut": { unit: "pcs", ingredients: [{ itemId: 51, qty: 0.2 }] },
-            "Paha Tepong": { unit: "pcs", ingredients: [{ itemId: 26, qty: 0.25 }] },
-            "Paha Bawah": { unit: "pcs", ingredients: [{ itemId: 27, qty: 0.125 }] },
-            "Paha Atas": { unit: "pcs", ingredients: [{ itemId: 28, qty: 0.167 }] },
-            "Ayam Kampung": { unit: "pcs", ingredients: [{ itemId: 31, qty: 1 }] },
-            "Tahu Kulit": { unit: "pcs", ingredients: [{ itemId: 67, qty: 1 }] },
-            "Ayam Geprek": { unit: "pcs", ingredients: [{ itemId: 30, qty: 0.15 }, { itemId: 46, qty: 0.05 }] },
-            "Telur": { unit: "pcs", ingredients: [{ itemId: 47, qty: 0.06 }] },
-            "Babat": { unit: "pcs", ingredients: [{ itemId: 100, qty: 0.1 }] },
-            "Kikil": { unit: "pcs", ingredients: [{ itemId: 99, qty: 0.1 }] },
-            "Tetelan": { unit: "pcs", ingredients: [{ itemId: 98, qty: 0.1 }] },
-            "Sosis Besar": { unit: "pcs", ingredients: [{ itemId: 118, qty: 1 }] },
-            "Salmon Fish Cake": { unit: "pcs", ingredients: [{ itemId: 121, qty: 0.2 }] },
-            "Otak-otak Singapore": { unit: "pcs", ingredients: [{ itemId: 120, qty: 0.2 }] },
-            "Sosis Merah": { unit: "pcs", ingredients: [{ itemId: 119, qty: 1 }] },
+            "Nila": { unit: "pcs", ingredients: [{ itemId: 49, qty: 0.25 }] }, "Lele": { unit: "pcs", ingredients: [{ itemId: 50, qty: 0.16 }] },
+            "Belut": { unit: "pcs", ingredients: [{ itemId: 51, qty: 0.2 }] }, "Paha Tepong": { unit: "pcs", ingredients: [{ itemId: 26, qty: 0.25 }] },
+            "Paha Bawah": { unit: "pcs", ingredients: [{ itemId: 27, qty: 0.125 }] }, "Paha Atas": { unit: "pcs", ingredients: [{ itemId: 28, qty: 0.167 }] },
+            "Ayam Kampung": { unit: "pcs", ingredients: [{ itemId: 31, qty: 1 }] }, "Tahu Kulit": { unit: "pcs", ingredients: [{ itemId: 67, qty: 1 }] },
+            "Ayam Geprek": { unit: "pcs", ingredients: [{ itemId: 30, qty: 0.15 }, { itemId: 46, qty: 0.05 }] }, 
+            "Telur": { unit: "pcs", ingredients: [{ itemId: 47, qty: 0.06 }] }, "Babat": { unit: "pcs", ingredients: [{ itemId: 100, qty: 0.1 }] }, 
+            "Kikil": { unit: "pcs", ingredients: [{ itemId: 99, qty: 0.1 }] }, "Tetelan": { unit: "pcs", ingredients: [{ itemId: 98, qty: 0.1 }] },
+            "Sosis Besar": { unit: "pcs", ingredients: [{ itemId: 118, qty: 1 }] }, "Salmon Fish Cake": { unit: "pcs", ingredients: [{ itemId: 121, qty: 0.2 }] },
+            "Otak-otak Singapore": { unit: "pcs", ingredients: [{ itemId: 120, qty: 0.2 }] }, "Sosis Merah": { unit: "pcs", ingredients: [{ itemId: 119, qty: 1 }] },
         },
         ambilGudangConfig: {
             title: "Ambil Barang dari Gudang",
@@ -523,34 +493,586 @@ const App = {
         }
     },
     
-    db: {
-        get: (key) => JSON.parse(localStorage.getItem(key)),
-        set: (key, value) => localStorage.setItem(key, JSON.stringify(value))
-    },
+    // ... sisa kode di bawah
+};
+// ... Let's continue the App object
+App.db = {
+    get: (key) => JSON.parse(localStorage.getItem(key)),
+    set: (key, value) => localStorage.setItem(key, JSON.stringify(value))
+};
 
-    init() {
-        if (!this.db.get('masterItems')) this.db.set('masterItems', this.data.initialMasterItems);
-        if (!this.db.get('recipes')) this.db.set('recipes', this.data.initialRecipes);
-        if (!this.db.get('shoppingLists')) this.db.set('shoppingLists', []);
-        if (!this.db.get('stockTransactions')) this.db.set('stockTransactions', []);
-        
-        document.getElementById('main-content').addEventListener('click', this.handle.click.bind(this));
-        
-        this.utils.updateTime();
-        setInterval(this.utils.updateTime, 1000);
-    },
+App.init = function() {
+    if (!this.db.get('masterItems')) this.db.set('masterItems', this.data.initialMasterItems);
+    if (!this.db.get('recipes')) this.db.set('recipes', this.data.initialRecipes);
+    if (!this.db.get('shoppingLists')) this.db.set('shoppingLists', []);
+    if (!this.db.get('stockTransactions')) this.db.set('stockTransactions', []);
+    
+    document.getElementById('main-content').addEventListener('click', this.handle.click.bind(this));
+    
+    this.utils.updateTime();
+    setInterval(this.utils.updateTime, 1000);
+};
 
-    showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId)?.classList.add('active');
+App.showPage = function(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById(pageId);
+    if (page) page.classList.add('active');
+};
+
+App.render = {
+    page(pageId, data = null) {
+        const targetPage = document.getElementById(pageId);
+        if (!targetPage) return;
+        targetPage.innerHTML = '';
+
+        switch (pageId) {
+            case 'page-input-belanja': this.shoppingListForm(targetPage); break;
+            case 'page-rangkuman-belanja': this.shoppingSummary(targetPage, data); break;
+            case 'page-input-belanja-datang': this.stockInForm(targetPage); break;
+            case 'page-input-menu-keluar': this.stockOutPage(targetPage, 'menu'); break;
+            case 'page-ambil-gudang': this.stockOutPage(targetPage, 'gudang'); break;
+            case 'page-manager-area': this.managerArea(targetPage); break;
+        }
+        App.showPage(pageId);
     },
     
-    // ... Sisa kode JavaScript akan mengikuti ...
+    shoppingListForm(targetPage) {
+        targetPage.innerHTML = `
+            <div class="page-header"><h2>Buat List Belanja Baru</h2><button class="btn btn-secondary" data-page="page-dashboard">Kembali</button></div>
+            <form id="shopping-list-form"></form>
+            <button class="btn" style="width: 100%; margin-top: 20px;" data-action="generate-shopping-list">Buat Daftar Belanja</button>`;
+
+        const masterItems = App.db.get('masterItems');
+        const formContainer = document.getElementById('shopping-list-form');
+        const categories = [...new Set(masterItems.map(item => item.category))].sort();
+        
+        categories.forEach(category => {
+            let itemsHTML = '';
+            masterItems.filter(item => item.category === category).forEach(item => {
+                const displayUnit = item.purchaseUnit || item.unit;
+                itemsHTML += `<div class="item-row">
+                    <label for="item-${item.id}" title="${item.name}">${item.name}</label>
+                    <input type="number" id="item-${item.id}" data-item-id="${item.id}" class="item-input" placeholder="Jumlah" min="0">
+                    <span>${displayUnit}</span>
+                </div>`;
+            });
+            formContainer.innerHTML += `<div class="category-group"><h3 class="category-title">${category}</h3>${itemsHTML}</div>`;
+        });
+    },
+
+    shoppingSummary(targetPage, shoppingList) {
+        targetPage.innerHTML = `
+            <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" data-page="page-input-belanja">Kembali</button></div>
+            <div id="summary-container"></div>`;
+            
+        const masterItems = App.db.get('masterItems');
+        const summaryContainer = document.getElementById('summary-container');
+        
+        const listItems = shoppingList.items.map(item => ({...masterItems.find(mi => mi.id === item.id), quantity: item.quantity }));
+        const categories = [...new Set(listItems.map(item => item.category))].sort();
+
+        categories.forEach(category => {
+            let categoryText = `List Belanja - ${category}:\n`;
+            let itemsHTML = '';
+            listItems.filter(item => item.category === category).forEach(item => {
+                const displayUnit = item.purchaseUnit || item.unit;
+                const text = `* ${item.name}: ${item.quantity} ${displayUnit}`;
+                itemsHTML += `<li>${text}</li>`;
+                categoryText += `${text}\n`;
+            });
+
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'category-group';
+            groupDiv.innerHTML = `
+                <h3 class="category-title">${category} <button class="copy-button" data-action="copy-text" data-text-to-copy="${escape(categoryText)}">📋 Salin</button></h3>
+                <ul style="list-style-type: none; padding-left: 10px;">${itemsHTML}</ul>`;
+            summaryContainer.appendChild(groupDiv);
+        });
+    },
+
+    stockInForm(targetPage) {
+        const allLists = App.db.get('shoppingLists');
+        const pendingLists = allLists.filter(list => list.status === 'pending');
+        
+        let contentHTML = `<div class="page-header"><h2>Pilih List Belanja yang Datang</h2><button class="btn btn-secondary" data-page="page-dashboard">Kembali</button></div>`;
+
+        if (pendingLists.length === 0) {
+            contentHTML += `<p>Tidak ada list belanja yang menunggu untuk dimasukkan ke stok.</p>`;
+        } else {
+            pendingLists.forEach(list => {
+                const date = new Date(list.date).toLocaleString('id-ID');
+                contentHTML += `<a href="#" class="list-item-button" data-action="select-pending-list" data-date="${list.date}">
+                    <strong>List Belanja ${date}</strong>
+                    <p style="font-size:0.8rem; color:#555;">${list.items.length} jenis barang</p>
+                </a>`;
+            });
+        }
+        targetPage.innerHTML = contentHTML;
+    },
+    
+    stockInDetail(targetPage, listDate) {
+        const allLists = App.db.get('shoppingLists');
+        const selectedList = allLists.find(list => list.date === listDate);
+
+        targetPage.innerHTML = `
+            <div class="page-header"><h2>Input Belanja Datang</h2><button class="btn btn-secondary" data-page="page-input-belanja-datang">Kembali</button></div>
+            <form id="stock-in-form"></form>
+            <button class="btn" style="width: 100%; margin-top: 20px;" data-action="process-stock-in" data-date="${listDate}">Konfirmasi Barang Masuk</button>`;
+
+        const masterItems = App.db.get('masterItems');
+        const listItems = selectedList.items.map(item => ({...masterItems.find(mi => mi.id === item.id), quantity: item.quantity }));
+        const categories = [...new Set(listItems.map(item => item.category))].sort();
+        
+        const stockInForm = document.getElementById('stock-in-form');
+        let formHTML = '';
+        categories.forEach(category => {
+            let itemsHTML = '';
+            listItems.filter(item => item.category === category).forEach(item => {
+                const displayUnit = item.purchaseUnit || item.unit;
+                itemsHTML += `<div class="item-row">
+                    <label for="stockin-${item.id}" title="${item.name}">${item.name}</label>
+                    <input type="number" id="stockin-${item.id}" data-item-id="${item.id}" class="item-input" value="${item.quantity}">
+                    <span>${displayUnit}</span>
+                </div>`;
+            });
+            formHTML += `<div class="category-group"><h3 class="category-title">${category}</h3>${itemsHTML}</div>`;
+        });
+        stockInForm.innerHTML = formHTML;
+    },
+
+    stockOutPage(targetPage, type) {
+        const config = type === 'menu' ? App.data.initialRecipes : App.data.ambilGudangConfig;
+        const masterItems = App.db.get('masterItems');
+        let itemsToRender = [];
+        let title = "";
+
+        if (type === 'gudang') {
+            title = config.title;
+            itemsToRender = config.itemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
+        } else {
+            const recipes = App.db.get('recipes');
+            title = "Input Menu Keluar";
+            itemsToRender = Object.keys(recipes).map(key => ({ name: key, unit: recipes[key].unit }));
+        }
+
+        let formHTML = '';
+        itemsToRender.forEach(item => {
+            formHTML += `<div class="item-row">
+                <label for="stockout-${item.name.replace(/\s+/g, '-')}" title="${item.name}">${item.name}</label>
+                <input type="number" id="stockout-${item.name.replace(/\s+/g, '-')}" class="item-input" placeholder="Jumlah" min="0">
+                <span>${item.unit}</span>
+            </div>`;
+        });
+
+        targetPage.innerHTML = `
+            <div class="page-header"><h2>${title}</h2><button class="btn btn-secondary" data-page="page-dashboard">Kembali</button></div>
+            <div class="category-group">${formHTML}</div>
+            <button class="btn" style="width:100%" data-action="process-stock-out" data-type="${type}">Proses Pengeluaran Stok</button>`;
+    },
+
+    managerArea(targetPage) {
+        targetPage.innerHTML = `
+            <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" data-page="page-dashboard">Kembali</button></div>
+            <div class="category-group">
+                <h3 class="category-title">Manajemen List Belanja</h3>
+                <div id="pending-lists-container"></div>
+            </div>
+            <div class="category-group">
+                <h3 class="category-title">Manajemen Resep</h3>
+                <div id="recipe-list-container"></div>
+            </div>
+            <div class="category-group">
+                <h3 class="category-title">Editor Database Barang</h3>
+                <div id="add-item-form"><input type="hidden" id="edit-item-id"><input class="item-input" type="text" id="item-name" placeholder="Nama Barang"><input class="item-input" type="text" id="item-category" placeholder="Kategori"><input class="item-input" type="text" id="item-unit" placeholder="Satuan Stok"><input class="item-input" type="text" id="item-purchase-unit" placeholder="Satuan Beli"><input class="item-input" type="number" id="item-conversion" placeholder="Konversi"><button class="btn" data-action="save-item">Simpan</button></div>
+                <div class="table-container"><table id="db-editor-table"><thead><tr><th>Nama</th><th>Kategori</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div>
+            </div>
+            <div class="category-group">
+                <h3 class="category-title">Ekspor Data untuk Analisa</h3>
+                <p style="font-size: 0.9rem; margin-bottom: 10px;">Salin teks di bawah ini dan paste ke Gemini untuk analisa lebih lanjut.</p><textarea id="data-export-area" readonly></textarea><button class="btn" data-action="export-data">Generate & Salin Data</button>
+            </div>`;
+        this.managerSubRenders();
+    },
+
+    managerSubRenders() {
+        // Render semua bagian dari manager area
+        const masterItems = App.db.get('masterItems');
+        const recipes = App.db.get('recipes');
+        const shoppingLists = App.db.get('shoppingLists');
+
+        // Render editor DB
+        const tbody = document.getElementById('db-editor-tbody');
+        tbody.innerHTML = '';
+        masterItems.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${item.name}</td><td>${item.category}</td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td><button class="action-btn edit-btn" data-action="edit-item" data-id="${item.id}">E</button><button class="action-btn delete-btn" data-action="delete-item" data-id="${item.id}">H</button></td>`;
+            tbody.appendChild(row);
+        });
+
+        // Render manajemen list belanja
+        const pendingContainer = document.getElementById('pending-lists-container');
+        const pendingLists = shoppingLists.filter(l => l.status === 'pending');
+        if (pendingLists.length > 0) {
+            pendingContainer.innerHTML = pendingLists.map(list => `<div class="list-item-button" style="flex-direction:row; justify-content:space-between; align-items:center;"><span>List Belanja ${new Date(list.date).toLocaleString('id-ID')}</span><button class="btn btn-danger" data-action="cancel-shopping-list" data-date="${list.date}">Batalkan</button></div>`).join('');
+        } else {
+            pendingContainer.innerHTML = '<p>Tidak ada list belanja yang pending.</p>';
+        }
+
+        // Render manajemen resep
+        const recipeContainer = document.getElementById('recipe-list-container');
+        recipeContainer.innerHTML = Object.keys(recipes).map(key => `<div class="list-item-button" style="flex-direction:row; justify-content:space-between; align-items:center;"><span>Resep: ${key}</span><button class="btn" data-action="edit-recipe" data-name="${key}">Edit Resep</button></div>`).join('');
+    },
+
+    recipeEditor(targetPage, menuName) {
+        const recipes = App.db.get('recipes');
+        const masterItems = App.db.get('masterItems');
+        const recipe = recipes[menuName];
+
+        let ingredientsHTML = recipe.ingredients.map(ing => {
+            const item = masterItems.find(mi => mi.id === ing.itemId);
+            return `<li class="item-row" style="grid-template-columns: 1fr 80px 50px;"><span>${item.name}</span><span>${ing.qty} ${item.unit}</span><button class="btn-danger" data-action="delete-ingredient" data-menu-name="${menuName}" data-item-id="${ing.itemId}">X</button></li>`;
+        }).join('');
+        
+        let optionsHTML = masterItems.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
+
+        targetPage.innerHTML = `
+            <div class="page-header"><h2>Edit Resep: ${menuName}</h2><button class="btn btn-secondary" data-page="page-manager-area">Kembali</button></div>
+            <div class="category-group">
+                <h3 class="category-title">Bahan Baku Saat Ini</h3>
+                <ul style="list-style:none;">${ingredientsHTML}</ul>
+            </div>
+            <div class="category-group">
+                <h3 class="category-title">Tambah Bahan Baku</h3>
+                <div id="recipe-editor-form">
+                    <select id="new-ingredient-item">${optionsHTML}</select>
+                    <input type="number" id="new-ingredient-qty" placeholder="Jumlah" class="item-input" min="0">
+                    <button class="btn" data-action="add-ingredient" data-menu-name="${menuName}">Tambah</button>
+                </div>
+            </div>
+        `;
+    }
+},
+
+    actions: {
+        // ... (semua fungsi aksi)
+    },
+    
+    handle: {
+        click(event) {
+            const target = event.target.closest('[data-page], [data-action]');
+            if (!target) return;
+
+            event.preventDefault();
+            const { page, action, message, date, id, name, type, textToCopy } = target.dataset;
+
+            if (page) {
+                App.render.page(page);
+            } else if (action) {
+                switch(action) {
+                    case 'show-alert': App.utils.showToast(message, 'info'); break;
+                    case 'generate-shopping-list': this.actions.generateShoppingList(); break;
+                    case 'copy-text': this.actions.copyText(target); break;
+                    case 'select-pending-list': this.render.stockInDetail(document.getElementById('page-input-belanja-datang'), date); break;
+                    case 'process-stock-in': this.actions.processStockIn(date); break;
+                    case 'process-stock-out': this.actions.processStockOut(type); break;
+                    case 'save-item': this.actions.saveItem(); break;
+                    case 'edit-item': this.actions.editItem(id); break;
+                    case 'delete-item': this.actions.deleteItem(id); break;
+                    case 'export-data': this.actions.exportData(); break;
+                    case 'cancel-shopping-list': this.actions.cancelShoppingList(date); break;
+                    case 'edit-recipe': this.render.recipeEditor(document.getElementById('page-manager-area'), name); break;
+                    case 'add-ingredient': this.actions.addIngredient(name); break;
+                    case 'delete-ingredient': this.actions.deleteIngredient(name, target.dataset.itemId); break;
+                }
+            }
+        }
+    },
+
+    utils: {
+        updateTime() {
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                const now = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                timeEl.textContent = now.toLocaleDateString('id-ID', options);
+            }
+        },
+        showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000);
+        }
+    }
+};
+
+// ... (tempel sisa object App.actions di sini)
+App.actions = {
+    generateShoppingList() {
+        const inputs = document.querySelectorAll('#shopping-list-form .item-input');
+        const shoppingList = { date: new Date().toISOString(), status: 'pending', items: [] };
+        inputs.forEach(input => {
+            if (input.value && parseFloat(input.value) > 0) {
+                shoppingList.items.push({ id: parseInt(input.dataset.itemId), quantity: parseFloat(input.value) });
+            }
+        });
+        if (shoppingList.items.length === 0) return App.utils.showToast('Mohon isi minimal satu barang belanja.', 'error');
+        let allLists = App.db.get('shoppingLists');
+        allLists.push(shoppingList);
+        App.db.set('shoppingLists', allLists);
+        App.render.page('page-rangkuman-belanja', shoppingList);
+        App.utils.showToast('List belanja berhasil dibuat!');
+    },
+    copyText(element) {
+        const textToCopy = unescape(element.dataset.textToCopy);
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            element.textContent = '✔️ Tersalin!';
+            setTimeout(() => { element.textContent = '📋 Salin'; }, 2000);
+        }).catch(() => App.utils.showToast('Gagal menyalin.', 'error'));
+    },
+    processStockIn(listDate) {
+        if (!confirm('Anda yakin ingin memasukkan barang-barang ini ke stok?')) return;
+        let masterItems = App.db.get('masterItems');
+        let allLists = App.db.get('shoppingLists');
+        let listIndex = allLists.findIndex(list => list.date === listDate);
+        let transactions = App.db.get('stockTransactions');
+        
+        if (listIndex === -1) return App.utils.showToast('List belanja tidak ditemukan.', 'error');
+
+        const inputs = document.querySelectorAll('#stock-in-form .item-input');
+        inputs.forEach(input => {
+            if (input.value && parseFloat(input.value) > 0) {
+                const itemId = parseInt(input.dataset.itemId);
+                const receivedQty = parseFloat(input.value);
+                const itemIndex = masterItems.findIndex(item => item.id === itemId);
+                if (itemIndex > -1) {
+                    const item = masterItems[itemIndex];
+                    const stockInQty = receivedQty * item.purchaseUnitConversion;
+                    const oldStock = item.stock || 0;
+                    item.stock = parseFloat((oldStock + stockInQty).toFixed(3));
+                    transactions.push({ date: new Date().toISOString(), type: 'IN', itemId: item.id, itemName: item.name, qty: stockInQty, unit: item.unit, fromStock: oldStock, toStock: item.stock, notes: `Belanja datang (${receivedQty} ${item.purchaseUnit || item.unit})`});
+                }
+            }
+        });
+        allLists[listIndex].status = 'completed';
+        App.db.set('masterItems', masterItems);
+        App.db.set('shoppingLists', allLists);
+        App.db.set('stockTransactions', transactions);
+        App.utils.showToast('Stok berhasil diperbarui!');
+        App.showPage('page-dashboard');
+    },
+    processStockOut(type) {
+        if (!confirm('Anda yakin ingin mengeluarkan barang-barang ini dari stok?')) return;
+        let masterItems = App.db.get('masterItems');
+        let transactions = App.db.get('stockTransactions');
+        const isMenuKeluar = type === 'menu';
+        const config = isMenuKeluar ? App.db.get('recipes') : App.data.ambilGudangConfig;
+        let itemsToProcess = isMenuKeluar ? Object.keys(config).map(key => ({ name: key, ...config[key] })) : config.itemIds.map(id => masterItems.find(item => item.id === id));
+        
+        try {
+            itemsToProcess.forEach(item => {
+                const inputId = `stockout-${item.name.replace(/\s+/g, '-')}`;
+                const input = document.getElementById(inputId);
+                if (input && input.value && parseFloat(input.value) > 0) {
+                    const qtyOut = parseFloat(input.value);
+                    if (isMenuKeluar) {
+                        item.ingredients.forEach(ingredient => {
+                            const itemIndex = masterItems.findIndex(mi => mi.id === ingredient.itemId);
+                            if (itemIndex > -1) {
+                                const stockItem = masterItems[itemIndex];
+                                const deduction = qtyOut * ingredient.qty;
+                                const oldStock = stockItem.stock || 0;
+                                if (oldStock < deduction) {
+                                    App.utils.showToast(`Stok ${stockItem.name} tidak cukup!`, 'error');
+                                    throw new Error("Stok tidak cukup");
+                                }
+                                stockItem.stock = parseFloat((oldStock - deduction).toFixed(3));
+                                transactions.push({ date: new Date().toISOString(), type: 'OUT', itemId: stockItem.id, itemName: stockItem.name, qty: deduction, unit: stockItem.unit, fromStock: oldStock, toStock: stockItem.stock, notes: `Menu keluar: ${qtyOut} pcs ${item.name}`});
+                            }
+                        });
+                    } else {
+                        const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
+                        if (itemIndex > -1) {
+                            const stockItem = masterItems[itemIndex];
+                            const oldStock = stockItem.stock || 0;
+                            if (oldStock < qtyOut) {
+                                App.utils.showToast(`Stok ${stockItem.name} tidak cukup!`, 'error');
+                                throw new Error("Stok tidak cukup");
+                            }
+                            stockItem.stock = parseFloat((oldStock - qtyOut).toFixed(3));
+                            transactions.push({ date: new Date().toISOString(), type: 'OUT', itemId: stockItem.id, itemName: stockItem.name, qty: qtyOut, unit: stockItem.unit, fromStock: oldStock, toStock: stockItem.stock, notes: `Ambil dari gudang` });
+                        }
+                    }
+                }
+            });
+            App.db.set('masterItems', masterItems);
+            App.db.set('stockTransactions', transactions);
+            App.utils.showToast('Stok berhasil dikurangi!');
+            App.showPage('page-dashboard');
+        } catch (error) { console.error(error.message); }
+    },
+    saveItem() {
+        const id = document.getElementById('edit-item-id').value;
+        const newItem = {
+            name: document.getElementById('item-name').value, category: document.getElementById('item-category').value,
+            unit: document.getElementById('item-unit').value, purchaseUnit: document.getElementById('item-purchase-unit').value,
+            purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1
+        };
+        if (!newItem.name || !newItem.category || !newItem.unit) return App.utils.showToast('Nama, Kategori, dan Satuan Stok harus diisi!', 'error');
+        let masterItems = App.db.get('masterItems');
+        if (id) {
+            const itemIndex = masterItems.findIndex(item => item.id == id);
+            newItem.id = parseInt(id);
+            newItem.stock = masterItems[itemIndex].stock || 0;
+            masterItems[itemIndex] = newItem;
+        } else {
+            newItem.id = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
+            newItem.stock = 0;
+            masterItems.push(newItem);
+        }
+        App.db.set('masterItems', masterItems);
+        document.getElementById('add-item-form').reset();
+        document.getElementById('edit-item-id').value = '';
+        App.render.managerSubRenders();
+        App.utils.showToast('Barang berhasil disimpan!');
+    },
+    editItem(id) {
+        const item = App.db.get('masterItems').find(item => item.id == id);
+        document.getElementById('edit-item-id').value = item.id;
+        document.getElementById('item-name').value = item.name;
+        document.getElementById('item-category').value = item.category;
+        document.getElementById('item-unit').value = item.unit;
+        document.getElementById('item-purchase-unit').value = item.purchaseUnit;
+        document.getElementById('item-conversion').value = item.purchaseUnitConversion;
+        document.getElementById('item-name').focus();
+    },
+    deleteItem(id) {
+        let masterItems = App.db.get('masterItems');
+        const item = masterItems.find(item => item.id == id);
+        if (item.stock > 0) return App.utils.showToast('Tidak dapat menghapus barang karena masih ada sisa stok.', 'error');
+        if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) return;
+        masterItems = masterItems.filter(item => item.id != id);
+        App.db.set('masterItems', masterItems);
+        App.render.managerSubRenders();
+        App.utils.showToast('Barang berhasil dihapus.');
+    },
+    cancelShoppingList(date) {
+        if (!confirm('Anda yakin ingin membatalkan list belanja ini?')) return;
+        let shoppingLists = App.db.get('shoppingLists');
+        const listIndex = shoppingLists.findIndex(l => l.date === date);
+        if (listIndex > -1) {
+            shoppingLists.splice(listIndex, 1);
+            App.db.set('shoppingLists', shoppingLists);
+            App.render.managerSubRenders();
+            App.utils.showToast('List belanja berhasil dibatalkan.');
+        }
+    },
+    addIngredient(menuName) {
+        const recipes = App.db.get('recipes');
+        const itemId = parseInt(document.getElementById('new-ingredient-item').value);
+        const qty = parseFloat(document.getElementById('new-ingredient-qty').value);
+        if (!itemId || !qty || qty <= 0) return App.utils.showToast('Pilih barang dan isi jumlah.', 'error');
+        recipes[menuName].ingredients.push({ itemId, qty });
+        App.db.set('recipes', recipes);
+        App.render.recipeEditor(document.getElementById('page-manager-area'), menuName);
+    },
+    deleteIngredient(menuName, itemId) {
+        const recipes = App.db.get('recipes');
+        recipes[menuName].ingredients = recipes[menuName].ingredients.filter(ing => ing.itemId != itemId);
+        App.db.set('recipes', recipes);
+        App.render.recipeEditor(document.getElementById('page-manager-area'), menuName);
+    },
+    exportData() {
+        const masterItems = App.db.get('masterItems');
+        const transactions = App.db.get('stockTransactions');
+        let exportText = `DATA RESTORAN PER TANGGAL ${new Date().toLocaleString('id-ID')}\n\n`;
+        exportText += "--- DATA STOK SAAT INI ---\n";
+        const categories = [...new Set(masterItems.map(item => item.category))].sort();
+        categories.forEach(cat => {
+            exportText += `\nKategori: ${cat}\n`;
+            masterItems.filter(item => item.category === cat).forEach(item => {
+                exportText += `- ${item.name}: ${(item.stock || 0).toFixed(2)} ${item.unit}\n`;
+            });
+        });
+        exportText += "\n\n--- RIWAYAT TRANSAKSI STOK (50 TERAKHIR) ---\n";
+        if (transactions.length > 0) {
+            transactions.slice(-50).reverse().forEach(t => {
+                const date = new Date(t.date).toLocaleString('id-ID');
+                const qty = t.type === 'IN' ? `+${t.qty.toFixed(2)}` : `-${t.qty.toFixed(2)}`;
+                exportText += `[${date}] ${t.type} | ${t.itemName} | ${qty} ${t.unit} | Stok: ${t.toStock.toFixed(2)} | Catatan: ${t.notes}\n`;
+            });
+        } else {
+            exportText += "Belum ada transaksi stok.\n";
+        }
+        const exportArea = document.getElementById('data-export-area');
+        exportArea.value = exportText;
+        navigator.clipboard.writeText(exportText).then(() => App.utils.showToast('Data untuk analisa berhasil disalin!'))
+        .catch(() => App.utils.showToast('Gagal menyalin otomatis.', 'error'));
+    }
+};
+
+App.handle = {
+    click(event) {
+        const target = event.target.closest('[data-page], [data-action]');
+        if (!target) return;
+        event.preventDefault();
+        const { page, action, message, date, id, name, type, textToCopy, itemId } = target.dataset;
+
+        if (page) {
+            App.render.page(page);
+        } else if (action) {
+            const actions = App.actions;
+            switch(action) {
+                case 'show-alert': App.utils.showToast(message, 'info'); break;
+                case 'generate-shopping-list': actions.generateShoppingList(); break;
+                case 'copy-text': actions.copyText(target); break;
+                case 'select-pending-list': App.render.stockInDetail(document.getElementById('page-input-belanja-datang'), date); break;
+                case 'process-stock-in': actions.processStockIn(date); break;
+                case 'process-stock-out': actions.processStockOut(type); break;
+                case 'save-item': actions.saveItem(); break;
+                case 'edit-item': actions.editItem(id); break;
+                case 'delete-item': actions.deleteItem(id); break;
+                case 'export-data': actions.exportData(); break;
+                case 'cancel-shopping-list': actions.cancelShoppingList(date); break;
+                case 'edit-recipe': App.render.recipeEditor(document.getElementById('page-manager-area'), name); break;
+                case 'add-ingredient': actions.addIngredient(name); break;
+                case 'delete-ingredient': actions.deleteIngredient(name, itemId); break;
+            }
+        }
+    }
+};
+
+App.utils = {
+    updateTime() {
+        const timeEl = document.getElementById('current-time');
+        if (timeEl) {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            timeEl.textContent = now.toLocaleDateString('id-ID', options);
+        }
+    },
+    showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, 3000);
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
-
 </script>
+
 </body>
 </html>
-
