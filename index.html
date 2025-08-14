@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V3.1 (Stable)</title>
+    <title>RestoApp - V3.2 (Custom Menus)</title>
     <style>
-        /* --- Import Font --- */
+                /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
         /* --- Reset & Global Styles --- */
@@ -273,6 +273,21 @@
             font-family: monospace;
             margin-top: 10px;
         }
+        
+        /* Gaya untuk editor list menu */
+        .menu-list-editor {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .menu-list-editor label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
     </style>
 </head>
 <body>
@@ -283,7 +298,7 @@
             ⚠️ <strong>Peringatan:</strong> Aplikasi ini menyimpan data di browser Anda. Membersihkan cache akan menghapus semua data.
         </div>
         <header>
-            <h1>RestoApp V3.1</h1>
+            <h1>RestoApp V3.2</h1>
         </header>
         <main id="main-content">
             <div id="page-dashboard" class="page active">
@@ -333,10 +348,9 @@
     </div>
 
 <script>
-const App = {
+    const App = {
     data: {
         initialMasterItems: [
-            // Sayur
             { id: 1, name: "Kolbis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 2, name: "Labu Siam", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 3, name: "Jagung Manis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -488,10 +502,7 @@ const App = {
             "Sosis Besar": { unit: "pcs", ingredients: [{ itemId: 118, qty: 1 }] }, "Salmon Fish Cake": { unit: "pcs", ingredients: [{ itemId: 121, qty: 0.2 }] },
             "Otak-otak Singapore": { unit: "pcs", ingredients: [{ itemId: 120, qty: 0.2 }] }, "Sosis Merah": { unit: "pcs", ingredients: [{ itemId: 119, qty: 1 }] },
         },
-        ambilGudangConfig: {
-            title: "Ambil Barang dari Gudang",
-            itemIds: [34, 35, 37, 44, 38, 40, 41, 42, 45, 46, 91, 93, 109, 48, 33]
-        }
+        initialGudangItemIds: [34, 35, 37, 44, 38, 40, 41, 42, 45, 46, 91, 93, 109, 48, 33]
     },
     
     db: {
@@ -502,6 +513,9 @@ const App = {
     init() {
         if (!this.db.get('masterItems')) this.db.set('masterItems', this.data.initialMasterItems);
         if (!this.db.get('recipes')) this.db.set('recipes', this.data.initialRecipes);
+        if (!this.db.get('gudangItemIds')) this.db.set('gudangItemIds', this.data.initialGudangItemIds);
+        const recipes = this.db.get('recipes');
+        if (!this.db.get('menuKeluarActive')) this.db.set('menuKeluarActive', Object.keys(recipes));
         if (!this.db.get('shoppingLists')) this.db.set('shoppingLists', []);
         if (!this.db.get('stockTransactions')) this.db.set('stockTransactions', []);
         
@@ -516,13 +530,12 @@ const App = {
         const page = document.getElementById(pageId);
         if (page) page.classList.add('active');
     },
-
+    
     render: {
         page(pageId, data = null) {
             const targetPage = document.getElementById(pageId);
             if (!targetPage) return;
             
-            // Render konten baru berdasarkan pageId
             switch (pageId) {
                 case 'page-input-belanja': this.shoppingListForm(targetPage); break;
                 case 'page-rangkuman-belanja': this.shoppingSummary(targetPage, data); break;
@@ -578,7 +591,7 @@ const App = {
                     itemsHTML += `<li>${text}</li>`;
                     categoryText += `${text}\n`;
                 });
-                groupDiv = document.createElement('div');
+                const groupDiv = document.createElement('div');
                 groupDiv.className = 'category-group';
                 groupDiv.innerHTML = `<h3 class="category-title">${category} <button class="copy-button" data-action="copy-text" data-text-to-copy="${escape(categoryText)}">📋 Salin</button></h3><ul style="list-style-type: none; padding-left: 10px;">${itemsHTML}</ul>`;
                 summaryContainer.appendChild(groupDiv);
@@ -595,7 +608,7 @@ const App = {
                 contentHTML += `<p>Tidak ada list belanja yang menunggu untuk dimasukkan ke stok.</p>`;
             } else {
                 contentHTML += pendingLists.map(list => {
-                    const date = new Date(list.date).toLocaleString('id-ID');
+                    const date = new Date(list.date).toLocaleString('id-ID', {day: '2-digit', month: 'long', hour:'2-digit', minute:'2-digit'});
                     return `<a href="#" class="list-item-button" data-action="select-pending-list" data-date="${list.date}">
                         <strong>List Belanja ${date}</strong>
                         <p style="font-size:0.8rem; color:#555;">${list.items.length} jenis barang</p>
@@ -634,17 +647,19 @@ const App = {
         },
 
         stockOutPage(targetPage, type) {
-            const config = type === 'menu' ? App.db.get('recipes') : App.data.ambilGudangConfig;
             const masterItems = App.db.get('masterItems');
             let itemsToRender = [];
             let title = "";
 
             if (type === 'gudang') {
-                title = config.title;
-                itemsToRender = config.itemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
+                const gudangItemIds = App.db.get('gudangItemIds');
+                title = "Ambil Barang dari Gudang";
+                itemsToRender = gudangItemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
             } else {
+                const menuKeluarActive = App.db.get('menuKeluarActive');
+                const recipes = App.db.get('recipes');
                 title = "Input Menu Keluar";
-                itemsToRender = Object.keys(config).map(key => ({ name: key, unit: config[key].unit }));
+                itemsToRender = menuKeluarActive.map(key => ({ name: key, unit: recipes[key]?.unit || 'pcs' }));
             }
 
             let formHTML = '';
@@ -666,6 +681,10 @@ const App = {
             targetPage.innerHTML = `
                 <div class="page-header"><h2>Manager Area</h2><button class="btn btn-secondary" data-page="page-dashboard">Kembali</button></div>
                 <div class="category-group">
+                    <h3 class="category-title">Atur Tampilan Menu & Gudang</h3>
+                    <div id="menu-config-container"></div>
+                </div>
+                <div class="category-group">
                     <h3 class="category-title">Manajemen List Belanja</h3>
                     <div id="pending-lists-container"></div>
                 </div>
@@ -686,16 +705,19 @@ const App = {
         },
 
         managerSubRenders() {
+            // Render semua bagian dari manager area
             const masterItems = App.db.get('masterItems');
             const recipes = App.db.get('recipes');
             const shoppingLists = App.db.get('shoppingLists');
 
+            // Render editor DB
             const tbody = document.getElementById('db-editor-tbody');
             tbody.innerHTML = '';
             masterItems.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
                 tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.category}</td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td><button class="action-btn edit-btn" data-action="edit-item" data-id="${item.id}">E</button><button class="action-btn delete-btn" data-action="delete-item" data-id="${item.id}">H</button></td></tr>`;
             });
 
+            // Render manajemen list belanja
             const pendingContainer = document.getElementById('pending-lists-container');
             const pendingLists = shoppingLists.filter(l => l.status === 'pending');
             if (pendingLists.length > 0) {
@@ -704,8 +726,13 @@ const App = {
                 pendingContainer.innerHTML = '<p>Tidak ada list belanja yang pending.</p>';
             }
 
+            // Render manajemen resep
             const recipeContainer = document.getElementById('recipe-list-container');
             recipeContainer.innerHTML = Object.keys(recipes).map(key => `<div class="list-item-button" style="flex-direction:row; justify-content:space-between; align-items:center;"><span>Resep: ${key}</span><button class="btn" data-action="edit-recipe" data-name="${key}">Edit Resep</button></div>`).join('');
+            
+            // Render Editor Tampilan Menu
+            const menuConfigContainer = document.getElementById('menu-config-container');
+            menuConfigContainer.innerHTML = `<button class="btn" data-action="edit-display-config">Edit Tampilan Menu & Gudang</button>`;
         },
 
         recipeEditor(targetPage, menuName) {
@@ -715,7 +742,7 @@ const App = {
 
             let ingredientsHTML = recipe.ingredients.map(ing => {
                 const item = masterItems.find(mi => mi.id === ing.itemId);
-                return `<li class="item-row" style="grid-template-columns: 1fr 80px 50px;"><span>${item.name}</span><span>${ing.qty} ${item.unit}</span><button class="btn-danger" data-action="delete-ingredient" data-menu-name="${menuName}" data-item-id="${ing.itemId}">X</button></li>`;
+                return item ? `<li class="item-row" style="grid-template-columns: 1fr 80px 50px;"><span>${item.name}</span><span>${ing.qty} ${item.unit}</span><button class="btn-danger" data-action="delete-ingredient" data-menu-name="${menuName}" data-item-id="${ing.itemId}">X</button></li>` : '';
             }).join('');
             
             let optionsHTML = masterItems.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
@@ -723,7 +750,35 @@ const App = {
             targetPage.innerHTML = `
                 <div class="page-header"><h2>Edit Resep: ${menuName}</h2><button class="btn btn-secondary" data-page="page-manager-area">Kembali</button></div>
                 <div class="category-group"><h3 class="category-title">Bahan Baku Saat Ini</h3><ul style="list-style:none;">${ingredientsHTML}</ul></div>
-                <div class="category-group"><h3 class="category-title">Tambah Bahan Baku</h3><div id="recipe-editor-form"><select id="new-ingredient-item">${optionsHTML}</select><input type="number" id="new-ingredient-qty" placeholder="Jumlah" class="item-input" min="0"><button class="btn" data-action="add-ingredient" data-menu-name="${menuName}">Tambah</button></div></div>`;
+                <div class="category-group"><h3 class="category-title">Tambah Bahan Baku</h3><div id="recipe-editor-form"><select id="new-ingredient-item">${optionsHTML}</select><input type="number" id="new-ingredient-qty" placeholder="Jumlah" class="item-input" min="0" step="0.01"><button class="btn" data-action="add-ingredient" data-menu-name="${menuName}">Tambah</button></div></div>`;
+        },
+
+        displayConfigEditor(targetPage) {
+            const masterItems = App.db.get('masterItems');
+            const recipes = App.db.get('recipes');
+            const gudangItemIds = App.db.get('gudangItemIds');
+            const menuKeluarActive = App.db.get('menuKeluarActive');
+
+            let gudangHTML = masterItems.map(item => `
+                <label><input type="checkbox" class="gudang-item-check" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>
+            `).join('');
+
+            let menuHTML = Object.keys(recipes).map(name => `
+                <label><input type="checkbox" class="menu-item-check" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>
+            `).join('');
+
+            targetPage.innerHTML = `
+                <div class="page-header"><h2>Atur Tampilan Menu & Gudang</h2><button class="btn btn-secondary" data-page="page-manager-area">Kembali</button></div>
+                <div class="category-group">
+                    <h3 class="category-title">Tampilkan di Menu "Ambil dari Gudang"</h3>
+                    <div class="menu-list-editor">${gudangHTML}</div>
+                </div>
+                <div class="category-group">
+                    <h3 class="category-title">Tampilkan di Menu "Input Menu Keluar"</h3>
+                    <div class="menu-list-editor">${menuHTML}</div>
+                </div>
+                <button class="btn" style="width:100%" data-action="save-display-config">Simpan Perubahan Tampilan</button>
+            `;
         }
     },
     
@@ -756,9 +811,7 @@ const App = {
             let allLists = App.db.get('shoppingLists');
             let listIndex = allLists.findIndex(list => list.date === listDate);
             let transactions = App.db.get('stockTransactions');
-            
             if (listIndex === -1) return App.utils.showToast('List belanja tidak ditemukan.', 'error');
-
             const inputs = document.querySelectorAll('#stock-in-form .item-input');
             inputs.forEach(input => {
                 if (input.value && parseFloat(input.value) > 0) {
@@ -786,12 +839,18 @@ const App = {
             let masterItems = App.db.get('masterItems');
             let transactions = App.db.get('stockTransactions');
             const isMenuKeluar = type === 'menu';
-            const config = isMenuKeluar ? App.db.get('recipes') : App.data.ambilGudangConfig;
-            let itemsToProcess = isMenuKeluar ? Object.keys(config).map(key => ({ name: key, ...config[key] })) : config.itemIds.map(id => masterItems.find(item => item.id === id));
             
+            const config = isMenuKeluar ? App.db.get('recipes') : App.db.get('gudangItemIds');
+            let itemsToProcess = [];
+            if(isMenuKeluar) {
+                const activeMenus = App.db.get('menuKeluarActive');
+                itemsToProcess = activeMenus.map(name => ({name, ...config[name]}));
+            } else {
+                itemsToProcess = config.map(id => masterItems.find(item => item.id === id));
+            }
+
             try {
                 const deductions = [];
-                // First, check if all stocks are sufficient
                 itemsToProcess.forEach(item => {
                     const inputId = `stockout-${item.name.replace(/\s+/g, '-')}`;
                     const input = document.getElementById(inputId);
@@ -801,22 +860,17 @@ const App = {
                             item.ingredients.forEach(ingredient => {
                                 const stockItem = masterItems.find(mi => mi.id === ingredient.itemId);
                                 const deduction = qtyOut * ingredient.qty;
-                                if ((stockItem.stock || 0) < deduction) {
-                                    throw new Error(`Stok ${stockItem.name} tidak cukup!`);
-                                }
+                                if ((stockItem.stock || 0) < deduction) throw new Error(`Stok ${stockItem.name} tidak cukup!`);
                                 deductions.push({item, stockItem, deduction, qtyOut});
                             });
                         } else {
                             const stockItem = masterItems.find(mi => mi.id === item.id);
-                            if ((stockItem.stock || 0) < qtyOut) {
-                                throw new Error(`Stok ${stockItem.name} tidak cukup!`);
-                            }
+                            if ((stockItem.stock || 0) < qtyOut) throw new Error(`Stok ${stockItem.name} tidak cukup!`);
                             deductions.push({stockItem, deduction: qtyOut, from: 'gudang'});
                         }
                     }
                 });
 
-                // If all checks pass, process the deductions
                 deductions.forEach(d => {
                     const itemIndex = masterItems.findIndex(mi => mi.id === d.stockItem.id);
                     const oldStock = masterItems[itemIndex].stock;
@@ -829,9 +883,7 @@ const App = {
                 App.db.set('stockTransactions', transactions);
                 App.utils.showToast('Stok berhasil dikurangi!');
                 App.showPage('page-dashboard');
-            } catch (error) { 
-                App.utils.showToast(error.message, 'error');
-            }
+            } catch (error) { App.utils.showToast(error.message, 'error'); }
         },
         saveItem() {
             const id = document.getElementById('edit-item-id').value;
@@ -869,7 +921,7 @@ const App = {
         deleteItem(id) {
             let masterItems = App.db.get('masterItems');
             const item = masterItems.find(item => item.id == id);
-            if (item.stock > 0) return App.utils.showToast('Tidak dapat menghapus barang karena masih ada sisa stok.', 'error');
+            if ((item.stock || 0) > 0) return App.utils.showToast('Tidak dapat menghapus barang karena masih ada sisa stok.', 'error');
             if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) return;
             masterItems = masterItems.filter(item => item.id != id);
             App.db.set('masterItems', masterItems);
@@ -898,6 +950,18 @@ const App = {
             recipes[menuName].ingredients = recipes[menuName].ingredients.filter(ing => ing.itemId != itemId);
             App.db.set('recipes', recipes);
             App.render.recipeEditor(document.getElementById('page-manager-area'), menuName);
+        },
+        saveDisplayConfig() {
+            const gudangChecks = document.querySelectorAll('.gudang-item-check:checked');
+            const newGudangItemIds = Array.from(gudangChecks).map(cb => parseInt(cb.value));
+            App.db.set('gudangItemIds', newGudangItemIds);
+
+            const menuChecks = document.querySelectorAll('.menu-item-check:checked');
+            const newMenuKeluarActive = Array.from(menuChecks).map(cb => cb.value);
+            App.db.set('menuKeluarActive', newMenuKeluarActive);
+
+            App.utils.showToast('Pengaturan tampilan berhasil disimpan!');
+            App.render.page('page-manager-area');
         },
         exportData() {
             const masterItems = App.db.get('masterItems');
@@ -932,7 +996,7 @@ const App = {
             const target = event.target.closest('[data-page], [data-action]');
             if (!target) return;
             event.preventDefault();
-            const { page, action, message, date, id, name, type, itemId } = target.dataset;
+            const { page, action, message, date, id, name, type, itemId, menuName } = target.dataset;
 
             if (page) {
                 App.render.page(page);
@@ -952,7 +1016,9 @@ const App = {
                     case 'cancel-shopping-list': actions.cancelShoppingList(date); break;
                     case 'edit-recipe': App.render.recipeEditor(document.getElementById('page-manager-area'), name); break;
                     case 'add-ingredient': actions.addIngredient(name); break;
-                    case 'delete-ingredient': actions.deleteIngredient(name, itemId); break;
+                    case 'delete-ingredient': actions.deleteIngredient(menuName, itemId); break;
+                    case 'edit-display-config': App.render.displayConfigEditor(document.getElementById('page-manager-area')); break;
+                    case 'save-display-config': actions.saveDisplayConfig(); break;
                 }
             }
         }
@@ -983,6 +1049,7 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
 </script>
 </body>
 </html>
