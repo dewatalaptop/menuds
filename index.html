@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V3.2 (Custom Menus)</title>
+    <title>RestoApp - V3.2 (Stable)</title>
     <style>
-                /* --- Import Font --- */
+        /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
         /* --- Reset & Global Styles --- */
@@ -287,11 +287,9 @@
             margin-bottom: 8px;
             cursor: pointer;
         }
-
     </style>
 </head>
 <body>
-
     <div class="container">
         <div id="toast-container"></div>
         <div class="storage-warning">
@@ -336,19 +334,17 @@
                     <p>Waktu saat ini: <span id="current-time"></span></p>
                 </div>
             </div>
-
             <div id="page-input-belanja" class="page"></div>
             <div id="page-rangkuman-belanja" class="page"></div>
             <div id="page-input-belanja-datang" class="page"></div>
             <div id="page-input-menu-keluar" class="page"></div>
             <div id="page-ambil-gudang" class="page"></div>
             <div id="page-manager-area" class="page"></div>
-
         </main>
     </div>
 
 <script>
-    const App = {
+const App = {
     data: {
         initialMasterItems: [
             { id: 1, name: "Kolbis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -705,19 +701,16 @@
         },
 
         managerSubRenders() {
-            // Render semua bagian dari manager area
             const masterItems = App.db.get('masterItems');
             const recipes = App.db.get('recipes');
             const shoppingLists = App.db.get('shoppingLists');
 
-            // Render editor DB
             const tbody = document.getElementById('db-editor-tbody');
             tbody.innerHTML = '';
             masterItems.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
                 tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.category}</td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td><button class="action-btn edit-btn" data-action="edit-item" data-id="${item.id}">E</button><button class="action-btn delete-btn" data-action="delete-item" data-id="${item.id}">H</button></td></tr>`;
             });
 
-            // Render manajemen list belanja
             const pendingContainer = document.getElementById('pending-lists-container');
             const pendingLists = shoppingLists.filter(l => l.status === 'pending');
             if (pendingLists.length > 0) {
@@ -726,11 +719,9 @@
                 pendingContainer.innerHTML = '<p>Tidak ada list belanja yang pending.</p>';
             }
 
-            // Render manajemen resep
             const recipeContainer = document.getElementById('recipe-list-container');
-            recipeContainer.innerHTML = Object.keys(recipes).map(key => `<div class="list-item-button" style="flex-direction:row; justify-content:space-between; align-items:center;"><span>Resep: ${key}</span><button class="btn" data-action="edit-recipe" data-name="${key}">Edit Resep</button></div>`).join('');
+            recipeContainer.innerHTML = Object.keys(recipes).sort().map(key => `<div class="list-item-button" style="flex-direction:row; justify-content:space-between; align-items:center;"><span>Resep: ${key}</span><button class="btn" data-action="edit-recipe" data-name="${key}">Edit Resep</button></div>`).join('');
             
-            // Render Editor Tampilan Menu
             const menuConfigContainer = document.getElementById('menu-config-container');
             menuConfigContainer.innerHTML = `<button class="btn" data-action="edit-display-config">Edit Tampilan Menu & Gudang</button>`;
         },
@@ -759,11 +750,11 @@
             const gudangItemIds = App.db.get('gudangItemIds');
             const menuKeluarActive = App.db.get('menuKeluarActive');
 
-            let gudangHTML = masterItems.map(item => `
+            let gudangHTML = masterItems.sort((a,b) => a.name.localeCompare(b.name)).map(item => `
                 <label><input type="checkbox" class="gudang-item-check" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>
             `).join('');
 
-            let menuHTML = Object.keys(recipes).map(name => `
+            let menuHTML = Object.keys(recipes).sort().map(name => `
                 <label><input type="checkbox" class="menu-item-check" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>
             `).join('');
 
@@ -1049,7 +1040,6 @@
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
-</script>
 </script>
 </body>
 </html>
