@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V3.2 (Stable)</title>
+    <title>RestoApp - V3.3 (Flexible Edit)</title>
     <style>
         /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -207,6 +207,28 @@
             font-size: 0.9rem;
         }
         .item-row label { line-height: 1.4; word-wrap: break-word; }
+        
+        .editable-item-row {
+            display: grid;
+            grid-template-columns: 30px 1fr 80px 40px;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+        }
+        .editable-item-row.dragging {
+            opacity: 0.5;
+            background: #e9e9e9;
+        }
+        .editable-item-row .drag-handle {
+            cursor: grab;
+            text-align: center;
+            color: #aaa;
+        }
+        .editable-item-row .drag-handle:active {
+            cursor: grabbing;
+        }
 
         .item-input {
             width: 100%;
@@ -253,7 +275,7 @@
         .edit-btn { background-color: var(--warning-color); color:#333; }
         .delete-btn { background-color: var(--danger-color); }
 
-        #add-item-form, #recipe-editor-form {
+        #add-item-form, #recipe-editor-form, #add-item-to-list-form {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
@@ -262,7 +284,7 @@
             border: 1px dashed var(--border-color);
             border-radius: var(--border-radius);
         }
-        #add-item-form input, #recipe-editor-form input, #recipe-editor-form select { padding: 8px; border-radius:6px; border: 1px solid var(--border-color); }
+        #add-item-form input, #recipe-editor-form input, #recipe-editor-form select, #add-item-to-list-form select, #add-item-to-list-form input { padding: 8px; border-radius:6px; border: 1px solid var(--border-color); }
         
         textarea {
             width: 100%;
@@ -274,7 +296,6 @@
             margin-top: 10px;
         }
         
-        /* Gaya untuk editor list menu */
         .menu-list-editor {
             max-height: 300px;
             overflow-y: auto;
@@ -296,7 +317,7 @@
             ⚠️ <strong>Peringatan:</strong> Aplikasi ini menyimpan data di browser Anda. Membersihkan cache akan menghapus semua data.
         </div>
         <header>
-            <h1>RestoApp V3.2</h1>
+            <h1>RestoApp V3.3</h1>
         </header>
         <main id="main-content">
             <div id="page-dashboard" class="page active">
@@ -334,12 +355,14 @@
                     <p>Waktu saat ini: <span id="current-time"></span></p>
                 </div>
             </div>
+
             <div id="page-input-belanja" class="page"></div>
-            <div id="page-rangkuman-belanja" class="page"></div>
+            <div id="page-edit-belanja" class="page"></div>
             <div id="page-input-belanja-datang" class="page"></div>
             <div id="page-input-menu-keluar" class="page"></div>
             <div id="page-ambil-gudang" class="page"></div>
             <div id="page-manager-area" class="page"></div>
+
         </main>
     </div>
 
@@ -347,6 +370,7 @@
 const App = {
     data: {
         initialMasterItems: [
+             // Sayur
             { id: 1, name: "Kolbis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 2, name: "Labu Siam", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 3, name: "Jagung Manis", category: "Sayur", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -532,9 +556,10 @@ const App = {
             const targetPage = document.getElementById(pageId);
             if (!targetPage) return;
             
+            // Render konten baru berdasarkan pageId
             switch (pageId) {
                 case 'page-input-belanja': this.shoppingListForm(targetPage); break;
-                case 'page-rangkuman-belanja': this.shoppingSummary(targetPage, data); break;
+                case 'page-edit-belanja': this.shoppingSummary(targetPage, data); break;
                 case 'page-input-belanja-datang': this.stockInForm(targetPage); break;
                 case 'page-input-menu-keluar': this.stockOutPage(targetPage, 'menu'); break;
                 case 'page-ambil-gudang': this.stockOutPage(targetPage, 'gudang'); break;
@@ -547,7 +572,7 @@ const App = {
             targetPage.innerHTML = `
                 <div class="page-header"><h2>Buat List Belanja Baru</h2><button class="btn btn-secondary" data-page="page-dashboard">Kembali</button></div>
                 <form id="shopping-list-form"></form>
-                <button class="btn" style="width: 100%; margin-top: 20px;" data-action="generate-shopping-list">Buat Daftar Belanja</button>`;
+                <button class="btn" style="width: 100%; margin-top: 20px;" data-action="generate-shopping-list">Buat & Edit Daftar Belanja</button>`;
 
             const masterItems = App.db.get('masterItems');
             const formContainer = document.getElementById('shopping-list-form');
@@ -569,8 +594,9 @@ const App = {
 
         shoppingSummary(targetPage, shoppingList) {
             targetPage.innerHTML = `
-                <div class="page-header"><h2>Rangkuman Belanja Siap Kirim</h2><button class="btn btn-secondary" data-page="page-input-belanja">Kembali</button></div>
-                <div id="summary-container"></div>`;
+                <div class="page-header"><h2>Edit List Belanja</h2><button class="btn btn-secondary" data-page="page-input-belanja">Kembali</button></div>
+                <div id="summary-container"></div>
+                <button class="btn" style="width: 100%; margin-top: 20px;" data-action="save-shopping-list" data-date="${shoppingList.date}">Simpan & Selesai Edit</button>`;
                 
             const masterItems = App.db.get('masterItems');
             const summaryContainer = document.getElementById('summary-container');
@@ -579,19 +605,34 @@ const App = {
             const categories = [...new Set(listItems.map(item => item.category))].sort();
 
             categories.forEach(category => {
-                let categoryText = `List Belanja - ${category}:\n`;
-                let itemsHTML = '';
-                listItems.filter(item => item.category === category).forEach(item => {
-                    const displayUnit = item.purchaseUnit || item.unit;
-                    const text = `* ${item.name}: ${item.quantity} ${displayUnit}`;
-                    itemsHTML += `<li>${text}</li>`;
-                    categoryText += `${text}\n`;
-                });
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'category-group';
-                groupDiv.innerHTML = `<h3 class="category-title">${category} <button class="copy-button" data-action="copy-text" data-text-to-copy="${escape(categoryText)}">📋 Salin</button></h3><ul style="list-style-type: none; padding-left: 10px;">${itemsHTML}</ul>`;
+                groupDiv.dataset.category = category;
+
+                let itemsHTML = listItems.filter(item => item.category === category).map(item => `
+                    <div class="editable-item-row" draggable="true" data-item-id="${item.id}">
+                        <span class="drag-handle">☰</span>
+                        <label title="${item.name}">${item.name}</label>
+                        <input type="number" class="item-input" value="${item.quantity}" min="0">
+                        <button class="btn-danger" style="padding: 5px 10px;" data-action="delete-from-list" data-item-id="${item.id}">&times;</button>
+                    </div>
+                `).join('');
+
+                const masterItemsInCategory = masterItems.filter(mi => mi.category === category);
+                let optionsHTML = masterItemsInCategory.map(mi => `<option value="${mi.id}">${mi.name}</option>`).join('');
+
+                groupDiv.innerHTML = `
+                    <h3 class="category-title">${category}</h3>
+                    <div class="items-container">${itemsHTML}</div>
+                    <div id="add-item-to-list-form" style="grid-template-columns: 1fr 100px auto; align-items:center;">
+                        <select class="item-select">${optionsHTML}</select>
+                        <input type="number" class="item-input" placeholder="Jumlah">
+                        <button class="btn" data-action="add-item-to-list" data-category="${category}">+</button>
+                    </div>
+                `;
                 summaryContainer.appendChild(groupDiv);
             });
+            App.utils.addDragDropHandlers(summaryContainer);
         },
 
         stockInForm(targetPage) {
@@ -736,7 +777,7 @@ const App = {
                 return item ? `<li class="item-row" style="grid-template-columns: 1fr 80px 50px;"><span>${item.name}</span><span>${ing.qty} ${item.unit}</span><button class="btn-danger" data-action="delete-ingredient" data-menu-name="${menuName}" data-item-id="${ing.itemId}">X</button></li>` : '';
             }).join('');
             
-            let optionsHTML = masterItems.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
+            let optionsHTML = masterItems.sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<option value="${item.id}">${item.name}</option>`).join('');
 
             targetPage.innerHTML = `
                 <div class="page-header"><h2>Edit Resep: ${menuName}</h2><button class="btn btn-secondary" data-page="page-manager-area">Kembali</button></div>
@@ -783,11 +824,69 @@ const App = {
                 }
             });
             if (shoppingList.items.length === 0) return App.utils.showToast('Mohon isi minimal satu barang belanja.', 'error');
+            
+            App.render.page('page-edit-belanja', shoppingList);
+        },
+        saveShoppingList(date){
+            const listContainer = document.getElementById('summary-container');
+            const newItems = [];
+            listContainer.querySelectorAll('.editable-item-row').forEach(row => {
+                const id = parseInt(row.dataset.itemId);
+                const quantity = parseFloat(row.querySelector('.item-input').value);
+                if(quantity > 0) newItems.push({ id, quantity });
+            });
+
             let allLists = App.db.get('shoppingLists');
-            allLists.push(shoppingList);
+            let listIndex = allLists.findIndex(l => l.date === date);
+
+            if(listIndex > -1){
+                allLists[listIndex].items = newItems;
+            } else {
+                allLists.push({ date, status: 'pending', items: newItems });
+            }
+
             App.db.set('shoppingLists', allLists);
-            App.render.page('page-rangkuman-belanja', shoppingList);
-            App.utils.showToast('List belanja berhasil dibuat!');
+            App.utils.showToast('List belanja berhasil disimpan!');
+            App.render.page('page-input-belanja-datang');
+
+        },
+        deleteFromList(itemId, listDate){
+            // This function will be called from the summary/edit page which doesn't save yet
+            // So we just remove the element from the DOM
+            const row = document.querySelector(`.editable-item-row[data-item-id="${itemId}"]`);
+            if(row) row.remove();
+            App.utils.showToast('Barang dihapus dari list.');
+        },
+        addItemToList(category, listDate){
+            const container = document.querySelector(`.category-group[data-category="${category}"]`);
+            const select = container.querySelector('.item-select');
+            const input = container.querySelector('.item-input');
+            const itemId = parseInt(select.value);
+            const quantity = parseFloat(input.value);
+
+            if(!itemId || !quantity || quantity <= 0) return App.utils.showToast('Pilih barang dan isi jumlah.','error');
+            
+            const masterItems = App.db.get('masterItems');
+            const item = masterItems.find(mi => mi.id === itemId);
+
+            // Check if item already in list to avoid duplicates
+            if (container.querySelector(`.editable-item-row[data-item-id="${itemId}"]`)){
+                return App.utils.showToast('Barang sudah ada di dalam list.', 'error');
+            }
+
+            const itemsContainer = container.querySelector('.items-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'editable-item-row';
+            newRow.draggable = true;
+            newRow.dataset.itemId = item.id;
+            newRow.innerHTML = `
+                <span class="drag-handle">☰</span>
+                <label title="${item.name}">${item.name}</label>
+                <input type="number" class="item-input" value="${quantity}" min="0">
+                <button class="btn-danger" style="padding: 5px 10px;" data-action="delete-from-list" data-item-id="${item.id}">&times;</button>
+            `;
+            itemsContainer.appendChild(newRow);
+            input.value = '';
         },
         copyText(element) {
             const textToCopy = unescape(element.dataset.textToCopy);
@@ -987,7 +1086,7 @@ const App = {
             const target = event.target.closest('[data-page], [data-action]');
             if (!target) return;
             event.preventDefault();
-            const { page, action, message, date, id, name, type, itemId, menuName } = target.dataset;
+            const { page, action, message, date, id, name, type, itemId, menuName, category } = target.dataset;
 
             if (page) {
                 App.render.page(page);
@@ -1010,6 +1109,9 @@ const App = {
                     case 'delete-ingredient': actions.deleteIngredient(menuName, itemId); break;
                     case 'edit-display-config': App.render.displayConfigEditor(document.getElementById('page-manager-area')); break;
                     case 'save-display-config': actions.saveDisplayConfig(); break;
+                    case 'save-shopping-list': actions.saveShoppingList(date); break;
+                    case 'delete-from-list': actions.deleteFromList(itemId, date); break;
+                    case 'add-item-to-list': actions.addItemToList(category, date); break;
                 }
             }
         }
@@ -1035,6 +1137,39 @@ const App = {
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
+        },
+        addDragDropHandlers(container){
+            let draggedItem = null;
+            container.addEventListener('dragstart', e => {
+                draggedItem = e.target;
+                setTimeout(() => e.target.classList.add('dragging'), 0);
+            });
+            container.addEventListener('dragend', e => {
+                e.target.classList.remove('dragging');
+            });
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const parent = container.querySelector('.items-container');
+                if (afterElement == null) {
+                    parent.appendChild(draggedItem);
+                } else {
+                    parent.insertBefore(draggedItem, afterElement);
+                }
+            });
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.editable-item-row:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
         }
     }
 };
