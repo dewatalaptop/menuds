@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V4.0 (Final Version)</title>
+    <title>RestoApp - V4.1 (Enhanced)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- Import Font --- */
@@ -155,34 +155,12 @@
             font-size: 1rem;
         }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: var(--white-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: var(--white-color);
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: var(--white-color);
-        }
-
-        .btn-danger:hover {
-            background-color: #c53030;
-        }
-        
-        /* Other button styles remain the same */
+        .btn-primary { background-color: var(--primary-color); color: var(--white-color); }
+        .btn-primary:hover { background-color: var(--primary-light); }
+        .btn-secondary { background-color: #6c757d; color: var(--white-color); }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-danger { background-color: var(--danger-color); color: var(--white-color); }
+        .btn-danger:hover { background-color: #c53030; }
         .btn-warning { background-color: var(--warning-color); color: var(--white-color); }
         .btn-warning:hover { background-color: #c05621; }
         .btn-success { background-color: var(--success-color); color: var(--white-color); }
@@ -195,17 +173,8 @@
         .btn-icon { width: 2.5rem; height: 2.5rem; padding: 0; border-radius: 50%; justify-content: center; }
 
         /* --- Form Styles --- */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-color);
-        }
-
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color); }
         .form-control {
             width: 100%;
             padding: 0.625rem 0.875rem;
@@ -214,12 +183,7 @@
             font-size: 0.9rem;
             transition: var(--transition);
         }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.2);
-        }
+        .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.2); }
 
         /* --- Alert Styles --- */
         .alert {
@@ -230,39 +194,12 @@
             align-items: center;
             gap: 0.75rem;
         }
-
-        .alert-warning {
-            background-color: var(--warning-light);
-            color: var(--warning-color);
-            border-left: 4px solid var(--warning-color);
-        }
+        .alert-warning { background-color: var(--warning-light); color: var(--warning-color); border-left: 4px solid var(--warning-color); }
+        .alert-danger { background-color: var(--danger-light); color: var(--danger-color); border-left: 4px solid var(--danger-color); }
 
         /* --- Toast Notification --- */
-        #toast-container {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            z-index: 1100;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            max-width: 350px;
-        }
-
-        .toast {
-            background-color: var(--text-color);
-            color: var(--white-color);
-            padding: 1rem 1.5rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-lg);
-            opacity: 0;
-            transform: translateX(100%);
-            transition: opacity 0.3s, transform 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
+        #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.75rem; max-width: 350px; }
+        .toast { background-color: var(--text-color); color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 0.75rem; }
         .toast.show { opacity: 1; transform: translateX(0); }
         .toast.success { background-color: var(--success-color); }
         .toast.error { background-color: var(--danger-color); }
@@ -270,86 +207,29 @@
         .toast i { font-size: 1.25rem; }
 
         /* --- Dashboard Grid --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1.25rem;
-            margin-top: 1.5rem;
-        }
-
-        .dashboard-card {
-            background-color: var(--white-color);
-            border-radius: var(--border-radius);
-            padding: 1.5rem 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary-color);
-        }
-
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem; }
+        .dashboard-card { background-color: var(--white-color); border-radius: var(--border-radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: var(--transition); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
+        .dashboard-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary-color); }
         .dashboard-card i { font-size: 2.25rem; color: var(--primary-color); }
         .dashboard-card h3 { font-size: 1rem; font-weight: 500; color: var(--text-color); }
 
         /* --- Item List Styles --- */
         .item-list { display: grid; gap: 0.75rem; }
-        .item-row {
-            display: grid;
-            grid-template-columns: minmax(0, 2fr) 100px 100px;
-            gap: 0.75rem;
-            align-items: center;
-            padding: 0.75rem;
-            border-radius: var(--border-radius);
-            background-color: var(--secondary-color);
-        }
+        .item-row { display: grid; grid-template-columns: minmax(0, 2fr) 100px 100px; gap: 0.75rem; align-items: center; padding: 0.75rem; border-radius: var(--border-radius); background-color: var(--secondary-color); }
         .item-row:hover { background-color: #edf2f7; }
         .item-label { font-weight: 500; word-break: break-word; }
         .item-unit, .stock-hint { color: var(--text-light); font-size: 0.85rem; }
 
         /* --- Editable Item Row --- */
-        .editable-item-row {
-            display: grid;
-            grid-template-columns: 30px 1fr 100px 40px;
-            gap: 0.75rem;
-            align-items: center;
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            transition: var(--transition);
-        }
+        .editable-item-row { display: grid; grid-template-columns: 30px 1fr 100px 40px; gap: 0.75rem; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); transition: var(--transition); }
         .editable-item-row:last-child { border-bottom: none; }
         .editable-item-row.dragging { opacity: 0.5; background-color: #ebf8ff; }
         .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; }
         .drag-handle:active { cursor: grabbing; }
 
         /* --- Category Group Styles --- */
-        .category-group {
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            background-color: var(--white-color);
-        }
-        .category-title {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .category-group { margin-bottom: 1.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.25rem; background-color: var(--white-color); }
+        .category-title { font-weight: 600; color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; }
 
         /* --- Table Styles --- */
         .table-container { overflow-x: auto; margin-bottom: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
@@ -360,11 +240,7 @@
         .table tr:hover td { background-color: var(--secondary-color); }
 
         /* --- Action Buttons --- */
-        .action-btn {
-            padding: 0.375rem 0.625rem; border-radius: 0.25rem; border: none; cursor: pointer;
-            transition: var(--transition); font-size: 0.8rem; display: inline-flex;
-            align-items: center; justify-content: center; gap: 0.25rem;
-        }
+        .action-btn { padding: 0.375rem 0.625rem; border-radius: 0.25rem; border: none; cursor: pointer; transition: var(--transition); font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; }
         .action-btn i { font-size: 0.8rem; }
         .edit-btn { background-color: var(--warning-light); color: var(--warning-color); }
         .edit-btn:hover { background-color: #feebc8; }
@@ -392,43 +268,31 @@
         <div id="toast-container"></div>
         
         <header>
-            <h1><i class="fas fa-utensils"></i> RestoApp V4.0</h1>
+            <h1><i class="fas fa-utensils"></i> RestoApp V4.1</h1>
         </header>
         
         <main id="main-content">
             <div id="page-dashboard" class="page active">
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div>
-                        <strong>Peringatan:</strong> Aplikasi ini menyimpan data di browser Anda. 
-                        Untuk keamanan, gunakan fitur Export Data di Manager Area secara berkala.
-                    </div>
-                </div>
-                
+                <div id="dashboard-alerts"></div>
+
                 <div class="dashboard-grid">
                     <a href="#" class="dashboard-card" data-page="page-input-belanja-datang">
-                        <i class="fas fa-truck-loading"></i>
-                        <h3>Input Belanja Datang</h3>
+                        <i class="fas fa-truck-loading"></i><h3>Input Belanja Datang</h3>
                     </a>
                     <a href="#" class="dashboard-card" data-page="page-input-menu-keluar">
-                        <i class="fas fa-utensils"></i>
-                        <h3>Input Menu Keluar</h3>
+                        <i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3>
                     </a>
                     <a href="#" class="dashboard-card" data-page="page-ambil-gudang">
-                        <i class="fas fa-warehouse"></i>
-                        <h3>Ambil dari Gudang</h3>
+                        <i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3>
                     </a>
                     <a href="#" class="dashboard-card" data-page="page-input-belanja">
-                        <i class="fas fa-shopping-cart"></i>
-                        <h3>Input List Belanja</h3>
+                        <i class="fas fa-shopping-cart"></i><h3>Input List Belanja</h3>
                     </a>
-                    <a href="#" class="dashboard-card" data-action="show-alert" data-message="Fitur ini sedang dalam pengembangan.">
-                        <i class="fas fa-chart-line"></i>
-                        <h3>Input Total Penjualan</h3>
+                    <a href="#" class="dashboard-card" data-page="page-riwayat-stok">
+                        <i class="fas fa-history"></i><h3>Riwayat Stok</h3>
                     </a>
                     <a href="#" class="dashboard-card" data-page="page-manager-area">
-                        <i class="fas fa-user-tie"></i>
-                        <h3>Manager Area</h3>
+                        <i class="fas fa-user-tie"></i><h3>Manager Area</h3>
                     </a>
                 </div>
                 
@@ -443,27 +307,27 @@
             <div id="page-input-menu-keluar" class="page"></div>
             <div id="page-ambil-gudang" class="page"></div>
             <div id="page-manager-area" class="page"></div>
+            <div id="page-riwayat-stok" class="page"></div>
         </main>
     </div>
 
 <script>
 const App = {
     data: {
-        // Initial data used only on first load if localStorage is empty
         initialMasterItems: [
-            { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 3, name: "Cabai Merah", category: "Sayuran", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 4, name: "Ayam Paha", category: "Daging", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 5, name: "Beras", category: "Pokok", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 25, stock: 0 },
-            { id: 6, name: "Minyak Goreng", category: "Pokok", unit: "liter", purchaseUnit: "jerigen", purchaseUnitConversion: 5, stock: 0 },
-            { id: 7, name: "Kecap Manis", category: "Bumbu", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0 },
-            { id: 8, name: "Garam", category: "Bumbu", unit: "gram", purchaseUnit: "bks", purchaseUnitConversion: 250, stock: 0 },
-            { id: 9, name: "Telur Ayam", category: "Daging", unit: "butir", purchaseUnit: "kg", purchaseUnitConversion: 16, stock: 0 },
-            { id: 10, name: "Teh Celup", category: "Minuman", unit: "pcs", purchaseUnit: "box", purchaseUnitConversion: 25, stock: 0 },
-            { id: 11, name: "Gula Pasir", category: "Pokok", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
-            { id: 13, name: "Saus Sambal", category: "Gudang", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0 },
-            { id: 14, name: "Gas LPG 12kg", category: "Operasional", unit: "tabung", purchaseUnit: "tabung", purchaseUnitConversion: 1, stock: 0 },
+            { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.5 },
+            { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.5 },
+            { id: 3, name: "Cabai Merah", category: "Sayuran", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.2 },
+            { id: 4, name: "Ayam Paha", category: "Daging", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 2 },
+            { id: 5, name: "Beras", category: "Pokok", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 25, stock: 0, minStock: 5 },
+            { id: 6, name: "Minyak Goreng", category: "Pokok", unit: "liter", purchaseUnit: "jerigen", purchaseUnitConversion: 5, stock: 0, minStock: 1 },
+            { id: 7, name: "Kecap Manis", category: "Bumbu", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0, minStock: 300 },
+            { id: 8, name: "Garam", category: "Bumbu", unit: "gram", purchaseUnit: "bks", purchaseUnitConversion: 250, stock: 0, minStock: 250 },
+            { id: 9, name: "Telur Ayam", category: "Daging", unit: "butir", purchaseUnit: "kg", purchaseUnitConversion: 16, stock: 0, minStock: 10 },
+            { id: 10, name: "Teh Celup", category: "Minuman", unit: "pcs", purchaseUnit: "box", purchaseUnitConversion: 25, stock: 0, minStock: 25 },
+            { id: 11, name: "Gula Pasir", category: "Pokok", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 1 },
+            { id: 13, name: "Saus Sambal", category: "Gudang", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0, minStock: 600 },
+            { id: 14, name: "Gas LPG 12kg", category: "Operasional", unit: "tabung", purchaseUnit: "tabung", purchaseUnitConversion: 1, stock: 0, minStock: 1 },
         ],
         initialRecipes: {
             "Nasi Goreng Spesial": { unit: "porsi", ingredients: [ { itemId: 5, qty: 0.15 }, { itemId: 9, qty: 1 }, { itemId: 1, qty: 0.02 }, { itemId: 2, qty: 0.01 }, { itemId: 7, qty: 15 }, { itemId: 8, qty: 2 }, { itemId: 6, qty: 0.02 } ] },
@@ -479,7 +343,6 @@ const App = {
     },
 
     init() {
-        // Initialize data from localStorage or initialData
         const keys = ['masterItems', 'recipes', 'gudangItemIds', 'menuKeluarActive', 'shoppingLists', 'stockTransactions'];
         const initialDataMap = {
             masterItems: this.data.initialMasterItems.map((item, index) => ({...item, sortOrder: index})),
@@ -500,6 +363,7 @@ const App = {
         
         this.utils.updateTime();
         setInterval(this.utils.updateTime, 1000);
+        this.render.page('page-dashboard');
     },
 
     showPage(pageId) {
@@ -526,17 +390,20 @@ const App = {
                 case 'page-input-menu-keluar': this.stockOutPage(targetPage, 'menu'); break;
                 case 'page-ambil-gudang': this.stockOutPage(targetPage, 'gudang'); break;
                 case 'page-manager-area': this.managerArea(targetPage); break;
+                // NEW: Route for the new transaction history page
+                case 'page-riwayat-stok': this.transactionHistoryPage(targetPage); break;
             }
             App.showPage(pageId);
         },
         
         dashboardPage(targetPage) {
             targetPage.innerHTML = `
+                <div id="dashboard-alerts"></div>
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div>
                         <strong>Peringatan:</strong> Aplikasi ini menyimpan data di browser Anda. 
-                        Untuk keamanan, gunakan fitur Export Data di Manager Area secara berkala.
+                        Gunakan fitur Export Data di Manager Area secara berkala.
                     </div>
                 </div>
                 <div class="dashboard-grid">
@@ -544,11 +411,36 @@ const App = {
                     <a href="#" class="dashboard-card" data-page="page-input-menu-keluar"><i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3></a>
                     <a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a>
                     <a href="#" class="dashboard-card" data-page="page-input-belanja"><i class="fas fa-shopping-cart"></i><h3>Input List Belanja</h3></a>
-                    <a href="#" class="dashboard-card" data-action="show-alert" data-message="Fitur ini sedang dalam pengembangan."><i class="fas fa-chart-line"></i><h3>Input Total Penjualan</h3></a>
+                    <a href="#" class="dashboard-card" data-page="page-riwayat-stok"><i class="fas fa-history"></i><h3>Riwayat Stok</h3></a>
                     <a href="#" class="dashboard-card" data-page="page-manager-area"><i class="fas fa-user-tie"></i><h3>Manager Area</h3></a>
                 </div>
                 <div class="time-display"><i class="far fa-clock"></i> <span id="current-time"></span></div>`;
             App.utils.updateTime();
+            // NEW: Render low stock alerts after rendering the dashboard
+            this.lowStockAlerts();
+        },
+        
+        // NEW: Function to render low stock alerts
+        lowStockAlerts() {
+            const container = document.getElementById('dashboard-alerts');
+            if (!container) return;
+
+            const masterItems = App.db.get('masterItems');
+            const lowStockItems = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+
+            if (lowStockItems.length > 0) {
+                const itemsList = lowStockItems.map(item => `<li><strong>${item.name}</strong> (Sisa: ${item.stock} ${item.unit}, Min: ${item.minStock} ${item.unit})</li>`).join('');
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>Peringatan Stok Rendah:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">${itemsList}</ul>
+                        </div>
+                    </div>`;
+            } else {
+                container.innerHTML = ''; // Clear alerts if no items are low on stock
+            }
         },
         
         shoppingListForm(targetPage) { /* ... Omitted for brevity ... */ },
@@ -566,7 +458,7 @@ const App = {
                 title = "Ambil Barang dari Gudang"; icon = "fa-warehouse";
                 itemsToRender = App.db.get('gudangItemIds')
                     .map(id => masterItems.find(item => item.id === id))
-                    .filter(Boolean) // Ensure no null items if data is inconsistent
+                    .filter(Boolean)
                     .sort((a,b) => a.sortOrder - b.sortOrder);
             } else {
                 title = "Input Menu Keluar"; icon = "fa-utensils";
@@ -589,7 +481,7 @@ const App = {
                         <i class="fas fa-cube"></i> ${item.name}
                         <div class="stock-hint">${stockHint}</div>
                     </label>
-                    <input type="number" id="stockout-${item.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Jumlah" min="0" step="1">
+                    <input type="number" id="stockout-${item.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Jumlah" min="0" step="any">
                     <span class="item-unit">${item.unit}</span>
                 </div>`;
             }).join('');
@@ -646,11 +538,13 @@ const App = {
                         <div id="add-item-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius);">
                             <input type="hidden" id="edit-item-id">
                             <input class="form-control" type="text" id="item-name" placeholder="Nama Barang">
-                            <input class="form-control" type="text" id="item-category" placeholder="Kategori">
+                            <input class="form-control" type="text" id="item-category" placeholder="Kategori" list="category-suggestions">
+                            <datalist id="category-suggestions"></datalist>
                             <input class="form-control" type="text" id="item-unit" placeholder="Satuan Stok">
                             <input class="form-control" type="text" id="item-purchase-unit" placeholder="Satuan Beli">
-                            <input class="form-control" type="number" id="item-conversion" placeholder="Konversi">
-                            <div id="form-buttons" style="display:flex; gap: 10px;">
+                            <input class="form-control" type="number" id="item-conversion" placeholder="Konversi" min="0">
+                            <input class="form-control" type="number" id="item-min-stock" placeholder="Stok Minimum" min="0">
+                            <div id="form-buttons" style="display:flex; gap: 10px; grid-column: 1 / -1;">
                                 <button class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow: 1;"><i class="fas fa-save"></i> Simpan Barang</button>
                                 <button class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display: none;"><i class="fas fa-times"></i> Batal</button>
                             </div>
@@ -660,7 +554,7 @@ const App = {
                             <table class="table" id="db-editor-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 50px;">Urutan</th><th>Nama</th><th>Kategori</th><th>Stok</th><th style="width: 150px;">Aksi</th>
+                                        <th style="width: 50px;">Urutan</th><th>Nama</th><th>Kategori</th><th>Stok</th><th>Stok Min</th><th style="width: 150px;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="db-editor-tbody"></tbody>
@@ -673,6 +567,59 @@ const App = {
         managerSubRenders() { /* ... Omitted for brevity ... */ },
         recipeEditor(targetPage, menuName) { /* ... Omitted for brevity ... */ },
         displayConfigEditor(targetPage) { /* ... Omitted for brevity ... */ },
+
+        // NEW: Function to render transaction history page
+        transactionHistoryPage(targetPage) {
+            const transactions = App.db.get('stockTransactions') || [];
+            const masterItems = App.db.get('masterItems');
+
+            let content = '';
+            if (transactions.length === 0) {
+                content = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Belum ada riwayat transaksi.</div>';
+            } else {
+                const rows = [...transactions].reverse().map(t => {
+                    const item = masterItems.find(i => i.id === t.itemId);
+                    const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
+                    const changeSign = t.change > 0 ? '+' : '';
+                    return `
+                        <tr>
+                            <td>${new Date(t.date).toLocaleString('id-ID')}</td>
+                            <td>${item ? item.name : 'Barang Dihapus'}</td>
+                            <td>${t.type}</td>
+                            <td style="${changeClass} font-weight: 500;">${changeSign}${t.change.toFixed(2)} ${item ? item.unit : ''}</td>
+                            <td>${t.newStock.toFixed(2)} ${item ? item.unit : ''}</td>
+                        </tr>`;
+                }).join('');
+                content = `
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Waktu</th><th>Barang</th><th>Jenis</th><th>Perubahan</th><th>Sisa Stok</th></tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
+            }
+
+            targetPage.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-history"></i><span>Riwayat Transaksi Stok</span></div>
+                        <button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button>
+                    </div>
+                    ${content}
+                </div>`;
+        },
+
+        // NEW: Function to populate category suggestions
+        populateCategoryDatalist() {
+            const masterItems = App.db.get('masterItems');
+            const categories = [...new Set(masterItems.map(item => item.category))];
+            const datalist = document.getElementById('category-suggestions');
+            if(datalist) {
+                datalist.innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
+            }
+        }
     },
     
     actions: {
@@ -690,7 +637,9 @@ const App = {
                 category: document.getElementById('item-category').value.trim(),
                 unit: document.getElementById('item-unit').value.trim(),
                 purchaseUnit: document.getElementById('item-purchase-unit').value.trim(),
-                purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1
+                purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1,
+                // NEW: Getting minStock value
+                minStock: parseFloat(document.getElementById('item-min-stock').value) || 0
             };
             
             if (!newItemData.name || !newItemData.category || !newItemData.unit) {
@@ -700,7 +649,14 @@ const App = {
             let masterItems = App.db.get('masterItems');
             if (id) {
                 const itemIndex = masterItems.findIndex(item => item.id == id);
-                masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
+                const originalItem = masterItems[itemIndex];
+                
+                // NEW: Check for unit change and show a warning
+                if (originalItem.unit !== newItemData.unit && originalItem.stock > 0) {
+                    App.utils.showToast(`Satuan diubah dari "${originalItem.unit}" ke "${newItemData.unit}". Pastikan nilai stok sudah sesuai.`, 'info');
+                }
+
+                masterItems[itemIndex] = { ...originalItem, ...newItemData };
                 App.utils.showToast('Barang berhasil diperbarui!', 'success');
             } else {
                 const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
@@ -710,8 +666,9 @@ const App = {
             }
             
             App.db.set('masterItems', masterItems);
-            this.cancelEdit(); // Reset form
+            this.cancelEdit();
             App.render.managerSubRenders();
+            App.render.populateCategoryDatalist(); // Refresh datalist after adding new category
         },
 
         editItem(id) {
@@ -723,8 +680,9 @@ const App = {
             document.getElementById('item-unit').value = item.unit;
             document.getElementById('item-purchase-unit').value = item.purchaseUnit || '';
             document.getElementById('item-conversion').value = item.purchaseUnitConversion || '';
+            // NEW: Set minStock value in the form
+            document.getElementById('item-min-stock').value = item.minStock || 0;
             
-            // Update UI for edit mode
             document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update Barang';
             document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
             
@@ -739,6 +697,8 @@ const App = {
             document.getElementById('item-unit').value = '';
             document.getElementById('item-purchase-unit').value = '';
             document.getElementById('item-conversion').value = '';
+            // NEW: Clear minStock input
+            document.getElementById('item-min-stock').value = '';
             
             document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
             document.getElementById('cancel-edit-btn').style.display = 'none';
@@ -752,7 +712,6 @@ const App = {
                 return App.utils.showToast('Tidak dapat menghapus, barang masih ada sisa stok.', 'error');
             }
 
-            // Data Integrity Check: Ensure item is not used in any recipe
             const recipes = App.db.get('recipes');
             for (const menuName in recipes) {
                 if (recipes[menuName].ingredients.some(ing => ing.itemId == id)) {
@@ -806,6 +765,7 @@ const App = {
                 if (!file) return;
 
                 if (!confirm("PERINGATAN: Mengimpor data akan menimpa semua data yang ada saat ini. Apakah Anda yakin ingin melanjutkan?")) {
+                    event.target.value = ''; // Reset file input
                     return;
                 }
 
@@ -813,14 +773,13 @@ const App = {
                 reader.onload = (e) => {
                     try {
                         const importedData = JSON.parse(e.target.result);
-                        const requiredKeys = ['masterItems', 'recipes', 'gudangItemIds'];
+                        const requiredKeys = ['masterItems', 'recipes']; // Basic validation
                         if (!requiredKeys.every(key => key in importedData)) {
                            throw new Error("File tidak valid atau korup.");
                         }
-
-                        // Overwrite localStorage with imported data
-                        Object.keys(importedData).forEach(key => {
-                            App.db.set(key, importedData[key]);
+                        
+                        Object.keys(initialDataMap).forEach(key => {
+                            App.db.set(key, importedData[key] || initialDataMap[key]);
                         });
 
                         App.utils.showToast('Data berhasil diimpor! Aplikasi akan dimuat ulang.', 'success');
@@ -831,6 +790,7 @@ const App = {
                     }
                 };
                 reader.readAsText(file);
+                event.target.value = ''; // Reset file input for next import
             };
         }
     },
@@ -900,7 +860,7 @@ const App = {
                         minPortions = portionsForItem;
                     }
                 } else {
-                    minPortions = 0; // If any ingredient is missing or has no quantity, no portions can be made
+                    minPortions = 0;
                 }
             });
             return minPortions === Infinity ? 0 : minPortions;
@@ -909,10 +869,6 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // To simplify the final code, many repetitive functions are omitted from the display.
-    // They are assumed to be the same as the last fully provided code.
-    // This is a placeholder for the full App object definition.
-    // In a real file, the full object would be here.
     App.init();
 });
 </script>
