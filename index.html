@@ -342,7 +342,7 @@
             flex-direction: column;
             align-items: center;
             gap: 0.75rem;
-            text-decoration: none; /* PERBAIKAN: Hapus underline dari link */
+            text-decoration: none;
             color: inherit;
         }
 
@@ -618,7 +618,6 @@
 <script>
 const App = {
     data: {
-        // PERBAIKAN BUG #1: Menambahkan data awal agar aplikasi tidak error saat pertama kali dijalankan.
         initialMasterItems: [
             { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
             { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
@@ -708,8 +707,7 @@ const App = {
             const targetPage = document.getElementById(pageId);
             if (!targetPage) return;
             
-            // Mengosongkan halaman sebelum render untuk mencegah tumpukan konten
-            targetPage.innerHTML = ''; 
+            targetPage.innerHTML = '';
 
             switch (pageId) {
                 case 'page-input-belanja': this.shoppingListForm(targetPage); break;
@@ -799,7 +797,6 @@ const App = {
                 return { ...masterItem, quantity: item.quantity };
             });
 
-            // Urutkan berdasarkan urutan master, lalu kelompokkan
             listItems.sort((a,b) => a.sortOrder - b.sortOrder);
             const categories = [...new Set(listItems.map(item => item.category))];
 
@@ -890,6 +887,11 @@ const App = {
         
         stockInDetail(targetPage, listDate) {
             const selectedList = App.db.get('shoppingLists').find(list => list.date === listDate);
+            if (!selectedList) {
+                App.utils.showToast('List belanja tidak ditemukan.', 'error');
+                return App.render.page('page-input-belanja-datang');
+            }
+
             targetPage.innerHTML = `
                 <div class="card">
                     <div class="card-header">
@@ -918,6 +920,7 @@ const App = {
             categories.forEach(category => {
                 let itemsHTML = '';
                 listItems.filter(item => item.category === category).forEach(item => {
+                    if (!item) return;
                     const displayUnit = item.purchaseUnit || item.unit;
                     itemsHTML += `<div class="item-row">
                         <label for="stockin-${item.id}" class="item-label" title="${item.name}">
@@ -962,6 +965,7 @@ const App = {
 
             let formHTML = '';
             itemsToRender.forEach(item => {
+                if (!item) return;
                 const inputId = `stockout-${item.name.replace(/\s+/g, '-')}`;
                 formHTML += `<div class="item-row">
                     <label for="${inputId}" class="item-label">
@@ -1154,7 +1158,12 @@ const App = {
             const masterItems = App.db.get('masterItems');
             const recipe = recipes[menuName];
 
-            targetPage.classList.remove('active'); // Hide main manager page
+            if (!recipe) {
+                App.utils.showToast('Resep tidak ditemukan.', 'error');
+                return App.render.page('page-manager-area');
+            }
+
+            targetPage.classList.remove('active');
             const tempContainer = document.createElement('div');
             tempContainer.id = 'page-edit-recipe';
             tempContainer.className = 'page active';
@@ -1432,6 +1441,7 @@ const App = {
                 const deductions = [];
                 
                 itemsToProcess.forEach(item => {
+                    if (!item) return;
                     const inputId = `stockout-${item.name.replace(/\s+/g, '-')}`;
                     const input = document.getElementById(inputId);
                     
@@ -1518,6 +1528,9 @@ const App = {
             if (id) {
                 // Edit existing item
                 const itemIndex = masterItems.findIndex(item => item.id == id);
+                if (itemIndex === -1) {
+                    return App.utils.showToast('Item tidak ditemukan.', 'error');
+                }
                 masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
                  App.utils.showToast('Barang berhasil diperbarui!', 'success');
             } else {
@@ -1535,7 +1548,7 @@ const App = {
             
             App.db.set('masterItems', masterItems);
             
-            // PERBAIKAN BUG #4: Mengganti .reset() dengan membersihkan field secara manual
+            // Clear form fields
             document.getElementById('edit-item-id').value = '';
             document.getElementById('item-name').value = '';
             document.getElementById('item-category').value = '';
@@ -1548,6 +1561,9 @@ const App = {
         
         editItem(id) {
             const item = App.db.get('masterItems').find(item => item.id == id);
+            if (!item) {
+                return App.utils.showToast('Item tidak ditemukan.', 'error');
+            }
             
             document.getElementById('edit-item-id').value = item.id;
             document.getElementById('item-name').value = item.name;
@@ -1610,6 +1626,10 @@ const App = {
         
         addIngredient(menuName) {
             const recipes = App.db.get('recipes');
+            if (!recipes[menuName]) {
+                return App.utils.showToast('Menu tidak ditemukan.', 'error');
+            }
+            
             const itemId = parseInt(document.getElementById('new-ingredient-item').value);
             const qty = parseFloat(document.getElementById('new-ingredient-qty').value);
             
@@ -1630,6 +1650,9 @@ const App = {
         deleteIngredient(menuName, itemId) {
             if (!confirm('Anda yakin ingin menghapus bahan ini dari resep?')) return;
             const recipes = App.db.get('recipes');
+            if (!recipes[menuName]) {
+                return App.utils.showToast('Menu tidak ditemukan.', 'error');
+            }
             recipes[menuName].ingredients = recipes[menuName].ingredients.filter(ing => ing.itemId != itemId);
             App.db.set('recipes', recipes);
             App.render.recipeEditor(document.getElementById('page-manager-area'), menuName);
@@ -1710,7 +1733,6 @@ const App = {
                 const actions = App.actions;
                 switch(action) {
                     case 'show-alert': App.utils.showToast(message, 'info'); break;
-                    // PERBAIKAN BUG #2: Menambahkan aksi yang hilang.
                     case 'select-pending-list': App.render.stockInDetail(document.getElementById('page-input-belanja-datang'), date); break;
                     case 'generate-shopping-list': actions.generateShoppingList(); break;
                     case 'save-shopping-list': actions.saveShoppingList(date); break;
@@ -1724,7 +1746,6 @@ const App = {
                     case 'save-item-order': actions.saveItemOrder(); break;
                     case 'cancel-shopping-list': actions.cancelShoppingList(date); break;
                     case 'edit-recipe': App.render.recipeEditor(document.getElementById('page-manager-area'), name); break;
-                    // PERBAIKAN BUG #3: Menggunakan 'menuName' bukan 'name'.
                     case 'add-ingredient': actions.addIngredient(menuName); break;
                     case 'delete-ingredient': actions.deleteIngredient(menuName, itemId); break;
                     case 'edit-display-config': App.render.displayConfigEditor(document.getElementById('page-manager-area')); break;
