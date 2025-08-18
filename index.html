@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V3.5 (Enhanced UI)</title>
-    <!-- Font Awesome Icons -->
+    <title>RestoApp - V3.5 (Enhanced UI & Bug Fixes)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- Import Font --- */
@@ -343,6 +342,8 @@
             flex-direction: column;
             align-items: center;
             gap: 0.75rem;
+            text-decoration: none; /* PERBAIKAN: Hapus underline dari link */
+            color: inherit;
         }
 
         .dashboard-card:hover {
@@ -560,7 +561,6 @@
         </header>
         
         <main id="main-content">
-            <!-- Dashboard Page -->
             <div id="page-dashboard" class="page active">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -606,7 +606,6 @@
                 </div>
             </div>
 
-            <!-- Other Pages -->
             <div id="page-input-belanja" class="page"></div>
             <div id="page-edit-belanja" class="page"></div>
             <div id="page-input-belanja-datang" class="page"></div>
@@ -619,13 +618,55 @@
 <script>
 const App = {
     data: {
+        // PERBAIKAN BUG #1: Menambahkan data awal agar aplikasi tidak error saat pertama kali dijalankan.
         initialMasterItems: [
-            // ... (same as your original data)
+            { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+            { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+            { id: 3, name: "Cabai Merah", category: "Sayuran", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+            { id: 4, name: "Ayam Paha", category: "Daging", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+            { id: 5, name: "Beras", category: "Pokok", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 25, stock: 0 },
+            { id: 6, name: "Minyak Goreng", category: "Pokok", unit: "liter", purchaseUnit: "jerigen", purchaseUnitConversion: 5, stock: 0 },
+            { id: 7, name: "Kecap Manis", category: "Bumbu", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0 },
+            { id: 8, name: "Garam", category: "Bumbu", unit: "gram", purchaseUnit: "bks", purchaseUnitConversion: 250, stock: 0 },
+            { id: 9, name: "Telur Ayam", category: "Daging", unit: "butir", purchaseUnit: "kg", purchaseUnitConversion: 16, stock: 0 },
+            { id: 10, name: "Teh Celup", category: "Minuman", unit: "pcs", purchaseUnit: "box", purchaseUnitConversion: 25, stock: 0 },
+            { id: 11, name: "Gula Pasir", category: "Pokok", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0 },
+            { id: 12, name: "Jeruk Nipis", category: "Sayuran", unit: "buah", purchaseUnit: "kg", purchaseUnitConversion: 8, stock: 0 },
+            { id: 13, name: "Saus Sambal", category: "Gudang", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0 },
+            { id: 14, name: "Gas LPG 12kg", category: "Operasional", unit: "tabung", purchaseUnit: "tabung", purchaseUnitConversion: 1, stock: 0 },
+            { id: 15, name: "Air Mineral Galon", category: "Operasional", unit: "galon", purchaseUnit: "galon", purchaseUnitConversion: 1, stock: 0 },
         ],
         initialRecipes: {
-            // ... (same as your original data)
+            "Nasi Goreng Spesial": {
+                unit: "porsi",
+                ingredients: [
+                    { itemId: 5, qty: 0.15 }, // Beras
+                    { itemId: 9, qty: 1 },    // Telur
+                    { itemId: 1, qty: 0.02 }, // Bawang Merah
+                    { itemId: 2, qty: 0.01 }, // Bawang Putih
+                    { itemId: 7, qty: 15 },   // Kecap Manis (ml)
+                    { itemId: 8, qty: 2 },    // Garam (gram)
+                    { itemId: 6, qty: 0.02 }  // Minyak (liter)
+                ]
+            },
+            "Ayam Bakar Madu": {
+                unit: "porsi",
+                ingredients: [
+                    { itemId: 4, qty: 0.25 }, // Ayam Paha
+                    { itemId: 7, qty: 20 },   // Kecap Manis
+                    { itemId: 2, qty: 0.015}, // Bawang Putih
+                    { itemId: 11, qty: 0.01}, // Gula Pasir
+                ]
+            },
+            "Es Teh Manis": {
+                unit: "gelas",
+                ingredients: [
+                    { itemId: 10, qty: 1 },   // Teh
+                    { itemId: 11, qty: 0.02 } // Gula
+                ]
+            }
         },
-        initialGudangItemIds: [34, 35, 37, 44, 38, 40, 41, 42, 45, 46, 91, 93, 109, 48, 33]
+        initialGudangItemIds: [13, 14, 15]
     },
     
     db: {
@@ -640,8 +681,10 @@ const App = {
         }
         if (!this.db.get('recipes')) this.db.set('recipes', this.data.initialRecipes);
         if (!this.db.get('gudangItemIds')) this.db.set('gudangItemIds', this.data.initialGudangItemIds);
+        
         const recipes = this.db.get('recipes');
         if (!this.db.get('menuKeluarActive')) this.db.set('menuKeluarActive', Object.keys(recipes));
+        
         if (!this.db.get('shoppingLists')) this.db.set('shoppingLists', []);
         if (!this.db.get('stockTransactions')) this.db.set('stockTransactions', []);
         
@@ -665,6 +708,9 @@ const App = {
             const targetPage = document.getElementById(pageId);
             if (!targetPage) return;
             
+            // Mengosongkan halaman sebelum render untuk mencegah tumpukan konten
+            targetPage.innerHTML = ''; 
+
             switch (pageId) {
                 case 'page-input-belanja': this.shoppingListForm(targetPage); break;
                 case 'page-edit-belanja': this.shoppingListEditor(targetPage, data); break;
@@ -687,9 +733,6 @@ const App = {
                         <div>
                             <button class="btn btn-secondary" data-page="page-dashboard">
                                 <i class="fas fa-arrow-left"></i> Kembali
-                            </button>
-                            <button class="btn btn-info" data-page="page-manager-area" data-scroll-to="db-editor">
-                                <i class="fas fa-database"></i> Edit Database
                             </button>
                         </div>
                     </div>
@@ -724,7 +767,7 @@ const App = {
                         <h3 class="category-title">
                             <i class="fas fa-folder"></i> ${category}
                         </h3>
-                        ${itemsHTML}
+                        <div class="item-list">${itemsHTML}</div>
                     </div>`;
             });
         },
@@ -772,7 +815,7 @@ const App = {
                             <i class="fas fa-cube"></i> ${item.name}
                         </label>
                         <input type="number" class="form-control" value="${item.quantity}" min="0" step="0.01">
-                        <button class="btn btn-danger btn-sm" data-action="delete-from-list" data-item-id="${item.id}">
+                        <button class="btn btn-danger btn-sm btn-icon" data-action="delete-from-list" data-item-id="${item.id}">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -817,14 +860,13 @@ const App = {
                             <button class="btn btn-secondary" data-page="page-dashboard">
                                 <i class="fas fa-arrow-left"></i> Kembali
                             </button>
-                            <button class="btn btn-info" data-page="page-manager-area" data-scroll-to="db-editor">
-                                <i class="fas fa-database"></i> Edit Database
-                            </button>
                         </div>
-                    </div>`;
+                    </div>
+                    <div class="dashboard-grid">`;
 
             if (pendingLists.length === 0) {
                 contentHTML += `
+                    </div>
                     <div class="alert alert-warning">
                         <i class="fas fa-info-circle"></i>
                         Tidak ada list belanja yang menunggu untuk dimasukkan ke stok.
@@ -833,12 +875,13 @@ const App = {
                 contentHTML += pendingLists.map(list => {
                     const date = new Date(list.date).toLocaleString('id-ID', {day: '2-digit', month: 'long', hour:'2-digit', minute:'2-digit'});
                     return `
-                        <div class="dashboard-card" data-action="select-pending-list" data-date="${list.date}">
+                        <a href="#" class="dashboard-card" data-action="select-pending-list" data-date="${list.date}">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <h3>List Belanja ${date}</h3>
                             <p style="font-size:0.8rem; color:#555;">${list.items.length} jenis barang</p>
-                        </div>`;
+                        </a>`;
                 }).join('');
+                contentHTML += `</div>`;
             }
             
             contentHTML += `</div>`;
@@ -866,8 +909,9 @@ const App = {
                 </div>`;
 
             const masterItems = App.db.get('masterItems');
-            const listItems = selectedList.items.map(item => ({...masterItems.find(mi => mi.id === item.id), quantity: item.quantity });
-            const categories = [...new Set(listItems.map(item => item.category))].sort();
+            const listItems = selectedList.items.map(item => ({...masterItems.find(mi => mi.id === item.id), quantity: item.quantity }));
+            listItems.sort((a,b) => a.sortOrder - b.sortOrder);
+            const categories = [...new Set(listItems.map(item => item.category))];
             
             const stockInForm = document.getElementById('stock-in-form');
             let formHTML = '';
@@ -889,7 +933,7 @@ const App = {
                         <h3 class="category-title">
                             <i class="fas fa-folder"></i> ${category}
                         </h3>
-                        ${itemsHTML}
+                        <div class="item-list">${itemsHTML}</div>
                     </div>`;
             });
             stockInForm.innerHTML = formHTML;
@@ -906,22 +950,25 @@ const App = {
                 title = "Ambil Barang dari Gudang";
                 icon = "fa-warehouse";
                 itemsToRender = gudangItemIds.map(id => masterItems.find(item => item.id === id)).filter(Boolean);
+                itemsToRender.sort((a,b) => a.sortOrder - b.sortOrder);
             } else {
                 const menuKeluarActive = App.db.get('menuKeluarActive');
                 const recipes = App.db.get('recipes');
                 title = "Input Menu Keluar";
                 icon = "fa-utensils";
                 itemsToRender = menuKeluarActive.map(key => ({ name: key, unit: recipes[key]?.unit || 'pcs' }));
+                itemsToRender.sort((a,b) => a.name.localeCompare(b.name));
             }
 
             let formHTML = '';
             itemsToRender.forEach(item => {
+                const inputId = `stockout-${item.name.replace(/\s+/g, '-')}`;
                 formHTML += `<div class="item-row">
-                    <label for="stockout-${item.name.replace(/\s+/g, '-')}" class="item-label">
+                    <label for="${inputId}" class="item-label">
                         <i class="fas fa-cube"></i> ${item.name}
                     </label>
-                    <input type="number" id="stockout-${item.name.replace(/\s+/g, '-')}" 
-                           class="form-control" placeholder="Jumlah" min="0" step="0.01">
+                    <input type="number" id="${inputId}" 
+                           class="form-control" placeholder="Jumlah" min="0" step="1">
                     <span class="item-unit">${item.unit}</span>
                 </div>`;
             });
@@ -937,12 +984,9 @@ const App = {
                             <button class="btn btn-secondary" data-page="page-dashboard">
                                 <i class="fas fa-arrow-left"></i> Kembali
                             </button>
-                            <button class="btn btn-info" data-page="page-manager-area" data-scroll-to="db-editor">
-                                <i class="fas fa-database"></i> Edit Database
-                            </button>
                         </div>
                     </div>
-                    <div class="category-group">${formHTML}</div>
+                    <div class="category-group"><div class="item-list">${formHTML}</div></div>
                     <button class="btn btn-primary" style="width:100%" 
                             data-action="process-stock-out" data-type="${type}">
                         <i class="fas fa-check"></i> Proses Pengeluaran Stok
@@ -989,12 +1033,12 @@ const App = {
                             <i class="fas fa-database"></i> Editor Database Barang
                         </h3>
                         <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-                            <button class="btn btn-primary" data-action="save-item-order">
+                            <button class="btn btn-success" data-action="save-item-order">
                                 <i class="fas fa-save"></i> Simpan Urutan
                             </button>
                         </div>
                         
-                        <div id="add-item-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1rem;">
+                        <div id="add-item-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius);">
                             <input type="hidden" id="edit-item-id">
                             <input class="form-control" type="text" id="item-name" placeholder="Nama Barang">
                             <input class="form-control" type="text" id="item-category" placeholder="Kategori">
@@ -1014,7 +1058,7 @@ const App = {
                                         <th>Nama</th>
                                         <th>Kategori</th>
                                         <th>Stok</th>
-                                        <th style="width: 100px;">Aksi</th>
+                                        <th style="width: 150px;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="db-editor-tbody"></tbody>
@@ -1051,7 +1095,7 @@ const App = {
                 row.dataset.itemId = item.id;
                 row.draggable = true;
                 row.innerHTML = `
-                    <td class="drag-handle"><i class="fas fa-grip-lines"></i></td>
+                    <td class="drag-handle" style="vertical-align: middle;"><i class="fas fa-grip-lines"></i></td>
                     <td>${item.name}</td>
                     <td>${item.category}</td>
                     <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
@@ -1093,7 +1137,7 @@ const App = {
                     <div>
                         <i class="fas fa-book"></i> Resep: ${key}
                     </div>
-                    <button class="btn btn-primary btn-sm" data-action="edit-recipe" data-name="${key}">
+                    <button class="btn btn-info btn-sm" data-action="edit-recipe" data-name="${key}">
                         <i class="fas fa-edit"></i> Edit Resep
                     </button>
                 </div>`).join('');
@@ -1110,13 +1154,18 @@ const App = {
             const masterItems = App.db.get('masterItems');
             const recipe = recipes[menuName];
 
+            targetPage.classList.remove('active'); // Hide main manager page
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'page-edit-recipe';
+            tempContainer.className = 'page active';
+
             let ingredientsHTML = recipe.ingredients.map(ing => {
                 const item = masterItems.find(mi => mi.id === ing.itemId);
                 return item ? `
                     <li class="item-row" style="grid-template-columns: 1fr 80px 50px;">
                         <span><i class="fas fa-cube"></i> ${item.name}</span>
                         <span>${ing.qty} ${item.unit}</span>
-                        <button class="btn btn-danger btn-sm" data-action="delete-ingredient" 
+                        <button class="btn btn-danger btn-sm btn-icon" data-action="delete-ingredient" 
                                 data-menu-name="${menuName}" data-item-id="${ing.itemId}">
                             <i class="fas fa-times"></i>
                         </button>
@@ -1126,7 +1175,7 @@ const App = {
             let optionsHTML = masterItems.sort((a,b)=>a.name.localeCompare(b.name))
                 .map(item => `<option value="${item.id}">${item.name}</option>`).join('');
 
-            targetPage.innerHTML = `
+            tempContainer.innerHTML = `
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">
@@ -1142,7 +1191,7 @@ const App = {
                         <h3 class="category-title">
                             <i class="fas fa-list"></i> Bahan Baku Saat Ini
                         </h3>
-                        <ul style="list-style:none; padding:0; margin:0;">${ingredientsHTML}</ul>
+                        <ul style="list-style:none; padding:0; margin:0;" class="item-list">${ingredientsHTML}</ul>
                     </div>
                     
                     <div class="category-group">
@@ -1159,6 +1208,7 @@ const App = {
                         </div>
                     </div>
                 </div>`;
+            targetPage.parentNode.appendChild(tempContainer);
         },
 
         displayConfigEditor(targetPage) {
@@ -1167,8 +1217,13 @@ const App = {
             const gudangItemIds = App.db.get('gudangItemIds');
             const menuKeluarActive = App.db.get('menuKeluarActive');
 
+            targetPage.classList.remove('active');
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'page-edit-display-config';
+            tempContainer.className = 'page active';
+
             let gudangHTML = masterItems.map(item => `
-                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor:pointer;">
                     <input type="checkbox" class="gudang-item-check" value="${item.id}" 
                            ${gudangItemIds.includes(item.id) ? 'checked' : ''}>
                     <i class="fas fa-cube"></i> ${item.name}
@@ -1176,14 +1231,14 @@ const App = {
             `).join('');
 
             let menuHTML = Object.keys(recipes).sort().map(name => `
-                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor:pointer;">
                     <input type="checkbox" class="menu-item-check" value="${name}" 
                            ${menuKeluarActive.includes(name) ? 'checked' : ''}>
                     <i class="fas fa-utensils"></i> ${name}
                 </label>
             `).join('');
 
-            targetPage.innerHTML = `
+            tempContainer.innerHTML = `
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">
@@ -1217,6 +1272,7 @@ const App = {
                         <i class="fas fa-save"></i> Simpan Perubahan Tampilan
                     </button>
                 </div>`;
+            targetPage.parentNode.appendChild(tempContainer);
         }
     },
     
@@ -1250,6 +1306,10 @@ const App = {
                 const quantity = parseFloat(row.querySelector('.form-control').value);
                 if (quantity > 0) newItems.push({ id, quantity });
             });
+            
+            if(newItems.length === 0) {
+                 return App.utils.showToast('List belanja tidak boleh kosong.', 'error');
+            }
 
             let allLists = App.db.get('shoppingLists');
             allLists.push({ date, status: 'pending', items: newItems });
@@ -1294,7 +1354,7 @@ const App = {
                     <i class="fas fa-cube"></i> ${item.name}
                 </label>
                 <input type="number" class="form-control" value="${quantity}" min="0" step="0.01">
-                <button class="btn btn-danger btn-sm" data-action="delete-from-list" data-item-id="${item.id}">
+                <button class="btn btn-danger btn-sm btn-icon" data-action="delete-from-list" data-item-id="${item.id}">
                     <i class="fas fa-times"></i>
                 </button>
             `;
@@ -1316,7 +1376,7 @@ const App = {
             
             const inputs = document.querySelectorAll('#stock-in-form .form-control[type="number"]');
             inputs.forEach(input => {
-                if (input.value && parseFloat(input.value) > 0) {
+                if (input.value && parseFloat(input.value) >= 0) {
                     const itemId = parseInt(input.dataset.itemId);
                     const receivedQty = parseFloat(input.value);
                     const itemIndex = masterItems.findIndex(item => item.id === itemId);
@@ -1379,27 +1439,34 @@ const App = {
                         const qtyOut = parseFloat(input.value);
                         
                         if (isMenuKeluar) {
+                            if (!item.ingredients) return;
                             item.ingredients.forEach(ingredient => {
                                 const stockItem = masterItems.find(mi => mi.id === ingredient.itemId);
+                                if (!stockItem) throw new Error(`Item resep tidak ditemukan di database: ID ${ingredient.itemId}`);
                                 const deduction = qtyOut * ingredient.qty;
                                 
                                 if ((stockItem.stock || 0) < deduction) {
-                                    throw new Error(`Stok ${stockItem.name} tidak cukup!`);
+                                    throw new Error(`Stok ${stockItem.name} tidak cukup! Dibutuhkan: ${deduction.toFixed(2)}, Tersedia: ${(stockItem.stock || 0).toFixed(2)}`);
                                 }
                                 
                                 deductions.push({ item, stockItem, deduction, qtyOut });
                             });
                         } else {
                             const stockItem = masterItems.find(mi => mi.id === item.id);
+                             if (!stockItem) throw new Error(`Item gudang tidak ditemukan di database: ID ${item.id}`);
                             
                             if ((stockItem.stock || 0) < qtyOut) {
-                                throw new Error(`Stok ${stockItem.name} tidak cukup!`);
+                                throw new Error(`Stok ${stockItem.name} tidak cukup! Dibutuhkan: ${qtyOut.toFixed(2)}, Tersedia: ${(stockItem.stock || 0).toFixed(2)}`);
                             }
                             
                             deductions.push({ stockItem, deduction: qtyOut, from: 'gudang' });
                         }
                     }
                 });
+                
+                if (deductions.length === 0) {
+                    return App.utils.showToast('Tidak ada barang yang diinput untuk dikeluarkan.', 'info');
+                }
 
                 deductions.forEach(d => {
                     const itemIndex = masterItems.findIndex(mi => mi.id === d.stockItem.id);
@@ -1408,7 +1475,7 @@ const App = {
                     
                     const notes = d.from === 'gudang' 
                         ? `Ambil dari gudang` 
-                        : `Menu keluar: ${d.qtyOut} pcs ${d.item.name}`;
+                        : `Menu keluar: ${d.qtyOut} ${d.item.unit || 'pcs'} ${d.item.name}`;
                     
                     transactions.push({ 
                         date: new Date().toISOString(), 
@@ -1435,10 +1502,10 @@ const App = {
         saveItem() {
             const id = document.getElementById('edit-item-id').value;
             const newItemData = {
-                name: document.getElementById('item-name').value,
-                category: document.getElementById('item-category').value,
-                unit: document.getElementById('item-unit').value,
-                purchaseUnit: document.getElementById('item-purchase-unit').value,
+                name: document.getElementById('item-name').value.trim(),
+                category: document.getElementById('item-category').value.trim(),
+                unit: document.getElementById('item-unit').value.trim(),
+                purchaseUnit: document.getElementById('item-purchase-unit').value.trim(),
                 purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1
             };
             
@@ -1452,6 +1519,7 @@ const App = {
                 // Edit existing item
                 const itemIndex = masterItems.findIndex(item => item.id == id);
                 masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
+                 App.utils.showToast('Barang berhasil diperbarui!', 'success');
             } else {
                 // Add new item
                 const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
@@ -1462,13 +1530,20 @@ const App = {
                     stock: 0, 
                     sortOrder: newSortOrder 
                 });
+                App.utils.showToast('Barang baru berhasil ditambahkan!', 'success');
             }
             
             App.db.set('masterItems', masterItems);
-            document.getElementById('add-item-form').reset();
+            
+            // PERBAIKAN BUG #4: Mengganti .reset() dengan membersihkan field secara manual
             document.getElementById('edit-item-id').value = '';
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-category').value = '';
+            document.getElementById('item-unit').value = '';
+            document.getElementById('item-purchase-unit').value = '';
+            document.getElementById('item-conversion').value = '';
+
             App.render.managerSubRenders();
-            App.utils.showToast('Barang berhasil disimpan!', 'success');
         },
         
         editItem(id) {
@@ -1478,22 +1553,24 @@ const App = {
             document.getElementById('item-name').value = item.name;
             document.getElementById('item-category').value = item.category;
             document.getElementById('item-unit').value = item.unit;
-            document.getElementById('item-purchase-unit').value = item.purchaseUnit;
-            document.getElementById('item-conversion').value = item.purchaseUnitConversion;
+            document.getElementById('item-purchase-unit').value = item.purchaseUnit || '';
+            document.getElementById('item-conversion').value = item.purchaseUnitConversion || '';
             
             document.getElementById('item-name').focus();
-            window.scrollTo(0, document.getElementById('add-item-form').offsetTop - 20);
+            document.getElementById('add-item-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
         
         deleteItem(id) {
             let masterItems = App.db.get('masterItems');
             const item = masterItems.find(item => item.id == id);
             
+            if (!item) return App.utils.showToast('Barang tidak ditemukan.', 'error');
+
             if ((item.stock || 0) > 0) {
-                return App.utils.showToast('Tidak dapat menghapus barang karena masih ada sisa stok.', 'error');
+                return App.utils.showToast('Tidak dapat menghapus, barang masih ada sisa stok.', 'error');
             }
             
-            if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) return;
+            if (!confirm(`Apakah Anda yakin ingin menghapus "${item.name}"?`)) return;
             
             masterItems = masterItems.filter(item => item.id != id);
             App.db.set('masterItems', masterItems);
@@ -1551,6 +1628,7 @@ const App = {
         },
         
         deleteIngredient(menuName, itemId) {
+            if (!confirm('Anda yakin ingin menghapus bahan ini dari resep?')) return;
             const recipes = App.db.get('recipes');
             recipes[menuName].ingredients = recipes[menuName].ingredients.filter(ing => ing.itemId != itemId);
             App.db.set('recipes', recipes);
@@ -1601,6 +1679,7 @@ const App = {
             
             const exportArea = document.getElementById('data-export-area');
             exportArea.value = exportText;
+            exportArea.select();
             
             navigator.clipboard.writeText(exportText)
                 .then(() => App.utils.showToast('Data untuk analisa berhasil disalin!', 'success'))
@@ -1616,6 +1695,9 @@ const App = {
             event.preventDefault();
             const { page, action, message, date, id, name, type, itemId, menuName, category, scrollTo } = target.dataset;
 
+            const tempPage = document.getElementById('page-edit-recipe') || document.getElementById('page-edit-display-config');
+            if(tempPage) tempPage.remove();
+
             if (page) {
                 App.render.page(page);
                 if (scrollTo) {
@@ -1628,6 +1710,8 @@ const App = {
                 const actions = App.actions;
                 switch(action) {
                     case 'show-alert': App.utils.showToast(message, 'info'); break;
+                    // PERBAIKAN BUG #2: Menambahkan aksi yang hilang.
+                    case 'select-pending-list': App.render.stockInDetail(document.getElementById('page-input-belanja-datang'), date); break;
                     case 'generate-shopping-list': actions.generateShoppingList(); break;
                     case 'save-shopping-list': actions.saveShoppingList(date); break;
                     case 'delete-from-list': actions.deleteFromList(itemId); break;
@@ -1640,7 +1724,8 @@ const App = {
                     case 'save-item-order': actions.saveItemOrder(); break;
                     case 'cancel-shopping-list': actions.cancelShoppingList(date); break;
                     case 'edit-recipe': App.render.recipeEditor(document.getElementById('page-manager-area'), name); break;
-                    case 'add-ingredient': actions.addIngredient(name); break;
+                    // PERBAIKAN BUG #3: Menggunakan 'menuName' bukan 'name'.
+                    case 'add-ingredient': actions.addIngredient(menuName); break;
                     case 'delete-ingredient': actions.deleteIngredient(menuName, itemId); break;
                     case 'edit-display-config': App.render.displayConfigEditor(document.getElementById('page-manager-area')); break;
                     case 'save-display-config': actions.saveDisplayConfig(); break;
@@ -1697,13 +1782,14 @@ const App = {
             let draggedItem = null;
             
             container.addEventListener('dragstart', e => {
-                if (e.target.classList.contains('editable-item-row') || e.target.tagName === 'TR') {
-                    draggedItem = e.target;
-                    setTimeout(() => e.target.classList.add('dragging'), 0);
+                const target = e.target.closest('[draggable="true"]');
+                if (target) {
+                    draggedItem = target;
+                    setTimeout(() => target.classList.add('dragging'), 0);
                 }
             });
             
-            container.addEventListener('dragend', e => {
+            container.addEventListener('dragend', () => {
                 if (draggedItem) {
                     draggedItem.classList.remove('dragging');
                     draggedItem = null;
@@ -1726,7 +1812,7 @@ const App = {
         
         getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll(
-                `${container.tagName === 'TBODY' ? 'tr' : '.editable-item-row'}:not(.dragging)`
+                `${container.tagName === 'TBODY' ? 'tr[draggable="true"]' : '.editable-item-row[draggable="true"]'}:not(.dragging)`
             )];
             
             return draggableElements.reduce((closest, child) => {
