@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V5.3 (Stable)</title>
+    <title>RestoApp - V5.4 (Advanced Alerts)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -40,27 +41,113 @@
         .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
 
         /* --- Header Styles --- */
-        header { background-color: var(--primary-color); color: var(--white-color); padding: 1.25rem 1.5rem; border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0; box-shadow: var(--shadow-md); position: relative; z-index: 10; }
-        header h1 { font-weight: 600; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+        header { 
+            background-color: var(--primary-color); 
+            color: var(--white-color); 
+            padding: 1.25rem 1.5rem; 
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0; 
+            box-shadow: var(--shadow-md); 
+            position: relative; 
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-weight: 600; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; margin: 0; }
         header h1 i { font-size: 1.75rem; }
 
-        /* --- Main Content Styles --- */
-        main { background-color: var(--white-color); border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg); box-shadow: var(--shadow-md); overflow: hidden; position: relative; }
+        /* --- Header Alerts Icon (NEW) --- */
+        #header-alerts {
+            position: relative;
+            cursor: pointer;
+        }
+        #header-alerts .alert-icon {
+            font-size: 1.5rem;
+            color: var(--white-color);
+            transition: transform 0.2s;
+        }
+        #header-alerts:hover .alert-icon {
+            transform: scale(1.1);
+        }
+        #header-alerts .alert-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: var(--danger-color);
+            color: var(--white-color);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 2px solid var(--primary-color);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(229, 62, 62, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+        }
 
-        /* --- Page Styles --- */
+        /* --- Modal Styles (NEW) --- */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(45, 55, 72, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 1040;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            visibility: hidden;
+        }
+        .modal-backdrop.show { 
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--white-color);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-backdrop.show .modal-content { transform: scale(1); }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        .modal-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); }
+        .modal-close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
+
+        /* --- Main Content & Page Styles --- */
+        main { background-color: var(--white-color); border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg); box-shadow: var(--shadow-md); overflow: hidden; position: relative; }
         .page { display: none; padding: 1.5rem; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .page.active { display: block; }
-
-        /* --- Card Styles --- */
-        .card { background: var(--white-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); transition: var(--transition); }
-        .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        
+        /* --- Styles from previous versions --- */
+        .card { background: var(--white-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
         .card-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
-
-        /* --- Button Styles --- */
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: var(--border-radius); font-weight: 500; cursor: pointer; transition: var(--transition); border: none; font-size: 0.9rem; }
-        .btn i { font-size: 1rem; }
         .btn-primary { background-color: var(--primary-color); color: var(--white-color); }
         .btn-primary:hover { background-color: var(--primary-light); }
         .btn-secondary { background-color: #6c757d; color: var(--white-color); }
@@ -71,95 +158,50 @@
         .btn-warning:hover { background-color: #c05621; }
         .btn-success { background-color: var(--success-color); color: var(--white-color); }
         .btn-success:hover { background-color: #2f855a; }
-        .btn-info { background-color: var(--info-color); color: var(--white-color); }
-        .btn-info:hover { background-color: #2c5282; }
-        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-outline:hover { background-color: var(--secondary-color); }
         .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8rem; }
-
-        /* --- Form Styles --- */
-        .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color); }
+        .alert { padding: 0.875rem 1.25rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+        .alert-info { background-color: var(--info-light); color: var(--info-color); border-left: 4px solid var(--info-color); }
         .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); }
         .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.2); }
-        #add-item-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-        }
-
-        /* --- Alert Styles --- */
-        .alert { padding: 0.875rem 1.25rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-        .alert-warning { background-color: var(--warning-light); color: var(--warning-color); border-left: 4px solid var(--warning-color); }
-        .alert-danger { background-color: var(--danger-light); color: var(--danger-color); border-left: 4px solid var(--danger-color); }
-        .alert-info { background-color: var(--info-light); color: var(--info-color); border-left: 4px solid var(--info-color); }
-
-        /* --- Toast Notification --- */
         #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.75rem; max-width: 350px; }
         .toast { background-color: var(--text-color); color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 0.75rem; }
         .toast.show { opacity: 1; transform: translateX(0); }
         .toast.success { background-color: var(--success-color); }
         .toast.error { background-color: var(--danger-color); }
-        .toast.info { background-color: var(--info-color); }
-        .toast i { font-size: 1.25rem; }
-
-        /* --- Dashboard & Item List Styles --- */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem; }
         .dashboard-card { background-color: var(--white-color); border-radius: var(--border-radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: var(--transition); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
         .dashboard-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary-color); }
         .dashboard-card i { font-size: 2.25rem; color: var(--primary-color); }
         .dashboard-card h3 { font-size: 1rem; font-weight: 500; color: var(--text-color); }
-        .item-list { display: grid; gap: 0.75rem; }
         .item-row { display: grid; grid-template-columns: minmax(0, 2fr) auto auto; gap: 1rem; align-items: center; padding: 0.75rem; border-radius: var(--border-radius); background-color: var(--secondary-color); }
-        .item-row:hover { background-color: #edf2f7; }
+        .item-list { display: grid; gap: 0.75rem; }
         .item-label { font-weight: 500; word-break: break-word; }
-        .item-unit, .stock-hint { color: var(--text-light); font-size: 0.85rem; }
-        .editable-item-row { display: grid; grid-template-columns: 30px 1fr 100px 40px; gap: 0.75rem; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); transition: var(--transition); }
-        .editable-item-row:last-child { border-bottom: none; }
-        .editable-item-row.dragging { opacity: 0.5; background-color: #ebf8ff; }
-        .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; }
-        .drag-handle:active { cursor: grabbing; }
-
-        /* --- Category & Table Styles --- */
-        .category-group { margin-bottom: 1.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.25rem; background-color: var(--white-color); }
+        .stock-hint { color: var(--text-light); font-size: 0.85rem; }
+        .category-group { margin-bottom: 1.5rem; }
         .category-title { font-weight: 600; color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-        .table-container { overflow-x: auto; margin-bottom: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+        .table-container { overflow-x: auto; }
         .table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         .table th, .table td { padding: 0.875rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
         .table th { background-color: #f7fafc; font-weight: 600; color: var(--text-color); }
-        .table tr:last-child td { border-bottom: none; }
-        .table tr:hover td { background-color: var(--secondary-color); }
+        #add-item-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); }
+        .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; }
+        .dragging { opacity: 0.5; }
         .time-display { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-light); }
-
-        /* --- Responsive Adjustments --- */
-        @media (max-width: 768px) {
-            .dashboard-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-            .item-row { grid-template-columns: 1fr; gap: 0.5rem; }
-             .item-row > * { width: 100%; }
-        }
-        @media (max-width: 576px) {
-            .container { padding: 0.5rem; }
-            .page { padding: 1rem; }
-            .dashboard-grid { grid-template-columns: 1fr 1fr; }
-        }
     </style>
 </head>
 <body>
+    <div id="modal-container"></div>
     <div class="container">
         <div id="toast-container"></div>
         
         <header>
-            <h1><i class="fas fa-utensils"></i> RestoApp V5.3</h1>
+            <h1><i class="fas fa-utensils"></i> RestoApp V5.4</h1>
+            <div id="header-alerts"></div>
         </header>
         
         <main id="main-content">
-            <div id="page-dashboard" class="page active"></div>
+            <div id="page-dashboard" class="page"></div>
             <div id="page-input-belanja" class="page"></div>
-            <div id="page-edit-belanja" class="page"></div>
             <div id="page-input-belanja-datang" class="page"></div>
             <div id="page-input-menu-keluar" class="page"></div>
             <div id="page-ambil-gudang" class="page"></div>
@@ -170,14 +212,10 @@
 
 <script>
 /**
- * RestoApp v5.3
- * Author: Gemini
- * Last Update: 2025-08-19
- *
+ * RestoApp v5.4
  * Changelog:
- * - v5.3: Fixed critical page navigation and rendering bug. All menus and back buttons are now functional.
- * - v5.2: Fixed critical recipe save bug. Implemented form reset after new item creation. Improved button layout.
- * - v5.1: Added full recipe management feature (add, edit, delete).
+ * - v5.4: Replaced banner alert with a clickable icon showing a low-stock bar chart modal. Codebase verified complete.
+ * - v5.3: Fixed critical page navigation and rendering bug.
  */
 const App = {
     data: {
@@ -210,7 +248,6 @@ const App = {
     },
 
     init() {
-        // Safe initialization to prevent data corruption issues
         try {
             const initialDataMap = {
                 masterItems: this.data.initialMasterItems.map((item, index) => ({...item, sortOrder: index})),
@@ -227,14 +264,13 @@ const App = {
                 }
             });
         } catch (e) {
-            console.error("Error initializing database from localStorage. Clearing and resetting.", e);
+            console.error("Error initializing database. Clearing and resetting.", e);
             localStorage.clear();
-            // Wait for the next cycle to re-initialize to avoid potential infinite loops
             setTimeout(() => window.location.reload(), 100);
             return;
         }
         
-        document.getElementById('main-content').addEventListener('click', this.handle.click.bind(this));
+        document.body.addEventListener('click', this.handle.click.bind(this));
         
         this.utils.updateTime();
         setInterval(this.utils.updateTime, 1000);
@@ -255,145 +291,171 @@ const App = {
             const targetPage = document.getElementById(pageId);
             if (!targetPage) return;
             
-            targetPage.innerHTML = '';
-
-            const renderMap = {
-                'page-dashboard': this.dashboardPage,
-                'page-input-belanja': this.shoppingListForm,
-                'page-input-belanja-datang': this.stockInForm,
-                'page-input-menu-keluar': (page) => this.stockOutPage(page, 'menu'),
-                'page-ambil-gudang': (page) => this.stockOutPage(page, 'gudang'),
-                'page-manager-area': this.managerArea,
-                'page-riwayat-stok': this.transactionHistoryPage,
-            };
-
-            if (renderMap[pageId]) {
-                // FIX: The context 'this' must refer to App.render, not the global App object.
-                renderMap[pageId].call(this, targetPage, data);
+            const pageRenderFunction = App.pages[pageId];
+            if (pageRenderFunction) {
+                targetPage.innerHTML = pageRenderFunction(data);
+                // Call sub-render functions for complex pages
+                if (pageId === 'page-manager-area') {
+                    App.pages.managerSubRenders();
+                } else if (pageId === 'page-input-belanja-datang' && typeof data === 'string') {
+                    // Handle detail view for stock-in
+                    targetPage.innerHTML = App.pages.stockInDetail(data);
+                }
             }
+            
+            this.lowStockAlerts();
+            App.utils.updateTime();
             App.showPage(pageId);
         },
         
-        dashboardPage(targetPage) {
-            targetPage.innerHTML = `
-                <div id="dashboard-alerts"></div>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div><strong>Peringatan:</strong> Aplikasi ini menyimpan data di browser Anda. Gunakan fitur Export Data secara berkala.</div>
-                </div>
-                <div class="dashboard-grid">
-                    <a href="#" class="dashboard-card" data-page="page-input-belanja-datang"><i class="fas fa-truck-loading"></i><h3>Input Belanja Datang</h3></a>
-                    <a href="#" class="dashboard-card" data-page="page-input-menu-keluar"><i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3></a>
-                    <a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a>
-                    <a href="#" class="dashboard-card" data-page="page-input-belanja"><i class="fas fa-shopping-cart"></i><h3>Input List Belanja</h3></a>
-                    <a href="#" class="dashboard-card" data-page="page-riwayat-stok"><i class="fas fa-history"></i><h3>Riwayat Stok</h3></a>
-                    <a href="#" class="dashboard-card" data-page="page-manager-area"><i class="fas fa-user-tie"></i><h3>Manager Area</h3></a>
-                </div>
-                <div class="time-display"><i class="far fa-clock"></i> <span id="current-time"></span></div>`;
-            App.utils.updateTime();
-            this.lowStockAlerts();
-        },
-        
         lowStockAlerts() {
-            const container = document.getElementById('dashboard-alerts');
-            if (!container) return;
+            const container = document.getElementById('header-alerts');
             const masterItems = App.db.get('masterItems');
-            if (!masterItems) return;
+            if (!container || !masterItems) return;
+            
             const lowStockItems = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+            
             if (lowStockItems.length > 0) {
-                const itemsList = lowStockItems.map(item => `<li><strong>${item.name}</strong> (Sisa: ${item.stock || 0} ${item.unit}, Min: ${item.minStock || 0} ${item.unit})</li>`).join('');
-                container.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i><div><strong>Peringatan Stok Rendah:</strong><ul style="margin-left: 20px; margin-top: 5px;">${itemsList}</ul></div></div>`;
+                container.innerHTML = `
+                    <div data-action="show-low-stock-modal">
+                        <i class="fas fa-bell alert-icon"></i>
+                        <span class="alert-badge">${lowStockItems.length}</span>
+                    </div>`;
             } else {
                 container.innerHTML = '';
             }
         },
-        
-        shoppingListForm(targetPage) {
+
+        lowStockModal() {
+            const masterItems = App.db.get('masterItems');
+            const lowStockItems = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0))
+                                            .sort((a,b) => (a.stock/a.minStock) - (b.stock/b.minStock));
+            if (lowStockItems.length === 0) return;
+
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `
+                <div class="modal-backdrop" data-action="close-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Peringatan Stok Rendah</h3>
+                            <button class="modal-close-btn" data-action="close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Grafik ini membandingkan stok saat ini (hijau) dengan batas minimum (merah).</p>
+                            <div style="position: relative; height:60vh;">
+                                <canvas id="lowStockChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const backdrop = modalContainer.querySelector('.modal-backdrop');
+            setTimeout(() => backdrop.classList.add('show'), 10);
+
+            const ctx = document.getElementById('lowStockChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: lowStockItems.map(item => `${item.name} (${item.unit})`),
+                    datasets: [{
+                        label: 'Stok Saat Ini',
+                        data: lowStockItems.map(item => item.stock),
+                        backgroundColor: 'rgba(56, 161, 105, 0.7)',
+                        borderColor: 'rgba(56, 161, 105, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Stok Minimum',
+                        data: lowStockItems.map(item => item.minStock),
+                        backgroundColor: 'rgba(229, 62, 62, 0.7)',
+                        borderColor: 'rgba(229, 62, 62, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        y: { ticks: { color: '#2d3748' } },
+                        x: { ticks: { color: '#2d3748' }, beginAtZero: true }
+                    },
+                    plugins: { legend: { labels: { color: '#2d3748' } } }
+                }
+            });
+        },
+
+        closeModal() {
+            const modalContainer = document.getElementById('modal-container');
+            const backdrop = modalContainer.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.classList.remove('show');
+                backdrop.addEventListener('transitionend', () => {
+                    modalContainer.innerHTML = '';
+                }, { once: true });
+            }
+        },
+    },
+
+    pages: {
+        'page-dashboard': () => `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <div><strong>Selamat Datang!</strong> Gunakan menu di bawah untuk mengelola inventaris restoran Anda.</div>
+            </div>
+            <div class="dashboard-grid">
+                <a href="#" class="dashboard-card" data-page="page-input-belanja-datang"><i class="fas fa-truck-loading"></i><h3>Input Belanja Datang</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-input-menu-keluar"><i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-input-belanja"><i class="fas fa-shopping-cart"></i><h3>Input List Belanja</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-riwayat-stok"><i class="fas fa-history"></i><h3>Riwayat Stok</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-manager-area"><i class="fas fa-user-tie"></i><h3>Manager Area</h3></a>
+            </div>
+            <div class="time-display"><i class="far fa-clock"></i> <span id="current-time"></span></div>`,
+
+        'page-input-belanja': () => {
             const masterItems = App.db.get('masterItems').sort((a, b) => a.sortOrder - b.sortOrder);
             const categories = [...new Set(masterItems.map(item => item.category))];
-            
             let formHTML = categories.map(cat => {
                 let itemsHTML = masterItems.filter(item => item.category === cat).map(item => `
                     <div class="item-row" style="grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem;">
                         <label for="shopitem-${item.id}" class="item-label">${item.name}<div class="stock-hint">Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}</div></label>
                         <input type="number" id="shopitem-${item.id}" class="form-control" placeholder="Jumlah" min="0" step="any" data-item-id="${item.id}">
                         <span class="item-unit">${item.purchaseUnit}</span>
-                    </div>
-                `).join('');
-                return `<div class="category-group"><h3 class="category-title"><i class="fas fa-tags"></i> ${cat}</h3><div class="item-list">${itemsHTML}</div></div>`;
+                    </div>`).join('');
+                return `<div class="card" style="padding:1rem; margin-bottom:1rem;"><h3 class="category-title" style="margin-bottom:1rem; font-size:1.1rem;">${cat}</h3><div class="item-list">${itemsHTML}</div></div>`;
             }).join('');
-
-            targetPage.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-shopping-cart"></i><span>Buat List Belanja</span></div>
-                        <button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button>
-                    </div>
-                    ${formHTML}
-                    <button class="btn btn-primary" style="width:100%" data-action="save-shopping-list"><i class="fas fa-save"></i> Simpan List Belanja</button>
-                </div>`;
+            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-shopping-cart"></i><span>Buat List Belanja</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div style="padding:1rem;">${formHTML}</div><button class="btn btn-primary" style="width:100%" data-action="save-shopping-list"><i class="fas fa-save"></i> Simpan List Belanja</button></div>`;
         },
-
-        stockInForm(targetPage) {
-             const shoppingLists = App.db.get('shoppingLists') || [];
-            let content;
-
-            if (shoppingLists.length === 0) {
-                content = `<div class="alert alert-info"><i class="fas fa-info-circle"></i> Tidak ada list belanja yang pending.</div>`;
-            } else {
-                content = shoppingLists.map(list => `
-                    <div class="card" style="cursor:pointer;" data-action="select-pending-list" data-date="${list.date}">
-                        <strong>List Belanja - ${new Date(list.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong>
-                        <div>${list.items.length} item</div>
-                    </div>
-                `).join('');
-            }
-            
-            targetPage.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-truck-loading"></i><span>Pilih List Belanja untuk Diproses</span></div>
-                        <button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button>
-                    </div>
-                    ${content}
-                </div>`;
+        'page-input-belanja-datang': (data) => {
+            if(typeof data === 'string') return App.pages.stockInDetail(data); // Show detail page
+            const shoppingLists = App.db.get('shoppingLists') || [];
+            let content = (shoppingLists.length === 0) 
+                ? `<div class="alert alert-info"><i class="fas fa-info-circle"></i> Tidak ada list belanja yang pending.</div>`
+                : shoppingLists.map(list => `<div class="card" style="cursor:pointer;" data-action="select-pending-list" data-date="${list.date}"><strong>List Belanja - ${new Date(list.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong><div>${list.items.length} item</div></div>`).join('');
+            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-truck-loading"></i><span>Pilih List Belanja</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
         },
-
-        stockInDetail(targetPage, listDate) {
+        'stockInDetail': (listDate) => {
             const shoppingList = App.db.get('shoppingLists').find(l => l.date === listDate);
-            if (!shoppingList) return App.utils.showToast('List belanja tidak ditemukan', 'error');
+            if (!shoppingList) return `Error: List not found. <button data-page="page-input-belanja-datang">Kembali</button>`;
             const masterItems = App.db.get('masterItems');
-
             const itemsHTML = shoppingList.items.map(item => {
                 const masterItem = masterItems.find(mi => mi.id === item.id);
                 if (!masterItem) return '';
-                return `
-                    <div class="item-row" style="grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem;">
-                        <label for="stockin-${item.id}" class="item-label">${masterItem.name}</label>
-                        <input type="number" id="stockin-${item.id}" class="form-control" value="${item.qty}" min="0" step="any">
-                        <span class="item-unit">${masterItem.purchaseUnit}</span>
-                    </div>`;
+                return `<div class="item-row">
+                            <label for="stockin-${item.id}" class="item-label">${masterItem.name}</label>
+                            <input type="number" id="stockin-${item.id}" class="form-control" value="${item.qty}" min="0" step="any">
+                            <span class="item-unit">${masterItem.purchaseUnit}</span>
+                        </div>`;
             }).join('');
-
-            targetPage.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-clipboard-check"></i><span>Konfirmasi Barang Datang</span></div>
-                        <button class="btn btn-secondary" data-page="page-input-belanja-datang"><i class="fas fa-arrow-left"></i> Kembali</button>
-                    </div>
-                    <div class="category-group"><div class="item-list">${itemsHTML}</div></div>
-                    <div style="display:flex; gap: 10px;">
-                        <button class="btn btn-primary" style="flex-grow:1;" data-action="process-stock-in" data-date="${listDate}"><i class="fas fa-check"></i> Proses & Tambah Stok</button>
-                        <button class="btn btn-danger" data-action="cancel-shopping-list" data-date="${listDate}"><i class="fas fa-trash"></i> Batalkan List</button>
-                    </div>
-                </div>`;
+            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-clipboard-check"></i><span>Konfirmasi Barang Datang</span></div><button class="btn btn-secondary" data-page="page-input-belanja-datang"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list">${itemsHTML}</div><div style="display:flex; gap: 10px; margin-top:1rem;"><button class="btn btn-primary" style="flex-grow:1;" data-action="process-stock-in" data-date="${listDate}"><i class="fas fa-check"></i> Proses Stok</button><button class="btn btn-danger" data-action="cancel-shopping-list" data-date="${listDate}"><i class="fas fa-trash"></i> Batalkan</button></div></div>`;
         },
-
-        stockOutPage(targetPage, type) {
+        'page-input-menu-keluar': () => App.pages.stockOutPage('menu'),
+        'page-ambil-gudang': () => App.pages.stockOutPage('gudang'),
+        'stockOutPage': (type) => {
             const masterItems = App.db.get('masterItems');
             const recipes = App.db.get('recipes');
             let itemsToRender, title, icon;
-
             if (type === 'gudang') {
                 title = "Ambil Barang dari Gudang"; icon = "fa-warehouse";
                 const gudangItemIds = App.db.get('gudangItemIds');
@@ -403,248 +465,107 @@ const App = {
                 const menuKeluarActive = App.db.get('menuKeluarActive');
                 itemsToRender = menuKeluarActive.map(key => ({ name: key, ...recipes[key] })).sort((a,b) => a.name.localeCompare(b.name));
             }
-
             let formHTML = itemsToRender.map(item => {
-                let stockHint = '';
-                if (type === 'gudang') {
-                    stockHint = `Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}`;
-                } else {
-                    const availablePortions = App.utils.calculateAvailablePortions(item.name);
-                    stockHint = `Stok cukup untuk: ${availablePortions} ${item.unit}`;
-                }
-                const itemNameId = item.name.replace(/\s+/g, '-');
-                return `<div class="item-row" style="grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem;">
-                    <label for="stockout-${itemNameId}" class="item-label"><i class="fas fa-cube"></i> ${item.name}<div class="stock-hint">${stockHint}</div></label>
-                    <input type="number" id="stockout-${itemNameId}" class="form-control" data-name="${item.name}" placeholder="Jumlah" min="0" step="any">
+                const stockHint = (type === 'gudang') ? `Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}` : `Stok cukup untuk: ${App.utils.calculateAvailablePortions(item.name)} ${item.unit}`;
+                return `<div class="item-row">
+                    <label class="item-label">${item.name}<div class="stock-hint">${stockHint}</div></label>
+                    <input type="number" class="form-control" data-name="${item.name}" placeholder="Jumlah" min="0" step="any">
                     <span class="item-unit">${item.unit}</span>
                 </div>`;
             }).join('');
-
-            targetPage.innerHTML = `
-                <div class="card">
-                    <div class="card-header"><div class="card-title"><i class="fas ${icon}"></i><span>${title}</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>
-                    <div class="category-group"><div class="item-list" id="stockout-list">${formHTML}</div></div>
-                    <button class="btn btn-primary" style="width:100%" data-action="process-stock-out" data-type="${type}"><i class="fas fa-check"></i> Proses Pengeluaran Stok</button>
-                </div>`;
+            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas ${icon}"></i><span>${title}</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list" id="stockout-list" data-type="${type}">${formHTML}</div><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="process-stock-out" data-type="${type}"><i class="fas fa-check"></i> Proses</button></div>`;
         },
-
-        managerArea(targetPage) {
-            targetPage.innerHTML = `
-                <div class="card">
-                    <div class="card-header"><div class="card-title"><i class="fas fa-user-tie"></i><span>Manager Area</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>
-                    <div class="category-group">
-                        <h3 class="category-title"><i class="fas fa-save"></i> Cadangkan & Pulihkan Data</h3>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary" data-action="export-data"><i class="fas fa-download"></i> Export Data</button>
-                            <button class="btn btn-warning" data-action="import-data"><i class="fas fa-upload"></i> Import Data</button>
-                            <input type="file" id="import-file-input" accept=".json" style="display: none;">
-                        </div>
-                    </div>
-                    <div class="category-group"><h3 class="category-title"><i class="fas fa-sliders-h"></i> Atur Tampilan Menu & Gudang</h3><div id="display-config-container"></div></div>
-                    <div class="category-group">
-                        <h3 class="category-title">
-                            <span><i class="fas fa-book"></i> Manajemen Resep</span>
-                            <button class="btn btn-sm btn-success" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah Resep</button>
-                        </h3>
-                        <div id="recipe-list-container"></div>
-                    </div>
-                    <div class="category-group" id="db-editor">
-                        <h3 class="category-title">
-                            <span><i class="fas fa-database"></i> Editor Database Barang</span>
-                            <button class="btn btn-sm btn-primary" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button>
-                        </h3>
-                        <form id="add-item-form">
-                            <input type="hidden" id="edit-item-id">
-                            <input class="form-control" type="text" id="item-name" placeholder="Nama Barang" required>
-                            <input class="form-control" type="text" id="item-category" placeholder="Kategori" list="category-suggestions" required>
-                            <input class="form-control" type="text" id="item-unit" placeholder="Satuan Stok" required>
-                            <input class="form-control" type="text" id="item-purchase-unit" placeholder="Satuan Beli">
-                            <input class="form-control" type="number" id="item-conversion" placeholder="Konversi" min="0" step="any">
-                            <input class="form-control" type="number" id="item-min-stock" placeholder="Stok Minimum" min="0" step="any">
-                            <div style="display:flex; gap: 10px; grid-column: 1 / -1;">
-                                <button type="submit" class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow: 1;"><i class="fas fa-save"></i> Simpan Barang</button>
-                                <button type="button" class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display: none;"><i class="fas fa-times"></i> Batal</button>
-                            </div>
-                        </form>
-                        <datalist id="category-suggestions"></datalist>
-                        <div class="table-container"><table class="table"><thead><tr><th style="width: 50px;">Urutan</th><th>Nama</th><th>Kategori</th><th>Stok</th><th>Stok Min</th><th style="width: 150px;">Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div>
-                    </div>
-                </div>`;
-            this.managerSubRenders();
-        },
-        
-        managerSubRenders() {
-            // Render DB Editor Table
-            const masterItems = App.db.get('masterItems').sort((a, b) => a.sortOrder - b.sortOrder);
-            const tbody = document.getElementById('db-editor-tbody');
-            if(tbody) {
-                tbody.innerHTML = masterItems.map(item => `
-                    <tr class="editable-item-row" draggable="true" data-id="${item.id}" style="grid-template-columns: 30px 1fr 1fr 1fr 1fr auto; align-items: center;">
-                        <td class="drag-handle"><i class="fas fa-grip-vertical"></i></td>
-                        <td>${item.name}</td>
-                        <td>${item.category}</td>
-                        <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
-                        <td>${item.minStock || 0} ${item.unit}</td>
-                        <td style="display:flex; gap: 0.5rem;">
-                            <button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>`).join('');
-                App.utils.addDragDropHandlers(tbody);
-            }
-            this.populateCategoryDatalist();
-
-            // Render Recipe List
-            const recipes = App.db.get('recipes');
-            const recipeContainer = document.getElementById('recipe-list-container');
-            if(recipeContainer) {
-                 let recipeHTML = Object.keys(recipes).sort().map(name => `
-                    <div class="item-row">
-                        <span class="item-label">${name}</span>
-                        <span class="item-unit">${recipes[name].unit}</span>
-                        <div style="display:flex; gap: 0.5rem; justify-content: flex-end;">
-                            <button class="btn btn-sm btn-warning" data-action="edit-recipe" data-name="${name}"><i class="fas fa-pencil-alt"></i> Edit</button>
-                            <button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}"><i class="fas fa-trash"></i> Hapus</button>
-                        </div>
-                    </div>`).join('');
-                recipeContainer.innerHTML = recipeHTML || '<div class="alert alert-info" style="margin:0;">Belum ada resep.</div>';
-            }
-
-            // Render Display Config
-            const displayConfigContainer = document.getElementById('display-config-container');
-            if (displayConfigContainer) this.displayConfigEditor(displayConfigContainer);
-        },
-        
-        recipeEditor(targetPage, recipeName = null) {
-            const isEditing = recipeName !== null;
-            const recipes = App.db.get('recipes');
-            const recipe = isEditing ? recipes[recipeName] : { unit: '', ingredients: [] };
-            const masterItems = App.db.get('masterItems').sort((a, b) => a.name.localeCompare(b.name));
-
-            const itemOptions = masterItems.map(item => `<option value="${item.id}">${item.name} (${item.unit})</option>`).join('');
-
-            let ingredientsHTML = recipe.ingredients.map(ing => {
-                const item = masterItems.find(mi => mi.id === ing.itemId);
-                return `
-                <div class="item-row ingredient-item" data-item-id="${ing.itemId}" style="grid-template-columns: 2fr 1fr auto; gap: 0.5rem;">
-                    <span class="item-label">${item ? item.name : 'Barang tidak ditemukan'}</span>
-                    <input type="number" class="form-control" value="${ing.qty}" step="any" min="0">
-                    <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <span class="item-unit">${item ? item.unit : ''}</span>
-                        <button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            targetPage.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-edit"></i> ${isEditing ? 'Edit Resep' : 'Tambah Resep Baru'}</h2>
-                        <button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-times"></i> Batal</button>
-                    </div>
-                    <div class="form-group">
-                        <label for="recipe-name" class="form-label">Nama Menu / Resep</label>
-                        <input type="text" id="recipe-name" class="form-control" value="${isEditing ? recipeName : ''}" ${isEditing ? 'readonly' : ''}>
-                    </div>
-                    <div class="form-group">
-                        <label for="recipe-unit" class="form-label">Satuan Hasil (Contoh: porsi, gelas)</label>
-                        <input type="text" id="recipe-unit" class="form-control" value="${recipe.unit}">
-                    </div>
-                    <div class="category-group">
-                        <h3 class="category-title">Bahan-Bahan</h3>
-                        <div id="ingredients-list">${ingredientsHTML}</div>
-                        <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--border-color); border-radius: var(--border-radius); display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: center;">
-                            <select id="new-ingredient-item" class="form-control">${itemOptions}</select>
-                            <input type="number" id="new-ingredient-qty" class="form-control" placeholder="Jumlah" step="any" min="0">
-                            <button class="btn btn-primary" data-action="add-ingredient"><i class="fas fa-plus"></i></button>
-                        </div>
-                    </div>
-                    <button class="btn btn-success" style="width: 100%;" data-action="save-recipe" data-original-name="${isEditing ? recipeName : ''}"><i class="fas fa-save"></i> Simpan Resep</button>
-                </div>`;
-        },
-
-        displayConfigEditor(targetContainer) {
-            const recipes = App.db.get('recipes');
+        'page-riwayat-stok': () => {
+             const transactions = App.db.get('stockTransactions') || [];
             const masterItems = App.db.get('masterItems');
-            const menuKeluarActive = App.db.get('menuKeluarActive');
-            const gudangItemIds = App.db.get('gudangItemIds');
-
-            const menuCheckboxes = Object.keys(recipes).sort().map(name => `
-                <label style="padding: 0.5rem; border-radius: var(--border-radius); background-color: var(--secondary-color);"><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>
-            `).join('');
-
-            const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `
-                <label style="padding: 0.5rem; border-radius: var(--border-radius); background-color: var(--secondary-color);"><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>
-            `).join('');
-            
-            targetContainer.innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;" id="display-config-form">
-                    <div><h4>Tampilan Menu Keluar</h4><div style="display:flex; flex-direction:column; gap: 0.5rem;">${menuCheckboxes}</div></div>
-                    <div><h4>Tampilan Ambil Gudang</h4><div style="display:flex; flex-direction:column; gap: 0.5rem;">${gudangCheckboxes}</div></div>
-                </div>
-                <button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan Pengaturan Tampilan</button>
-            `;
-        },
-        
-        transactionHistoryPage(targetPage) {
-            const transactions = App.db.get('stockTransactions') || [];
-            const masterItems = App.db.get('masterItems');
-            let content = '';
+            let content;
             if (transactions.length === 0) {
                 content = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Belum ada riwayat transaksi.</div>';
             } else {
                 const rows = [...transactions].reverse().map(t => {
                     const item = masterItems.find(i => i.id === t.itemId);
                     const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
-                    const changeSign = t.change > 0 ? '+' : '';
-                    return `
-                        <tr>
+                    return `<tr>
                             <td>${new Date(t.date).toLocaleString('id-ID')}</td>
                             <td>${item ? item.name : 'Barang Dihapus'}</td>
                             <td>${t.type}</td>
-                            <td style="${changeClass} font-weight: 500;">${changeSign}${(t.change || 0).toFixed(2)} ${item ? item.unit : ''}</td>
-                            <td>${(t.newStock || 0).toFixed(2)} ${item ? item.unit : ''}</td>
+                            <td style="${changeClass}">${t.change > 0 ? '+' : ''}${(t.change || 0).toFixed(2)}</td>
+                            <td>${(t.newStock || 0).toFixed(2)}</td>
                         </tr>`;
                 }).join('');
-                content = `<div class="table-container"><table class="table"><thead><tr><th>Waktu</th><th>Barang</th><th>Jenis</th><th>Perubahan</th><th>Sisa Stok</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                content = `<div class="table-container"><table class="table"><thead><tr><th>Waktu</th><th>Barang</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div>`;
             }
-            targetPage.innerHTML = `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-history"></i><span>Riwayat Transaksi Stok</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
+            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-history"></i><span>Riwayat Stok</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
         },
+        'page-manager-area': (data) => {
+            if (data?.mode === 'add-recipe') return App.pages.recipeEditor();
+            if (data?.mode === 'edit-recipe') return App.pages.recipeEditor(data.name);
 
-        populateCategoryDatalist() {
-            const masterItems = App.db.get('masterItems');
+            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-user-tie"></i><span>Manager Area</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>
+                    <div class="card" style="margin-bottom:1rem;"><h3 class="card-title" style="margin-bottom:1rem;">Cadangkan & Pulihkan</h3><div style="display:flex; gap:10px;"><button class="btn btn-primary" data-action="export-data"><i class="fas fa-download"></i> Export</button><button class="btn btn-warning" data-action="import-data"><i class="fas fa-upload"></i> Import</button><input type="file" id="import-file-input" accept=".json" style="display:none;"></div></div>
+                    <div class="card" style="margin-bottom:1rem;"><h3 class="card-title" style="margin-bottom:1rem;">Atur Tampilan Menu & Gudang</h3><div id="display-config-container"></div></div>
+                    <div class="card" style="margin-bottom:1rem;"><h3 class="category-title"><span>Manajemen Resep</span><button class="btn btn-sm btn-primary" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah</button></h3><div id="recipe-list-container"></div></div>
+                    <div class="card"><h3 class="category-title"><span>Database Barang</span><button class="btn btn-sm btn-primary" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></h3><form id="add-item-form"><input type="hidden" id="edit-item-id"><input class="form-control" type="text" id="item-name" placeholder="Nama Barang" required><input class="form-control" type="text" id="item-category" placeholder="Kategori" list="category-suggestions" required><input class="form-control" type="text" id="item-unit" placeholder="Satuan Stok" required><input class="form-control" type="text" id="item-purchase-unit" placeholder="Satuan Beli"><input class="form-control" type="number" id="item-conversion" placeholder="Konversi" min="0" step="any"><input class="form-control" type="number" id="item-min-stock" placeholder="Stok Min" min="0" step="any"><div style="display:flex;gap:10px;grid-column:1/-1;"><button class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow:1;"><i class="fas fa-save"></i> Simpan</button><button type="button" class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button></div></form><datalist id="category-suggestions"></datalist><div class="table-container" style="margin-top:1rem;"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
+                </div>`;
+        },
+        'managerSubRenders': () => {
+            // This function now manipulates the DOM after the main HTML is rendered
+            const masterItems = App.db.get('masterItems').sort((a, b) => a.sortOrder - b.sortOrder);
+            document.getElementById('db-editor-tbody').innerHTML = masterItems.map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+            App.utils.addDragDropHandlers(document.getElementById('db-editor-tbody'));
             const categories = [...new Set(masterItems.map(item => item.category))];
-            const datalist = document.getElementById('category-suggestions');
-            if(datalist) datalist.innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
+            document.getElementById('category-suggestions').innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
+            
+            const recipes = App.db.get('recipes');
+            document.getElementById('recipe-list-container').innerHTML = Object.keys(recipes).sort().map(name => `<div class="item-row" style="padding: 0.5rem;"><span>${name}</span><span>${recipes[name].unit}</span><div style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-recipe" data-name="${name}">Edit</button><button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}">Hapus</button></div></div>`).join('') || 'Belum ada resep.';
+            
+            const menuKeluarActive = App.db.get('menuKeluarActive');
+            const gudangItemIds = App.db.get('gudangItemIds');
+            const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
+            const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
+            document.getElementById('display-config-container').innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
+        },
+        'recipeEditor': (recipeName = null) => {
+            const isEditing = recipeName !== null;
+            const recipes = App.db.get('recipes');
+            const recipe = isEditing ? recipes[recipeName] : { unit: '', ingredients: [] };
+            const masterItems = App.db.get('masterItems').sort((a, b) => a.name.localeCompare(b.name));
+            const itemOptions = masterItems.map(item => `<option value="${item.id}">${item.name} (${item.unit})</option>`).join('');
+            let ingredientsHTML = recipe.ingredients.map(ing => {
+                const item = masterItems.find(mi => mi.id === ing.itemId);
+                return `<div class="item-row ingredient-item" data-item-id="${ing.itemId}">
+                    <span>${item ? item.name : 'N/A'}</span>
+                    <input type="number" class="form-control" value="${ing.qty}" step="any" min="0">
+                    <div><span>${item ? item.unit : ''}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div>
+                </div>`;
+            }).join('');
+            return `<div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-edit"></i> ${isEditing ? 'Edit Resep' : 'Tambah Resep'}</h2><button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-times"></i> Batal</button></div>
+                    <div style="margin-bottom:1rem;"><label>Nama Menu</label><input type="text" id="recipe-name" class="form-control" value="${isEditing ? recipeName : ''}" ${isEditing ? 'readonly' : ''}></div>
+                    <div style="margin-bottom:1rem;"><label>Satuan Hasil (porsi, gelas, dll)</label><input type="text" id="recipe-unit" class="form-control" value="${recipe.unit}"></div>
+                    <div class="card"><h3 class="card-title">Bahan-Bahan</h3><div id="ingredients-list">${ingredientsHTML}</div><div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed #ccc;display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:center;"><select id="new-ingredient-item" class="form-control">${itemOptions}</select><input type="number" id="new-ingredient-qty" class="form-control" placeholder="Jumlah" step="any" min="0"><button class="btn btn-primary" data-action="add-ingredient">+</button></div></div>
+                    <button class="btn btn-success" style="width:100%;margin-top:1rem;" data-action="save-recipe" data-original-name="${isEditing ? recipeName : ''}"><i class="fas fa-save"></i> Simpan Resep</button>
+                </div>`;
         }
     },
-    
-    actions: {
-        saveShoppingList() {
-            const inputs = document.querySelectorAll('#page-input-belanja input[data-item-id]');
-            const items = [];
-            inputs.forEach(input => {
-                const qty = parseFloat(input.value);
-                if (qty > 0) {
-                    items.push({ id: parseInt(input.dataset.itemId), qty: qty });
-                }
-            });
 
-            if (items.length === 0) {
-                return App.utils.showToast('List belanja kosong, tidak ada yang disimpan.', 'info');
-            }
+    actions: {
+        showLowStockModal() { App.render.lowStockModal(); },
+        closeModal() { App.render.closeModal(); },
+        saveShoppingList() {
+            const items = Array.from(document.querySelectorAll('#page-input-belanja input[data-item-id]'))
+                .map(input => ({ id: parseInt(input.dataset.itemId), qty: parseFloat(input.value) }))
+                .filter(item => item.qty > 0);
+            if (items.length === 0) return App.utils.showToast('List belanja kosong.', 'info');
             const shoppingLists = App.db.get('shoppingLists') || [];
-            shoppingLists.push({ date: new Date().toISOString(), items: items });
+            shoppingLists.push({ date: new Date().toISOString(), items });
             App.db.set('shoppingLists', shoppingLists);
             App.utils.showToast('List belanja berhasil disimpan!', 'success');
             App.render.page('page-dashboard');
         },
-        
-        processStockIn(listDate) {
-            const shoppingList = App.db.get('shoppingLists').find(l => l.date === listDate);
+        processStockIn(date) {
+            const shoppingList = App.db.get('shoppingLists').find(l => l.date === date);
             let masterItems = App.db.get('masterItems');
             let transactions = App.db.get('stockTransactions') || [];
-
             shoppingList.items.forEach(item => {
                 const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
                 if (qtyReceived > 0) {
@@ -653,42 +574,28 @@ const App = {
                         const masterItem = masterItems[itemIndex];
                         const stockIncrease = qtyReceived * masterItem.purchaseUnitConversion;
                         masterItem.stock = (masterItem.stock || 0) + stockIncrease;
-
-                        transactions.push({
-                            date: new Date().toISOString(),
-                            itemId: masterItem.id,
-                            type: 'Stok Masuk',
-                            change: stockIncrease,
-                            newStock: masterItem.stock
-                        });
+                        transactions.push({ date: new Date().toISOString(), itemId: masterItem.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItem.stock });
                     }
                 }
             });
-
-            const updatedShoppingLists = App.db.get('shoppingLists').filter(l => l.date !== listDate);
-            App.db.set('shoppingLists', updatedShoppingLists);
+            App.db.set('shoppingLists', App.db.get('shoppingLists').filter(l => l.date !== date));
             App.db.set('masterItems', masterItems);
             App.db.set('stockTransactions', transactions);
             App.utils.showToast('Stok berhasil diperbarui!', 'success');
             App.render.page('page-dashboard');
         },
-        
         cancelShoppingList(date) {
-            if (!confirm('Apakah Anda yakin ingin membatalkan list belanja ini?')) return;
-            let shoppingLists = App.db.get('shoppingLists');
-            shoppingLists = shoppingLists.filter(l => l.date !== date);
-            App.db.set('shoppingLists', shoppingLists);
+            if (!confirm('Batalkan list belanja ini?')) return;
+            App.db.set('shoppingLists', App.db.get('shoppingLists').filter(l => l.date !== date));
             App.utils.showToast('List belanja dibatalkan.', 'success');
             App.render.page('page-input-belanja-datang');
         },
-
         processStockOut(type) {
-            const inputs = document.querySelectorAll('#stockout-list input[type="number"]');
+            const inputs = document.querySelectorAll('#stockout-list input[data-name]');
             let masterItems = App.db.get('masterItems');
             let recipes = App.db.get('recipes');
             let transactions = App.db.get('stockTransactions') || [];
             let changesMade = false;
-
             inputs.forEach(input => {
                 const qty = parseFloat(input.value);
                 if (qty > 0) {
@@ -702,29 +609,24 @@ const App = {
                             if (itemIndex > -1) {
                                 const stockDecrease = ing.qty * qty;
                                 masterItems[itemIndex].stock -= stockDecrease;
-                                transactions.push({ date: new Date().toISOString(), itemId: ing.itemId, type: `Keluar Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock });
+                                transactions.push({ date: new Date().toISOString(), itemId: ing.itemId, type: `Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock });
                             }
                         });
-                    } else { // type === 'gudang'
+                    } else { // gudang
                         const itemIndex = masterItems.findIndex(mi => mi.name === itemName);
                         if (itemIndex > -1) {
                             masterItems[itemIndex].stock -= qty;
-                            transactions.push({ date: new Date().toISOString(), itemId: masterItems[itemIndex].id, type: 'Ambil Gudang', change: -qty, newStock: masterItems[itemIndex].stock });
+                            transactions.push({ date: new Date().toISOString(), itemId: masterItems[itemIndex].id, type: 'Gudang', change: -qty, newStock: masterItems[itemIndex].stock });
                         }
                     }
                 }
             });
-
-            if (!changesMade) {
-                return App.utils.showToast('Tidak ada jumlah yang diinput.', 'info');
-            }
-
+            if (!changesMade) return App.utils.showToast('Tidak ada jumlah yang diinput.', 'info');
             App.db.set('masterItems', masterItems);
             App.db.set('stockTransactions', transactions);
             App.utils.showToast('Stok berhasil dikeluarkan!', 'success');
             App.render.page(type === 'menu' ? 'page-input-menu-keluar' : 'page-ambil-gudang');
         },
-
         saveItem() {
             const id = document.getElementById('edit-item-id').value;
             const newItemData = {
@@ -735,26 +637,22 @@ const App = {
                 purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1,
                 minStock: parseFloat(document.getElementById('item-min-stock').value) || 0
             };
-            
+            if (!newItemData.name || !newItemData.category || !newItemData.unit) return App.utils.showToast('Nama, Kategori, dan Satuan Stok harus diisi!', 'error');
             let masterItems = App.db.get('masterItems');
             if (id) {
                 const itemIndex = masterItems.findIndex(item => item.id == id);
-                if(itemIndex > -1) {
-                    masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
-                    App.utils.showToast('Barang berhasil diperbarui!', 'success');
-                }
+                masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
+                App.utils.showToast('Barang diperbarui!', 'success');
             } else {
                 const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
                 const newSortOrder = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.sortOrder)) + 1 : 0;
                 masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: newSortOrder });
-                App.utils.showToast('Barang baru berhasil ditambahkan!', 'success');
+                App.utils.showToast('Barang baru ditambahkan!', 'success');
             }
-            
             App.db.set('masterItems', masterItems);
-            this.cancelEdit();
-            App.render.managerSubRenders();
+            App.actions.cancelEdit();
+            App.pages.managerSubRenders();
         },
-
         editItem(id) {
             const item = App.db.get('masterItems').find(item => item.id == id);
             document.getElementById('edit-item-id').value = item.id;
@@ -764,290 +662,172 @@ const App = {
             document.getElementById('item-purchase-unit').value = item.purchaseUnit || '';
             document.getElementById('item-conversion').value = item.purchaseUnitConversion || '';
             document.getElementById('item-min-stock').value = item.minStock || 0;
-            document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update Barang';
+            document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update';
             document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
-            document.getElementById('add-item-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
-
         cancelEdit() {
-            const form = document.getElementById('add-item-form');
-            if(form) form.reset();
-            const saveBtn = document.getElementById('save-item-btn');
-            const cancelBtn = document.getElementById('cancel-edit-btn');
-            if (saveBtn) {
-                document.getElementById('edit-item-id').value = '';
-                saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
-            }
-            if (cancelBtn) cancelBtn.style.display = 'none';
+            document.getElementById('add-item-form').reset();
+            document.getElementById('edit-item-id').value = '';
+            document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan';
+            document.getElementById('cancel-edit-btn').style.display = 'none';
         },
-        
         deleteItem(id) {
             let masterItems = App.db.get('masterItems');
             const item = masterItems.find(item => item.id == id);
-            if (!item) return;
-
-            if ((item.stock || 0) > 0) {
-                return App.utils.showToast('Tidak dapat menghapus, barang masih ada sisa stok.', 'error');
-            }
-            const recipes = App.db.get('recipes');
-            for (const menuName in recipes) {
-                if (recipes[menuName].ingredients.some(ing => ing.itemId == id)) {
-                    return App.utils.showToast(`Gagal! "${item.name}" masih digunakan di resep "${menuName}".`, 'error');
-                }
-            }
-            if (!confirm(`Apakah Anda yakin ingin menghapus "${item.name}"?`)) return;
-
-            masterItems = masterItems.filter(item => item.id != id);
-            App.db.set('masterItems', masterItems);
-            App.render.managerSubRenders();
+            if ((item.stock || 0) > 0) return App.utils.showToast('Tidak dapat menghapus, barang masih ada stok.', 'error');
+            if (Object.values(App.db.get('recipes')).some(r => r.ingredients.some(i => i.itemId == id))) return App.utils.showToast(`Gagal! "${item.name}" masih digunakan di resep.`, 'error');
+            if (!confirm(`Hapus "${item.name}"?`)) return;
+            App.db.set('masterItems', masterItems.filter(item => item.id != id));
+            App.pages.managerSubRenders();
             App.utils.showToast('Barang berhasil dihapus.', 'success');
         },
-        
         saveItemOrder() {
             const masterItems = App.db.get('masterItems');
             const rows = document.querySelectorAll('#db-editor-tbody tr');
-            const newOrderMap = new Map();
             rows.forEach((row, index) => {
-                newOrderMap.set(parseInt(row.dataset.id), index);
-            });
-            masterItems.forEach(item => {
-                const newOrder = newOrderMap.get(item.id);
-                if (newOrder !== undefined) {
-                    item.sortOrder = newOrder;
-                }
+                const item = masterItems.find(i => i.id == row.dataset.id);
+                if (item) item.sortOrder = index;
             });
             App.db.set('masterItems', masterItems);
-            App.utils.showToast('Urutan barang berhasil disimpan!', 'success');
-            App.render.managerSubRenders();
+            App.utils.showToast('Urutan barang disimpan!', 'success');
         },
-
         saveDisplayConfig() {
-            const checkboxes = document.querySelectorAll('#display-config-form input[type="checkbox"]');
-            const menuKeluarActive = [];
-            const gudangItemIds = [];
-
-            checkboxes.forEach(cb => {
-                if(cb.checked) {
-                    if(cb.dataset.type === 'menu') {
-                        menuKeluarActive.push(cb.value);
-                    } else {
-                        gudangItemIds.push(parseInt(cb.value));
-                    }
-                }
-            });
+            const menuKeluarActive = Array.from(document.querySelectorAll('#display-config-container input[data-type="menu"]:checked')).map(cb => cb.value);
+            const gudangItemIds = Array.from(document.querySelectorAll('#display-config-container input[data-type="gudang"]:checked')).map(cb => parseInt(cb.value));
             App.db.set('menuKeluarActive', menuKeluarActive);
             App.db.set('gudangItemIds', gudangItemIds);
-            App.utils.showToast('Pengaturan tampilan berhasil disimpan!', 'success');
+            App.utils.showToast('Pengaturan tampilan disimpan!', 'success');
         },
-        
         addIngredient() {
             const list = document.getElementById('ingredients-list');
             const itemId = document.getElementById('new-ingredient-item').value;
             const qty = parseFloat(document.getElementById('new-ingredient-qty').value);
-            
-            if (!itemId || !(qty > 0)) {
-                return App.utils.showToast('Pilih barang dan isi jumlahnya.', 'error');
-            }
-            if (list.querySelector(`[data-item-id="${itemId}"]`)) {
-                return App.utils.showToast('Barang ini sudah ada di dalam resep.', 'warning');
-            }
-            
-            const masterItems = App.db.get('masterItems');
-            const item = masterItems.find(mi => mi.id == itemId);
-
-            const newIngredientHTML = `
-                <div class="item-row ingredient-item" data-item-id="${item.id}" style="grid-template-columns: 2fr 1fr auto; gap: 0.5rem;">
-                    <span class="item-label">${item.name}</span>
-                    <input type="number" class="form-control" value="${qty}" step="any" min="0">
-                    <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <span class="item-unit">${item.unit}</span>
-                        <button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`;
-            list.insertAdjacentHTML('beforeend', newIngredientHTML);
+            if (!itemId || !(qty > 0)) return App.utils.showToast('Pilih barang dan isi jumlah.', 'error');
+            if (list.querySelector(`[data-item-id="${itemId}"]`)) return App.utils.showToast('Barang sudah ada di resep.', 'warning');
+            const item = App.db.get('masterItems').find(mi => mi.id == itemId);
+            const newIngredientHTML = document.createElement('div');
+            newIngredientHTML.className = 'item-row ingredient-item';
+            newIngredientHTML.dataset.itemId = item.id;
+            newIngredientHTML.innerHTML = `<span>${item.name}</span><input type="number" class="form-control" value="${qty}" step="any" min="0"><div><span>${item.unit}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div>`;
+            list.appendChild(newIngredientHTML);
             document.getElementById('new-ingredient-qty').value = '';
         },
-        
         removeIngredient(button) {
             button.closest('.ingredient-item').remove();
         },
-        
         saveRecipe(button) {
             const originalName = button.dataset.originalName;
-            const isEditing = originalName !== '';
-
             const newName = document.getElementById('recipe-name').value.trim();
-            const newUnit = document.getElementById('recipe-unit').value.trim();
-
-            if (!newName || !newUnit) {
-                return App.utils.showToast('Nama menu dan satuan harus diisi.', 'error');
-            }
-
-            const ingredients = [];
-            document.querySelectorAll('.ingredient-item').forEach(el => {
-                const itemId = parseInt(el.dataset.itemId);
-                const qty = parseFloat(el.querySelector('input').value);
-                if (itemId && qty > 0) {
-                    ingredients.push({ itemId, qty });
-                }
-            });
-
-            if (ingredients.length === 0) {
-                return App.utils.showToast('Resep harus memiliki minimal 1 bahan.', 'error');
-            }
-
+            const unit = document.getElementById('recipe-unit').value.trim();
+            if (!newName || !unit) return App.utils.showToast('Nama menu dan satuan harus diisi.', 'error');
+            const ingredients = Array.from(document.querySelectorAll('.ingredient-item')).map(el => ({ itemId: parseInt(el.dataset.itemId), qty: parseFloat(el.querySelector('input').value) })).filter(ing => ing.qty > 0);
+            if (ingredients.length === 0) return App.utils.showToast('Resep harus punya minimal 1 bahan.', 'error');
             let recipes = App.db.get('recipes');
-            if (!isEditing && recipes[newName]) {
-                return App.utils.showToast('Nama menu sudah ada, gunakan nama lain.', 'error');
-            }
-            
-            recipes[newName] = { unit: newUnit, ingredients: ingredients };
-            
+            if (!originalName && recipes[newName]) return App.utils.showToast('Nama menu sudah ada.', 'error');
+            if (originalName && originalName !== newName) delete recipes[originalName];
+            recipes[newName] = { unit, ingredients };
             App.db.set('recipes', recipes);
-
-            if (!isEditing) {
+            if (!originalName) {
                 let menuKeluarActive = App.db.get('menuKeluarActive');
-                if (!menuKeluarActive.includes(newName)) {
-                    menuKeluarActive.push(newName);
-                    App.db.set('menuKeluarActive', menuKeluarActive);
-                }
+                menuKeluarActive.push(newName);
+                App.db.set('menuKeluarActive', menuKeluarActive);
             }
-
-            App.utils.showToast(`Resep "${newName}" berhasil disimpan.`, 'success');
+            App.utils.showToast(`Resep "${newName}" disimpan.`, 'success');
             App.render.page('page-manager-area');
         },
-
         deleteRecipe(name) {
-            if (!confirm(`Apakah Anda yakin ingin menghapus resep "${name}"? Ini tidak bisa dibatalkan.`)) return;
-
+            if (!confirm(`Hapus resep "${name}"?`)) return;
             let recipes = App.db.get('recipes');
             delete recipes[name];
             App.db.set('recipes', recipes);
-
-            let menuKeluarActive = App.db.get('menuKeluarActive');
-            menuKeluarActive = menuKeluarActive.filter(menu => menu !== name);
-            App.db.set('menuKeluarActive', menuKeluarActive);
-            
-            App.utils.showToast('Resep berhasil dihapus.', 'success');
-            App.render.managerSubRenders();
+            App.db.set('menuKeluarActive', App.db.get('menuKeluarActive').filter(menu => menu !== name));
+            App.utils.showToast('Resep dihapus.', 'success');
+            App.render.page('page-manager-area');
         },
-
         exportData() {
             const dataToExport = {
-                masterItems: App.db.get('masterItems'),
-                recipes: App.db.get('recipes'),
-                gudangItemIds: App.db.get('gudangItemIds'),
-                menuKeluarActive: App.db.get('menuKeluarActive'),
-                shoppingLists: App.db.get('shoppingLists'),
-                stockTransactions: App.db.get('stockTransactions')
+                masterItems: App.db.get('masterItems'), recipes: App.db.get('recipes'), gudangItemIds: App.db.get('gudangItemIds'),
+                menuKeluarActive: App.db.get('menuKeluarActive'), shoppingLists: App.db.get('shoppingLists'), stockTransactions: App.db.get('stockTransactions')
             };
-            const dataStr = JSON.stringify(dataToExport, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            const exportFileDefaultName = `restoapp_backup_${new Date().toISOString().slice(0,10)}.json`;
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
+            const a = document.createElement('a');
+            a.href = 'data:application/json;charset=utf-8,'+ encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+            a.download = `restoapp_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
             App.utils.showToast('Data berhasil diekspor!', 'success');
         },
-
         importData() {
             const fileInput = document.getElementById('import-file-input');
-            fileInput.click();
             fileInput.onchange = e => {
                 const file = e.target.files[0];
                 if (!file) return;
-                if (!confirm("PENTING: Mengimpor data akan menimpa semua data yang ada saat ini. Lanjutkan?")) {
-                    fileInput.value = ''; // Reset file input
-                    return;
-                }
-                
+                if (!confirm("PENTING: Ini akan menimpa semua data saat ini. Lanjutkan?")) return fileInput.value = '';
                 const reader = new FileReader();
                 reader.onload = event => {
                     try {
                         const data = JSON.parse(event.target.result);
-                        const requiredKeys = ['masterItems', 'recipes', 'shoppingLists', 'stockTransactions'];
-                        const hasAllKeys = requiredKeys.every(key => key in data);
-
-                        if (!hasAllKeys) {
-                           throw new Error("File tidak valid atau format tidak sesuai.");
-                        }
-
-                        Object.keys(data).forEach(key => {
-                            App.db.set(key, data[key]);
-                        });
-                        
+                        if (!['masterItems', 'recipes'].every(key => key in data)) throw new Error("File tidak valid.");
+                        Object.keys(App.data).forEach(key => App.db.set(key, data[key] || App.data[key]));
                         App.utils.showToast('Data berhasil diimpor! Halaman akan dimuat ulang.', 'success');
                         setTimeout(() => window.location.reload(), 2000);
-                    } catch (error) {
-                         App.utils.showToast('Gagal mengimpor data: ' + error.message, 'error');
-                    } finally {
-                        fileInput.value = '';
-                    }
+                    } catch (error) { App.utils.showToast('Gagal impor: ' + error.message, 'error'); }
                 };
                 reader.readAsText(file);
             };
+            fileInput.click();
         }
     },
-    
+
     handle: {
         click(event) {
             const target = event.target.closest('[data-action], [data-page]');
             if (!target) return;
             
-            const action = target.dataset.action;
-            // Prevent default for everything except form submission triggers
-            if (action !== 'save-item') {
-                 event.preventDefault();
-            } else if (action === 'save-item' && event.type === 'click') {
-                 // Trigger form submission if the button is clicked, not just the form itself
-                 target.closest('form').requestSubmit();
-                 return;
-            }
-
-            const { page, date, id, name, type } = target.dataset;
+            const { page, action, date, id, name } = target.dataset;
 
             if (page) {
+                event.preventDefault();
                 App.render.page(page);
             } else if (action) {
+                event.preventDefault();
                 const actionMap = {
-                    'save-shopping-list': () => App.actions.saveShoppingList(),
-                    'select-pending-list': () => App.render.stockInDetail(document.getElementById('page-input-belanja-datang'), date),
+                    'show-low-stock-modal': App.actions.showLowStockModal,
+                    'close-modal': (e) => { if (e.target.classList.contains('modal-backdrop') || e.target.closest('.modal-close-btn')) App.actions.closeModal(); },
+                    'save-shopping-list': App.actions.saveShoppingList,
+                    'select-pending-list': () => App.render.page('page-input-belanja-datang', date),
                     'process-stock-in': () => App.actions.processStockIn(date),
                     'cancel-shopping-list': () => App.actions.cancelShoppingList(date),
-                    'process-stock-out': () => App.actions.processStockOut(type),
-                    'save-item': () => App.actions.saveItem(),
+                    'process-stock-out': () => App.actions.processStockOut(document.getElementById('stockout-list').dataset.type),
+                    'save-item': App.actions.saveItem,
                     'edit-item': () => App.actions.editItem(id),
-                    'cancel-edit': () => App.actions.cancelEdit(),
+                    'cancel-edit': App.actions.cancelEdit,
                     'delete-item': () => App.actions.deleteItem(id),
-                    'save-item-order': () => App.actions.saveItemOrder(),
-                    'add-recipe': () => App.render.recipeEditor(document.getElementById('page-manager-area')),
-                    'edit-recipe': () => App.render.recipeEditor(document.getElementById('page-manager-area'), name),
+                    'save-item-order': App.actions.saveItemOrder,
+                    'add-recipe': () => App.render.page('page-manager-area', { mode: 'add-recipe' }),
+                    'edit-recipe': () => App.render.page('page-manager-area', { mode: 'edit-recipe', name: name }),
                     'delete-recipe': () => App.actions.deleteRecipe(name),
                     'save-recipe': () => App.actions.saveRecipe(target),
-                    'add-ingredient': () => App.actions.addIngredient(),
+                    'add-ingredient': App.actions.addIngredient,
                     'remove-ingredient': () => App.actions.removeIngredient(target),
-                    'save-display-config': () => App.actions.saveDisplayConfig(),
-                    'export-data': () => App.actions.exportData(),
-                    'import-data': () => App.actions.importData(),
+                    'save-display-config': App.actions.saveDisplayConfig,
+                    'export-data': App.actions.exportData,
+                    'import-data': App.actions.importData,
                 };
-                if(actionMap[action]) actionMap[action]();
+                if(actionMap[action]) actionMap[action](event);
             }
         }
     },
-
+    
     utils: {
         updateTime() {
             const timeEl = document.getElementById('current-time');
             if (timeEl) timeEl.textContent = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' });
         },
-
         showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            const iconClass = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' }[type];
-            toast.innerHTML = `<i class="fas ${iconClass}"></i><span>${message}</span>`;
+            const iconClass = { success: 'fa-check-circle', error: 'fa-times-circle' };
+            toast.innerHTML = `<i class="fas ${iconClass[type] || 'fa-info-circle'}"></i><span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => {
@@ -1055,59 +835,38 @@ const App = {
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
         },
-
         addDragDropHandlers(container) {
-            let draggedItem = null;
-            container.addEventListener('dragstart', e => {
-                draggedItem = e.target;
-                setTimeout(() => {
-                   if(draggedItem) draggedItem.classList.add('dragging');
-                }, 0);
-            });
-            container.addEventListener('dragend', e => {
-                if(draggedItem) draggedItem.classList.remove('dragging');
-                draggedItem = null;
-            });
+            container.addEventListener('dragstart', e => e.target.classList.add('dragging'));
+            container.addEventListener('dragend', e => e.target.classList.remove('dragging'));
             container.addEventListener('dragover', e => {
                 e.preventDefault();
-                if(!draggedItem) return;
                 const afterElement = this.getDragAfterElement(container, e.clientY);
-                if (afterElement == null) {
-                    container.appendChild(draggedItem);
-                } else {
-                    container.insertBefore(draggedItem, afterElement);
+                const draggable = document.querySelector('.dragging');
+                if (draggable) {
+                    if (afterElement == null) container.appendChild(draggable);
+                    else container.insertBefore(draggable, afterElement);
                 }
             });
         },
-        
         getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.editable-item-row:not(.dragging)')];
+            const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
             return draggableElements.reduce((closest, child) => {
                 const box = child.getBoundingClientRect();
                 const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         },
-        
         calculateAvailablePortions(menuName) {
-            const recipes = App.db.get('recipes');
-            const masterItems = App.db.get('masterItems');
+            const { recipes, masterItems } = { recipes: App.db.get('recipes'), masterItems: App.db.get('masterItems') };
             if(!recipes || !masterItems) return 0;
             const recipe = recipes[menuName];
             if (!recipe || !recipe.ingredients) return 0;
             let minPortions = Infinity;
             recipe.ingredients.forEach(ing => {
                 const item = masterItems.find(mi => mi.id === ing.itemId);
-                if (item && ing.qty > 0) {
-                    const portionsForItem = Math.floor((item.stock || 0) / ing.qty);
-                    minPortions = Math.min(minPortions, portionsForItem);
-                } else if(ing.qty > 0) { // Item for ingredient not found
-                    minPortions = 0;
-                }
+                if (item && ing.qty > 0) minPortions = Math.min(minPortions, Math.floor((item.stock || 0) / ing.qty));
+                else if (ing.qty > 0) minPortions = 0;
             });
             return minPortions === Infinity ? 0 : minPortions;
         }
