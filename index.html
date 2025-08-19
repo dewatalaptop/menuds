@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V5.5 (Manager UI Overhaul)</title>
+    <title>RestoApp - V5.6 (Daily Reports)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -143,7 +143,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .page.active { display: block; }
         
-        /* --- Styles from previous versions --- */
+        /* --- General Component Styles --- */
         .card { background: var(--white-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
         .card-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
@@ -187,6 +187,9 @@
         .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; }
         .dragging { opacity: 0.5; }
         .time-display { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-light); }
+        .report-list { list-style: none; padding-left: 0; }
+        .report-list li { display: flex; justify-content: space-between; padding: 0.5rem; border-radius: 0.25rem; }
+        .report-list li:nth-child(odd) { background-color: var(--secondary-color); }
     </style>
 </head>
 <body>
@@ -195,7 +198,7 @@
         <div id="toast-container"></div>
         
         <header>
-            <h1><i class="fas fa-utensils"></i> RestoApp V5.5</h1>
+            <h1><i class="fas fa-utensils"></i> RestoApp V5.6</h1>
             <div id="header-alerts"></div>
         </header>
         
@@ -206,6 +209,7 @@
             <div id="page-input-menu-keluar" class="page"></div>
             <div id="page-ambil-gudang" class="page"></div>
             <div id="page-riwayat-stok" class="page"></div>
+            <div id="page-laporan-harian" class="page"></div>
             
             <div id="page-manager-area" class="page"></div>
             <div id="page-manager-items" class="page"></div>
@@ -217,10 +221,10 @@
 
 <script>
 /**
- * RestoApp v5.5
+ * RestoApp v5.6
  * Changelog:
- * - v5.5: Overhauled Manager Area into a dashboard with dedicated sub-pages for each function. Fixed item editing bug.
- * - v5.4: Replaced banner alert with a clickable icon showing a low-stock bar chart modal.
+ * - v5.6: Added button-triggered Daily Report feature. Modified stock-out logic to accurately log menu production quantity for reporting.
+ * - v5.5: Overhauled Manager Area into a dashboard with dedicated sub-pages. Fixed item editing bug.
  */
 const App = {
     data: {
@@ -300,7 +304,6 @@ const App = {
             if (pageRenderFunction) {
                 targetPage.innerHTML = pageRenderFunction(data);
                 
-                // Call render helpers for complex pages
                 if (pageId === 'page-manager-items') {
                     App.render.managerItemsContent();
                 } else if (pageId === 'page-manager-recipes') {
@@ -442,6 +445,7 @@ const App = {
                 <a href="#" class="dashboard-card" data-page="page-input-belanja"><i class="fas fa-shopping-cart"></i><h3>Input List Belanja</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-riwayat-stok"><i class="fas fa-history"></i><h3>Riwayat Stok</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-manager-area"><i class="fas fa-user-tie"></i><h3>Manager Area</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-laporan-harian"><i class="fas fa-chart-line"></i><h3>Laporan Harian</h3></a>
             </div>
             <div class="time-display"><i class="far fa-clock"></i> <span id="current-time"></span></div>`,
 
@@ -516,20 +520,65 @@ const App = {
             } else {
                 const rows = [...transactions].reverse().map(t => {
                     const item = masterItems.find(i => i.id === t.itemId);
-                    const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
+                    let changeHTML;
+                    if (t.type === 'Produksi Menu') {
+                        changeHTML = `<td>+${t.change} porsi</td><td>${t.details}</td>`;
+                    } else {
+                        const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
+                        changeHTML = `<td style="${changeClass}">${t.change > 0 ? '+' : ''}${(t.change || 0).toFixed(2)}</td><td>${(t.newStock || 0).toFixed(2)}</td>`;
+                    }
                     return `<tr>
                             <td>${new Date(t.date).toLocaleString('id-ID')}</td>
-                            <td>${item ? item.name : 'Barang Dihapus'}</td>
+                            <td>${item ? item.name : (t.type === 'Produksi Menu' ? '---' : 'Barang Dihapus')}</td>
                             <td>${t.type}</td>
-                            <td style="${changeClass}">${t.change > 0 ? '+' : ''}${(t.change || 0).toFixed(2)}</td>
-                            <td>${(t.newStock || 0).toFixed(2)}</td>
+                            ${changeHTML}
                         </tr>`;
                 }).join('');
-                content = `<div class="table-container"><table class="table"><thead><tr><th>Waktu</th><th>Barang</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                content = `<div class="table-container"><table class="table"><thead><tr><th>Waktu</th><th>Barang</th><th>Jenis</th><th>+/-</th><th>Sisa/Detail</th></tr></thead><tbody>${rows}</tbody></table></div>`;
             }
             return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-history"></i><span>Riwayat Stok</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
         },
-        // --- NEW MANAGER AREA ---
+        
+        'page-laporan-harian': () => {
+            const reportData = App.utils.generateDailyReport();
+            
+            const createListHTML = (data, unit = '') => {
+                if (data.length === 0) return `<p class="stock-hint">Tidak ada data untuk ditampilkan.</p>`;
+                return `<ul class="report-list">${data.map(item => `<li><span>${item[0]}</span> <strong>${parseFloat(item[1]).toFixed(1)} ${unit}</strong></li>`).join('')}</ul>`;
+            };
+
+            const stokRendahHTML = reportData.stokRendah.length > 0
+                ? `<ul class="report-list">${reportData.stokRendah.map(item => `<li><span>${item.name}</span> <strong>Sisa: ${item.stock} ${item.unit}</strong></li>`).join('')}</ul>`
+                : `<p class="stock-hint">Tidak ada stok di bawah minimum. Kerja bagus!</p>`;
+
+            return `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-chart-line"></i><span>Laporan Harian</span></div>
+                    <button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button>
+                </div>
+                <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                    <i class="fas fa-info-circle"></i>
+                    <div>Laporan ini dibuat pada <strong>${reportData.reportDate.toLocaleString('id-ID')}</strong> dan menganalisis semua aktivitas dalam 24 jam terakhir.</div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">📈 Top 5 Menu Diproduksi</h3>
+                    ${createListHTML(reportData.topMenus, 'porsi')}
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">🥕 Top 5 Bahan Terpakai</h3>
+                    ${createListHTML(reportData.topBahan, 'unit')}
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">⚠️ Stok Kritis Saat Ini</h3>
+                    ${stokRendahHTML}
+                </div>
+            </div>`;
+        },
+
         'page-manager-area': () => `
             <div class="card">
                 <div class="card-header">
@@ -657,7 +706,7 @@ const App = {
                         const masterItem = masterItems[itemIndex];
                         const stockIncrease = qtyReceived * masterItem.purchaseUnitConversion;
                         masterItem.stock = (masterItem.stock || 0) + stockIncrease;
-                        transactions.push({ date: new Date().toISOString(), itemId: masterItem.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItem.stock });
+                        transactions.push({ date: new Date().toISOString(), itemId: masterItem.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItem.stock, details: null });
                     }
                 }
             });
@@ -679,12 +728,17 @@ const App = {
             let recipes = App.db.get('recipes');
             let transactions = App.db.get('stockTransactions') || [];
             let changesMade = false;
+            const transactionDate = new Date().toISOString();
+
             inputs.forEach(input => {
                 const qty = parseFloat(input.value);
                 if (qty > 0) {
                     changesMade = true;
                     const itemName = input.dataset.name;
                     if (type === 'menu') {
+                        // NEW: Log the menu production event for accurate reporting
+                        transactions.push({ date: transactionDate, itemId: null, type: 'Produksi Menu', change: qty, newStock: null, details: itemName });
+                        
                         const recipe = recipes[itemName];
                         if (!recipe) return;
                         recipe.ingredients.forEach(ing => {
@@ -692,14 +746,14 @@ const App = {
                             if (itemIndex > -1) {
                                 const stockDecrease = ing.qty * qty;
                                 masterItems[itemIndex].stock -= stockDecrease;
-                                transactions.push({ date: new Date().toISOString(), itemId: ing.itemId, type: `Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock });
+                                transactions.push({ date: transactionDate, itemId: ing.itemId, type: `Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: `${qty} porsi` });
                             }
                         });
                     } else { // gudang
                         const itemIndex = masterItems.findIndex(mi => mi.name === itemName);
                         if (itemIndex > -1) {
                             masterItems[itemIndex].stock -= qty;
-                            transactions.push({ date: new Date().toISOString(), itemId: masterItems[itemIndex].id, type: 'Gudang', change: -qty, newStock: masterItems[itemIndex].stock });
+                            transactions.push({ date: transactionDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -qty, newStock: masterItems[itemIndex].stock, details: null });
                         }
                     }
                 }
@@ -956,7 +1010,39 @@ const App = {
                 else if (ing.qty > 0) minPortions = 0;
             });
             return minPortions === Infinity ? 0 : minPortions;
-        }
+        },
+        generateDailyReport() {
+            const transactions = App.db.get('stockTransactions') || [];
+            const masterItems = App.db.get('masterItems');
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+
+            const recentTransactions = transactions.filter(t => new Date(t.date) > yesterday);
+            const stokRendah = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+
+            const menuProduksi = recentTransactions.filter(t => t.type === 'Produksi Menu');
+            const menuCount = menuProduksi.reduce((acc, t) => {
+                const menuName = t.details;
+                const qty = t.change;
+                acc[menuName] = (acc[menuName] || 0) + qty;
+                return acc;
+            }, {});
+            const topMenus = Object.entries(menuCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            const bahanTerpakai = recentTransactions.filter(t => t.change < 0 && t.type !== 'Produksi Menu');
+            const bahanCount = bahanTerpakai.reduce((acc, t) => {
+                const item = masterItems.find(i => i.id === t.itemId);
+                if (item) {
+                    const change = Math.abs(t.change);
+                    const key = `${item.name} (${item.unit})`;
+                    acc[key] = (acc[key] || 0) + change;
+                }
+                return acc;
+            }, {});
+            const topBahan = Object.entries(bahanCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            
+            return { topMenus, topBahan, stokRendah, reportDate: now };
+        },
     }
 };
 
