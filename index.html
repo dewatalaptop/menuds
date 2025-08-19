@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V5.4 (Advanced Alerts)</title>
+    <title>RestoApp - V5.5 (Manager UI Overhaul)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -56,7 +56,7 @@
         header h1 { font-weight: 600; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; margin: 0; }
         header h1 i { font-size: 1.75rem; }
 
-        /* --- Header Alerts Icon (NEW) --- */
+        /* --- Header Alerts Icon --- */
         #header-alerts {
             position: relative;
             cursor: pointer;
@@ -92,7 +92,7 @@
             100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
         }
 
-        /* --- Modal Styles (NEW) --- */
+        /* --- Modal Styles --- */
         .modal-backdrop {
             position: fixed;
             top: 0;
@@ -195,7 +195,7 @@
         <div id="toast-container"></div>
         
         <header>
-            <h1><i class="fas fa-utensils"></i> RestoApp V5.4</h1>
+            <h1><i class="fas fa-utensils"></i> RestoApp V5.5</h1>
             <div id="header-alerts"></div>
         </header>
         
@@ -205,17 +205,22 @@
             <div id="page-input-belanja-datang" class="page"></div>
             <div id="page-input-menu-keluar" class="page"></div>
             <div id="page-ambil-gudang" class="page"></div>
-            <div id="page-manager-area" class="page"></div>
             <div id="page-riwayat-stok" class="page"></div>
+            
+            <div id="page-manager-area" class="page"></div>
+            <div id="page-manager-items" class="page"></div>
+            <div id="page-manager-recipes" class="page"></div>
+            <div id="page-manager-display" class="page"></div>
+            <div id="page-manager-backup" class="page"></div>
         </main>
     </div>
 
 <script>
 /**
- * RestoApp v5.4
+ * RestoApp v5.5
  * Changelog:
- * - v5.4: Replaced banner alert with a clickable icon showing a low-stock bar chart modal. Codebase verified complete.
- * - v5.3: Fixed critical page navigation and rendering bug.
+ * - v5.5: Overhauled Manager Area into a dashboard with dedicated sub-pages for each function. Fixed item editing bug.
+ * - v5.4: Replaced banner alert with a clickable icon showing a low-stock bar chart modal.
  */
 const App = {
     data: {
@@ -294,11 +299,15 @@ const App = {
             const pageRenderFunction = App.pages[pageId];
             if (pageRenderFunction) {
                 targetPage.innerHTML = pageRenderFunction(data);
-                // Call sub-render functions for complex pages
-                if (pageId === 'page-manager-area') {
-                    App.pages.managerSubRenders();
+                
+                // Call render helpers for complex pages
+                if (pageId === 'page-manager-items') {
+                    App.render.managerItemsContent();
+                } else if (pageId === 'page-manager-recipes') {
+                    App.render.managerRecipesContent();
+                } else if (pageId === 'page-manager-display') {
+                    App.render.managerDisplayContent();
                 } else if (pageId === 'page-input-belanja-datang' && typeof data === 'string') {
-                    // Handle detail view for stock-in
                     targetPage.innerHTML = App.pages.stockInDetail(data);
                 }
             }
@@ -395,6 +404,29 @@ const App = {
                 }, { once: true });
             }
         },
+
+        managerItemsContent() {
+            const masterItems = App.db.get('masterItems').sort((a, b) => a.sortOrder - b.sortOrder);
+            document.getElementById('db-editor-tbody').innerHTML = masterItems.map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+            App.utils.addDragDropHandlers(document.getElementById('db-editor-tbody'));
+            const categories = [...new Set(masterItems.map(item => item.category))];
+            document.getElementById('category-suggestions').innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
+        },
+        
+        managerRecipesContent() {
+            const recipes = App.db.get('recipes');
+            document.getElementById('recipe-list-container').innerHTML = Object.keys(recipes).sort().map(name => `<div class="item-row" style="padding: 0.5rem;"><span>${name}</span><span>${recipes[name].unit}</span><div style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-recipe" data-name="${name}">Edit</button><button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}">Hapus</button></div></div>`).join('') || 'Belum ada resep.';
+        },
+        
+        managerDisplayContent() {
+            const masterItems = App.db.get('masterItems');
+            const recipes = App.db.get('recipes');
+            const menuKeluarActive = App.db.get('menuKeluarActive');
+            const gudangItemIds = App.db.get('gudangItemIds');
+            const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
+            const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
+            document.getElementById('display-config-container').innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
+        }
     },
 
     pages: {
@@ -497,34 +529,85 @@ const App = {
             }
             return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-history"></i><span>Riwayat Stok</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
         },
-        'page-manager-area': (data) => {
+        // --- NEW MANAGER AREA ---
+        'page-manager-area': () => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-user-tie"></i><span>Manager Area</span></div>
+                    <button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button>
+                </div>
+                <div class="dashboard-grid">
+                    <a href="#" class="dashboard-card" data-page="page-manager-items"><i class="fas fa-database"></i><h3>Database Barang</h3></a>
+                    <a href="#" class="dashboard-card" data-page="page-manager-recipes"><i class="fas fa-book-open"></i><h3>Manajemen Resep</h3></a>
+                    <a href="#" class="dashboard-card" data-page="page-manager-display"><i class="fas fa-desktop"></i><h3>Atur Tampilan</h3></a>
+                    <a href="#" class="dashboard-card" data-page="page-manager-backup"><i class="fas fa-cloud-upload-alt"></i><h3>Cadangkan Data</h3></a>
+                </div>
+            </div>`,
+        'page-manager-items': () => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-database"></i><span>Database Barang</span></div>
+                    <button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button>
+                </div>
+                <h3 class="category-title"><span>Tambah / Edit Barang</span></h3>
+                <form id="add-item-form">
+                    <input type="hidden" id="edit-item-id">
+                    <input class="form-control" type="text" id="item-name" placeholder="Nama Barang" required>
+                    <input class="form-control" type="text" id="item-category" placeholder="Kategori" list="category-suggestions" required>
+                    <input class="form-control" type="text" id="item-unit" placeholder="Satuan Stok" required>
+                    <input class="form-control" type="text" id="item-purchase-unit" placeholder="Satuan Beli">
+                    <input class="form-control" type="number" id="item-conversion" placeholder="Konversi" min="0" step="any">
+                    <input class="form-control" type="number" id="item-min-stock" placeholder="Stok Min" min="0" step="any">
+                    <div style="display:flex;gap:10px;grid-column:1/-1;">
+                        <button type="button" class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow:1;"><i class="fas fa-save"></i> Simpan</button>
+                        <button type="button" class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
+                    </div>
+                </form>
+                <datalist id="category-suggestions"></datalist>
+                
+                <h3 class="category-title" style="margin-top: 2rem;"><span>Daftar Barang</span><button class="btn btn-sm btn-primary" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></h3>
+                <p class="stock-hint" style="margin-bottom: 1rem;">Anda dapat menarik dan melepas baris untuk mengubah urutan.</p>
+                <div class="table-container">
+                    <table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table>
+                </div>
+            </div>`,
+        'page-manager-recipes': (data) => {
             if (data?.mode === 'add-recipe') return App.pages.recipeEditor();
             if (data?.mode === 'edit-recipe') return App.pages.recipeEditor(data.name);
-
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-user-tie"></i><span>Manager Area</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>
-                    <div class="card" style="margin-bottom:1rem;"><h3 class="card-title" style="margin-bottom:1rem;">Cadangkan & Pulihkan</h3><div style="display:flex; gap:10px;"><button class="btn btn-primary" data-action="export-data"><i class="fas fa-download"></i> Export</button><button class="btn btn-warning" data-action="import-data"><i class="fas fa-upload"></i> Import</button><input type="file" id="import-file-input" accept=".json" style="display:none;"></div></div>
-                    <div class="card" style="margin-bottom:1rem;"><h3 class="card-title" style="margin-bottom:1rem;">Atur Tampilan Menu & Gudang</h3><div id="display-config-container"></div></div>
-                    <div class="card" style="margin-bottom:1rem;"><h3 class="category-title"><span>Manajemen Resep</span><button class="btn btn-sm btn-primary" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah</button></h3><div id="recipe-list-container"></div></div>
-                    <div class="card"><h3 class="category-title"><span>Database Barang</span><button class="btn btn-sm btn-primary" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></h3><form id="add-item-form"><input type="hidden" id="edit-item-id"><input class="form-control" type="text" id="item-name" placeholder="Nama Barang" required><input class="form-control" type="text" id="item-category" placeholder="Kategori" list="category-suggestions" required><input class="form-control" type="text" id="item-unit" placeholder="Satuan Stok" required><input class="form-control" type="text" id="item-purchase-unit" placeholder="Satuan Beli"><input class="form-control" type="number" id="item-conversion" placeholder="Konversi" min="0" step="any"><input class="form-control" type="number" id="item-min-stock" placeholder="Stok Min" min="0" step="any"><div style="display:flex;gap:10px;grid-column:1/-1;"><button class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow:1;"><i class="fas fa-save"></i> Simpan</button><button type="button" class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button></div></form><datalist id="category-suggestions"></datalist><div class="table-container" style="margin-top:1rem;"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div></div>
-                </div>`;
-        },
-        'managerSubRenders': () => {
-            // This function now manipulates the DOM after the main HTML is rendered
-            const masterItems = App.db.get('masterItems').sort((a, b) => a.sortOrder - b.sortOrder);
-            document.getElementById('db-editor-tbody').innerHTML = masterItems.map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
-            App.utils.addDragDropHandlers(document.getElementById('db-editor-tbody'));
-            const categories = [...new Set(masterItems.map(item => item.category))];
-            document.getElementById('category-suggestions').innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
             
-            const recipes = App.db.get('recipes');
-            document.getElementById('recipe-list-container').innerHTML = Object.keys(recipes).sort().map(name => `<div class="item-row" style="padding: 0.5rem;"><span>${name}</span><span>${recipes[name].unit}</span><div style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-recipe" data-name="${name}">Edit</button><button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}">Hapus</button></div></div>`).join('') || 'Belum ada resep.';
-            
-            const menuKeluarActive = App.db.get('menuKeluarActive');
-            const gudangItemIds = App.db.get('gudangItemIds');
-            const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
-            const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
-            document.getElementById('display-config-container').innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
+            return `<div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-book-open"></i><span>Manajemen Resep</span></div>
+                    <button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button>
+                </div>
+                <div class="category-title"><span>Daftar Resep</span><button class="btn btn-sm btn-primary" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah Resep</button></div>
+                <div id="recipe-list-container"></div>
+            </div>`;
         },
+        'page-manager-display': () => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-desktop"></i><span>Atur Tampilan Menu & Gudang</span></div>
+                    <button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button>
+                </div>
+                <div id="display-config-container"></div>
+            </div>`,
+        'page-manager-backup': () => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-cloud-upload-alt"></i><span>Cadangkan & Pulihkan Data</span></div>
+                    <button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>Simpan data Anda secara berkala untuk menghindari kehilangan data. File akan diunduh dalam format JSON.</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-primary" data-action="export-data"><i class="fas fa-download"></i> Export Data</button>
+                    <button class="btn btn-warning" data-action="import-data"><i class="fas fa-upload"></i> Import Data</button>
+                    <input type="file" id="import-file-input" accept=".json" style="display:none;">
+                </div>
+            </div>`,
         'recipeEditor': (recipeName = null) => {
             const isEditing = recipeName !== null;
             const recipes = App.db.get('recipes');
@@ -539,7 +622,7 @@ const App = {
                     <div><span>${item ? item.unit : ''}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div>
                 </div>`;
             }).join('');
-            return `<div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-edit"></i> ${isEditing ? 'Edit Resep' : 'Tambah Resep'}</h2><button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-times"></i> Batal</button></div>
+            return `<div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-edit"></i> ${isEditing ? 'Edit Resep' : 'Tambah Resep'}</h2><button class="btn btn-secondary" data-page="page-manager-recipes"><i class="fas fa-arrow-left"></i> Kembali</button></div>
                     <div style="margin-bottom:1rem;"><label>Nama Menu</label><input type="text" id="recipe-name" class="form-control" value="${isEditing ? recipeName : ''}" ${isEditing ? 'readonly' : ''}></div>
                     <div style="margin-bottom:1rem;"><label>Satuan Hasil (porsi, gelas, dll)</label><input type="text" id="recipe-unit" class="form-control" value="${recipe.unit}"></div>
                     <div class="card"><h3 class="card-title">Bahan-Bahan</h3><div id="ingredients-list">${ingredientsHTML}</div><div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed #ccc;display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:center;"><select id="new-ingredient-item" class="form-control">${itemOptions}</select><input type="number" id="new-ingredient-qty" class="form-control" placeholder="Jumlah" step="any" min="0"><button class="btn btn-primary" data-action="add-ingredient">+</button></div></div>
@@ -651,10 +734,11 @@ const App = {
             }
             App.db.set('masterItems', masterItems);
             App.actions.cancelEdit();
-            App.pages.managerSubRenders();
+            App.render.managerItemsContent();
         },
         editItem(id) {
             const item = App.db.get('masterItems').find(item => item.id == id);
+            if(!item) return;
             document.getElementById('edit-item-id').value = item.id;
             document.getElementById('item-name').value = item.name;
             document.getElementById('item-category').value = item.category;
@@ -664,6 +748,7 @@ const App = {
             document.getElementById('item-min-stock').value = item.minStock || 0;
             document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update';
             document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
+            window.scrollTo(0, 0);
         },
         cancelEdit() {
             document.getElementById('add-item-form').reset();
@@ -678,7 +763,7 @@ const App = {
             if (Object.values(App.db.get('recipes')).some(r => r.ingredients.some(i => i.itemId == id))) return App.utils.showToast(`Gagal! "${item.name}" masih digunakan di resep.`, 'error');
             if (!confirm(`Hapus "${item.name}"?`)) return;
             App.db.set('masterItems', masterItems.filter(item => item.id != id));
-            App.pages.managerSubRenders();
+            App.render.managerItemsContent();
             App.utils.showToast('Barang berhasil dihapus.', 'success');
         },
         saveItemOrder() {
@@ -692,8 +777,9 @@ const App = {
             App.utils.showToast('Urutan barang disimpan!', 'success');
         },
         saveDisplayConfig() {
-            const menuKeluarActive = Array.from(document.querySelectorAll('#display-config-container input[data-type="menu"]:checked')).map(cb => cb.value);
-            const gudangItemIds = Array.from(document.querySelectorAll('#display-config-container input[data-type="gudang"]:checked')).map(cb => parseInt(cb.value));
+            const container = document.getElementById('display-config-container');
+            const menuKeluarActive = Array.from(container.querySelectorAll('input[data-type="menu"]:checked')).map(cb => cb.value);
+            const gudangItemIds = Array.from(container.querySelectorAll('input[data-type="gudang"]:checked')).map(cb => parseInt(cb.value));
             App.db.set('menuKeluarActive', menuKeluarActive);
             App.db.set('gudangItemIds', gudangItemIds);
             App.utils.showToast('Pengaturan tampilan disimpan!', 'success');
@@ -733,7 +819,7 @@ const App = {
                 App.db.set('menuKeluarActive', menuKeluarActive);
             }
             App.utils.showToast(`Resep "${newName}" disimpan.`, 'success');
-            App.render.page('page-manager-area');
+            App.render.page('page-manager-recipes');
         },
         deleteRecipe(name) {
             if (!confirm(`Hapus resep "${name}"?`)) return;
@@ -742,7 +828,7 @@ const App = {
             App.db.set('recipes', recipes);
             App.db.set('menuKeluarActive', App.db.get('menuKeluarActive').filter(menu => menu !== name));
             App.utils.showToast('Resep dihapus.', 'success');
-            App.render.page('page-manager-area');
+            App.render.page('page-manager-recipes');
         },
         exportData() {
             const dataToExport = {
@@ -765,8 +851,9 @@ const App = {
                 reader.onload = event => {
                     try {
                         const data = JSON.parse(event.target.result);
-                        if (!['masterItems', 'recipes'].every(key => key in data)) throw new Error("File tidak valid.");
-                        Object.keys(App.data).forEach(key => App.db.set(key, data[key] || App.data[key]));
+                        const requiredKeys = ['masterItems', 'recipes', 'gudangItemIds', 'menuKeluarActive', 'shoppingLists', 'stockTransactions'];
+                        if (!requiredKeys.every(key => key in data)) throw new Error("File tidak valid atau format lama.");
+                        requiredKeys.forEach(key => App.db.set(key, data[key]));
                         App.utils.showToast('Data berhasil diimpor! Halaman akan dimuat ulang.', 'success');
                         setTimeout(() => window.location.reload(), 2000);
                     } catch (error) { App.utils.showToast('Gagal impor: ' + error.message, 'error'); }
@@ -802,8 +889,8 @@ const App = {
                     'cancel-edit': App.actions.cancelEdit,
                     'delete-item': () => App.actions.deleteItem(id),
                     'save-item-order': App.actions.saveItemOrder,
-                    'add-recipe': () => App.render.page('page-manager-area', { mode: 'add-recipe' }),
-                    'edit-recipe': () => App.render.page('page-manager-area', { mode: 'edit-recipe', name: name }),
+                    'add-recipe': () => App.render.page('page-manager-recipes', { mode: 'add-recipe' }),
+                    'edit-recipe': () => App.render.page('page-manager-recipes', { mode: 'edit-recipe', name: name }),
                     'delete-recipe': () => App.actions.deleteRecipe(name),
                     'save-recipe': () => App.actions.saveRecipe(target),
                     'add-ingredient': App.actions.addIngredient,
