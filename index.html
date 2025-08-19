@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V5.2 (Fixed & Improved)</title>
+    <title>RestoApp - V5.3 (Stable)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- Import Font --- */
@@ -153,7 +153,7 @@
         <div id="toast-container"></div>
         
         <header>
-            <h1><i class="fas fa-utensils"></i> RestoApp V5.2</h1>
+            <h1><i class="fas fa-utensils"></i> RestoApp V5.3</h1>
         </header>
         
         <main id="main-content">
@@ -170,11 +170,12 @@
 
 <script>
 /**
- * RestoApp v5.2
+ * RestoApp v5.3
  * Author: Gemini
  * Last Update: 2025-08-19
  *
  * Changelog:
+ * - v5.3: Fixed critical page navigation and rendering bug. All menus and back buttons are now functional.
  * - v5.2: Fixed critical recipe save bug. Implemented form reset after new item creation. Improved button layout.
  * - v5.1: Added full recipe management feature (add, edit, delete).
  */
@@ -228,7 +229,8 @@ const App = {
         } catch (e) {
             console.error("Error initializing database from localStorage. Clearing and resetting.", e);
             localStorage.clear();
-            this.init(); // Retry initialization
+            // Wait for the next cycle to re-initialize to avoid potential infinite loops
+            setTimeout(() => window.location.reload(), 100);
             return;
         }
         
@@ -266,7 +268,8 @@ const App = {
             };
 
             if (renderMap[pageId]) {
-                renderMap[pageId].call(App, targetPage, data);
+                // FIX: The context 'this' must refer to App.render, not the global App object.
+                renderMap[pageId].call(this, targetPage, data);
             }
             App.showPage(pageId);
         },
@@ -640,7 +643,7 @@ const App = {
         processStockIn(listDate) {
             const shoppingList = App.db.get('shoppingLists').find(l => l.date === listDate);
             let masterItems = App.db.get('masterItems');
-            let transactions = App.db.get('stockTransactions');
+            let transactions = App.db.get('stockTransactions') || [];
 
             shoppingList.items.forEach(item => {
                 const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
@@ -683,7 +686,7 @@ const App = {
             const inputs = document.querySelectorAll('#stockout-list input[type="number"]');
             let masterItems = App.db.get('masterItems');
             let recipes = App.db.get('recipes');
-            let transactions = App.db.get('stockTransactions');
+            let transactions = App.db.get('stockTransactions') || [];
             let changesMade = false;
 
             inputs.forEach(input => {
@@ -693,6 +696,7 @@ const App = {
                     const itemName = input.dataset.name;
                     if (type === 'menu') {
                         const recipe = recipes[itemName];
+                        if (!recipe) return;
                         recipe.ingredients.forEach(ing => {
                             const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
                             if (itemIndex > -1) {
@@ -735,14 +739,15 @@ const App = {
             let masterItems = App.db.get('masterItems');
             if (id) {
                 const itemIndex = masterItems.findIndex(item => item.id == id);
-                masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
-                App.utils.showToast('Barang berhasil diperbarui!', 'success');
+                if(itemIndex > -1) {
+                    masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData };
+                    App.utils.showToast('Barang berhasil diperbarui!', 'success');
+                }
             } else {
                 const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1;
                 const newSortOrder = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.sortOrder)) + 1 : 0;
                 masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: newSortOrder });
                 App.utils.showToast('Barang baru berhasil ditambahkan!', 'success');
-                this.cancelEdit(); // <-- FIX: Reset form after adding new item
             }
             
             App.db.set('masterItems', masterItems);
@@ -767,9 +772,13 @@ const App = {
         cancelEdit() {
             const form = document.getElementById('add-item-form');
             if(form) form.reset();
-            document.getElementById('edit-item-id').value = '';
-            document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
-            document.getElementById('cancel-edit-btn').style.display = 'none';
+            const saveBtn = document.getElementById('save-item-btn');
+            const cancelBtn = document.getElementById('cancel-edit-btn');
+            if (saveBtn) {
+                document.getElementById('edit-item-id').value = '';
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
+            }
+            if (cancelBtn) cancelBtn.style.display = 'none';
         },
         
         deleteItem(id) {
@@ -892,11 +901,6 @@ const App = {
                 return App.utils.showToast('Nama menu sudah ada, gunakan nama lain.', 'error');
             }
             
-            // If editing and name has changed, which is not allowed now with readonly field, but for safety
-            if (isEditing && newName !== originalName) {
-                delete recipes[originalName];
-            }
-            
             recipes[newName] = { unit: newUnit, ingredients: ingredients };
             
             App.db.set('recipes', recipes);
@@ -953,7 +957,10 @@ const App = {
             fileInput.onchange = e => {
                 const file = e.target.files[0];
                 if (!file) return;
-                if (!confirm("PENTING: Mengimpor data akan menimpa semua data yang ada saat ini. Lanjutkan?")) return;
+                if (!confirm("PENTING: Mengimpor data akan menimpa semua data yang ada saat ini. Lanjutkan?")) {
+                    fileInput.value = ''; // Reset file input
+                    return;
+                }
                 
                 const reader = new FileReader();
                 reader.onload = event => {
@@ -988,12 +995,17 @@ const App = {
             const target = event.target.closest('[data-action], [data-page]');
             if (!target) return;
             
-            // Allow form submission for save-item
-            if (target.dataset.action !== 'save-item') {
+            const action = target.dataset.action;
+            // Prevent default for everything except form submission triggers
+            if (action !== 'save-item') {
                  event.preventDefault();
+            } else if (action === 'save-item' && event.type === 'click') {
+                 // Trigger form submission if the button is clicked, not just the form itself
+                 target.closest('form').requestSubmit();
+                 return;
             }
 
-            const { page, action, date, id, name, type } = target.dataset;
+            const { page, date, id, name, type } = target.dataset;
 
             if (page) {
                 App.render.page(page);
@@ -1004,7 +1016,7 @@ const App = {
                     'process-stock-in': () => App.actions.processStockIn(date),
                     'cancel-shopping-list': () => App.actions.cancelShoppingList(date),
                     'process-stock-out': () => App.actions.processStockOut(type),
-                    'save-item': (e) => { e.preventDefault(); App.actions.saveItem(); },
+                    'save-item': () => App.actions.saveItem(),
                     'edit-item': () => App.actions.editItem(id),
                     'cancel-edit': () => App.actions.cancelEdit(),
                     'delete-item': () => App.actions.deleteItem(id),
@@ -1019,7 +1031,7 @@ const App = {
                     'export-data': () => App.actions.exportData(),
                     'import-data': () => App.actions.importData(),
                 };
-                if(actionMap[action]) actionMap[action](event);
+                if(actionMap[action]) actionMap[action]();
             }
         }
     },
@@ -1049,17 +1061,16 @@ const App = {
             container.addEventListener('dragstart', e => {
                 draggedItem = e.target;
                 setTimeout(() => {
-                    e.target.style.display = 'none';
+                   if(draggedItem) draggedItem.classList.add('dragging');
                 }, 0);
             });
             container.addEventListener('dragend', e => {
-                 setTimeout(() => {
-                    draggedItem.style.display = '';
-                    draggedItem = null;
-                }, 0);
+                if(draggedItem) draggedItem.classList.remove('dragging');
+                draggedItem = null;
             });
             container.addEventListener('dragover', e => {
                 e.preventDefault();
+                if(!draggedItem) return;
                 const afterElement = this.getDragAfterElement(container, e.clientY);
                 if (afterElement == null) {
                     container.appendChild(draggedItem);
@@ -1085,6 +1096,7 @@ const App = {
         calculateAvailablePortions(menuName) {
             const recipes = App.db.get('recipes');
             const masterItems = App.db.get('masterItems');
+            if(!recipes || !masterItems) return 0;
             const recipe = recipes[menuName];
             if (!recipe || !recipe.ingredients) return 0;
             let minPortions = Infinity;
