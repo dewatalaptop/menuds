@@ -164,7 +164,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<script type="module">
+<script>
 // #############################################################################
 // --- file: src/config/firebase.js ---
 // #############################################################################
@@ -172,33 +172,28 @@ const firebaseConfig = {
   apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
   authDomain: "restoapp-v6.firebaseapp.com",
   projectId: "restoapp-v6",
-  storageBucket: "restoapp-v6.appspot.com", // <<--- KODE TELAH DIPERBAIKI DI SINI
+  storageBucket: "restoapp-v6.appspot.com",
   messagingSenderId: "163876863347",
   appId: "1:163876863347:web:2e5181c0bdae91e3809906"
 };
 firebase.initializeApp(firebaseConfig);
-export const auth = firebase.auth();
-export const firestore = firebase.firestore();
+const auth = firebase.auth();
+const firestore = firebase.firestore();
 
 // #############################################################################
 // --- file: src/state.js ---
 // #############################################################################
 const AppState = { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], isDataLoaded: false, unsubscribe: null };
-export default AppState;
 
 // #############################################################################
 // --- file: src/utils/helpers.js ---
 // #############################################################################
-export const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
 
 // #############################################################################
 // --- file: src/api.js ---
 // #############################################################################
-import AppState from './state.js';
-import { firestore } from './config/firebase.js';
-import { showToast } from './ui/ui.js';
-
-export const API = {
+const API = {
     listenToData(callback) {
         if (AppState.unsubscribe) AppState.unsubscribe();
         if (!AppState.currentUser) return;
@@ -248,12 +243,7 @@ export const API = {
 // #############################################################################
 // --- file: src/auth.js ---
 // #############################################################################
-import { auth } from './config/firebase.js';
-import AppState from './state.js';
-import { App } from './main.js';
-import { API } from './api.js';
-
-export const Auth = {
+const Auth = {
     listen() {
         auth.onAuthStateChanged(user => {
             const loginPage = document.getElementById('login-page'); const appRoot = document.getElementById('app-root');
@@ -272,10 +262,7 @@ export const Auth = {
 // #############################################################################
 // --- file: src/ui/pages.js ---
 // #############################################################################
-import AppState from '../state.js';
-import { formatCurrency } from '../utils/helpers.js';
-
-export const Pages = {
+const Pages = {
     dashboard() {
         const lowStockItems = AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
         return `<div class="card">
@@ -332,10 +319,6 @@ export const Pages = {
 // #############################################################################
 // --- file: src/ui/ui.js ---
 // #############################################################################
-import AppState from '../state.js';
-import { Pages } from './pages.js';
-import { setupDraggableList } from '../eventHandlers.js';
-
 const mainContent = document.getElementById('main-content');
 const pageTitle = document.getElementById('page-title');
 const sidebarMenuContainer = document.getElementById('sidebar-menu-container');
@@ -345,8 +328,8 @@ const menuConfig = [
     { id: 'page-manager-items', icon: 'fa-database', text: 'Database Barang', page: Pages.managerItems },
 ];
 
-export function renderApp() { if (!AppState.isDataLoaded) return; renderSidebar(); const currentPageId = location.hash.substring(1) || 'page-dashboard'; renderPage(currentPageId); }
-export function renderPage(pageId) {
+function renderApp() { if (!AppState.isDataLoaded) return; renderSidebar(); const currentPageId = location.hash.substring(1) || 'page-dashboard'; renderPage(currentPageId); }
+function renderPage(pageId) {
     const pageConfig = menuConfig.find(p => p.id === pageId) || menuConfig[0];
     location.hash = pageConfig.id;
     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.toggle('active', a.dataset.page === pageConfig.id));
@@ -359,7 +342,7 @@ function renderSidebar() {
     sidebarMenuContainer.innerHTML = menuConfig.map(item => `<li><a href="#${item.id}" data-page="${item.id}"><i class="fas ${item.icon}"></i><span>${item.text}</span></a></li>`).join('');
     document.getElementById('user-email-display').textContent = AppState.currentUser.email;
 }
-export function showToast(message, type = 'success') {
+function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container'); const toast = document.createElement('div');
     toast.className = `toast ${type}`; const icon = { success: 'fa-check-circle', error: 'fa-times-circle' }[type] || 'fa-info-circle';
     toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><span>${message}</span>`;
@@ -370,12 +353,7 @@ export function showToast(message, type = 'success') {
 // #############################################################################
 // --- file: src/eventHandlers.js ---
 // #############################################################################
-import AppState from './state.js';
-import { Auth } from './auth.js';
-import { renderPage, showToast } from './ui/ui.js';
-import { API } from './api.js';
-
-export function setupDraggableList(tbody) {
+function setupDraggableList(tbody) {
     let draggedItem = null;
     const handleDrag = (y) => { const afterElement = getDragAfterElement(tbody, y); if (afterElement == null) tbody.appendChild(draggedItem); else tbody.insertBefore(draggedItem, afterElement); };
     tbody.addEventListener('dragstart', e => { draggedItem = e.target; setTimeout(() => e.target.style.opacity = '0.5', 0); });
@@ -390,7 +368,7 @@ export function setupDraggableList(tbody) {
     }
 }
 
-export function handleGlobalClick(event) {
+function handleGlobalClick(event) {
     const target = event.target.closest('[data-action]');
     if (!target) return;
     
@@ -407,7 +385,7 @@ export function handleGlobalClick(event) {
 
 const ActionHandlers = {
     'login': async ({ target }) => {
-        const form = target;
+        const form = target.closest('form');
         const button = form.querySelector('button');
         const errorEl = document.getElementById('login-error');
         const email = document.getElementById('email').value;
@@ -449,6 +427,7 @@ const ActionHandlers = {
         finally { target.disabled = false; target.innerHTML = '<i class="fas fa-save"></i> Simpan Urutan'; }
     },
     'save-item': async ({ target }) => {
+        const form = target.closest('form');
         const id = document.getElementById('edit-item-id').value;
         const newItemData = {
             name: document.getElementById('item-name').value.trim(),
@@ -507,13 +486,7 @@ const ActionHandlers = {
 // #############################################################################
 // --- file: src/main.js ---
 // #############################################################################
-import AppState from './state.js';
-import { Auth } from './auth.js';
-import { API } from './api.js';
-import { renderApp, renderPage } from './ui/ui.js';
-import { handleGlobalClick } from './eventHandlers.js';
-
-export const App = {
+const App = {
     init() {
         Auth.listen();
         document.body.addEventListener('click', (e) => {
