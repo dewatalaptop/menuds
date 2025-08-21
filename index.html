@@ -35,7 +35,8 @@
         /* --- Reset & Global Styles --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--secondary-color); color: var(--text-color); line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
-        
+        .app-wrapper { display: flex; }
+
         /* --- Sidebar Navigation --- */
         #sidebar {
             width: var(--sidebar-width); background-color: var(--white-color); border-right: 1px solid var(--border-color);
@@ -72,15 +73,12 @@
         .header-actions { display: flex; align-items: center; gap: 1rem; }
         .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-light); width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: var(--transition); }
         .theme-toggle:hover { background-color: var(--secondary-color); color: var(--primary-color); }
-        /* FIXED: Hide mobile toggle by default */
-        .mobile-menu-toggle { display: none; }
 
         /* --- Mobile Responsiveness --- */
         @media (max-width: 768px) {
             #sidebar { transform: translateX(calc(-1 * var(--sidebar-width))); }
             #sidebar.open { transform: translateX(0); }
             #app-container { padding-left: 0; }
-            /* FIXED: Use !important to ensure this rule overrides others if needed, and only display it on mobile */
             .mobile-menu-toggle { display: block !important; z-index: 1001; }
             .page-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none;}
             #sidebar.open ~ #app-container .page-overlay { display: block; }
@@ -114,31 +112,47 @@
         .text-danger { color: var(--danger-color); }
         .text-success { color: var(--success-color); }
         .stock-hint { font-size: 0.85rem; color: var(--text-light); }
-        /* FIXED: Add grabbing cursor style and disable text selection for better UX */
         .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         tr.dragging { opacity: 0.5; background: var(--secondary-color); }
+
+        /* --- Login Page Styles --- */
+        #login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--secondary-color); }
+        #login-card { width: 100%; max-width: 400px; text-align: center; }
+        #login-error { color: var(--danger-color); margin-top: 1rem; display: none; font-size: 0.9rem; }
+        #app-root { display: none; }
     </style>
 </head>
 <body>
     <div id="login-page">
         <div class="card" id="login-card">
             <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.2</h1>
-            
-            <form id="login-form"> <div class="form-group" style="text-align: left;"><label for="email" class="form-label">Email</label><input type="email" id="email" class="form-control" required></div>
-                <div class="form-group" style="text-align: left;"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
+            <form id="login-form">
+                <div class="form-group" style="text-align: left;">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="form-group" style="text-align: left;">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
             </form>
-
             <p id="login-error"></p>
         </div>
     </div>
 
     <div id="app-root">
         <nav id="sidebar">
-            <div class="sidebar-header"><h1><i class="fas fa-utensils"></i> RestoApp</h1></div>
+            <div class="sidebar-header">
+                <h1><i class="fas fa-utensils"></i> RestoApp</h1>
+            </div>
             <ul class="sidebar-menu" id="sidebar-menu-container"></ul>
-            <div class="sidebar-footer"><span id="user-email-display"></span><br>V7.2 &copy; 2025</div>
+            <div class="sidebar-footer">
+                <span id="user-email-display"></span><br>
+                V7.2 &copy; 2025
+            </div>
         </nav>
+
         <div id="app-container">
             <div class="page-overlay" data-action="toggle-sidebar"></div>
             <div class="container">
@@ -147,7 +161,7 @@
                     <div class="header-actions">
                         <button class="theme-toggle" id="theme-toggle" data-action="toggle-theme"><i class="fas fa-moon"></i></button>
                         <button class="btn btn-sm btn-danger" data-action="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                        <button class="mobile-menu-toggle btn btn-primary" data-action="toggle-sidebar"><i class="fas fa-bars"></i></button>
+                        <button class="mobile-menu-toggle btn btn-primary" data-action="toggle-sidebar" style="display: none;"><i class="fas fa-bars"></i></button>
                     </div>
                 </header>
                 <main id="main-content"></main>
@@ -162,54 +176,55 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<script>
+<script type="module">
 // #############################################################################
 // --- file: src/config/firebase.js ---
 // #############################################################################
 const firebaseConfig = {
-  apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
-  authDomain: "restoapp-v6.firebaseapp.com",
-  projectId: "restoapp-v6",
-  storageBucket: "restoapp-v6.appspot.com",
-  messagingSenderId: "163876863347",
-  appId: "1:163876863347:web:2e5181c0bdae91e3809906"
+    apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
+    authDomain: "restoapp-v6.firebaseapp.com",
+    projectId: "restoapp-v6",
+    storageBucket: "restoapp-v6.appspot.com",
+    messagingSenderId: "163876863347",
+    appId: "1:163876863347:web:2e5181c0bdae91e3809906"
 };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const firestore = firebase.firestore();
+export const auth = firebase.auth();
+export const firestore = firebase.firestore();
 
 // #############################################################################
 // --- file: src/state.js ---
 // #############################################################################
 const AppState = { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], isDataLoaded: false, unsubscribe: null };
+export default AppState;
 
 // #############################################################################
 // --- file: src/utils/helpers.js ---
 // #############################################################################
-const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+export const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
 
 // #############################################################################
 // --- file: src/api.js ---
 // #############################################################################
-const API = {
-    listenToData(onUpdate) { // FIXED: Pass a callback function
+import AppState from './state.js';
+import { firestore } from './config/firebase.js';
+import { showToast } from './ui/ui.js';
+
+export const API = {
+    listenToData(onUpdate) {
         if (AppState.unsubscribe) AppState.unsubscribe();
         if (!AppState.currentUser) return;
         const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
         AppState.unsubscribe = docRef.onSnapshot(doc => {
-            let data;
             if (doc.exists) {
-                data = doc.data();
+                const data = doc.data();
                 Object.keys(data).forEach(key => { AppState[key] = data[key]; });
                 AppState.isDataLoaded = true;
-            } else { 
-                this.initializeDefaultData().then(initialData => {
-                    data = initialData;
-                    Object.keys(data).forEach(key => { AppState[key] = data[key]; });
-                    AppState.isDataLoaded = true;
-                });
+            } else {
+                this.initializeDefaultData();
+                AppState.isDataLoaded = true;
             }
-            onUpdate(); // FIXED: Call the provided callback
+            onUpdate(); // Panggil callback setiap ada update data
         }, error => { console.error("Error listening:", error); showToast("Gagal sinkronisasi data.", "error"); });
     },
     stopListeningToData() { if (AppState.unsubscribe) { AppState.unsubscribe(); AppState.unsubscribe = null; } },
@@ -219,12 +234,6 @@ const API = {
         try { await docRef.set({ [key]: value }, { merge: true }); } 
         catch (e) { console.error(`Error setKey ${key}:`, e); showToast("Gagal menyimpan data.", "error"); throw e; }
     },
-    async set(data) {
-        if (!AppState.currentUser) return;
-        const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
-        try { await docRef.set(data, { merge: true }); }
-        catch (e) { console.error(`Error set:`, e); showToast("Gagal menyimpan data.", "error"); throw e; }
-    },
     async initializeDefaultData() {
         const initialData = {
             masterItems: [
@@ -233,13 +242,10 @@ const API = {
                 { id: 3, name: "Ayam Paha", category: "Daging", unit: "kg", stock: 0, minStock: 2, hargaBeli: 45000, sortOrder: 2 },
                 { id: 4, name: "Beras", category: "Pokok", unit: "kg", stock: 0, minStock: 5, hargaBeli: 12000, sortOrder: 3 },
             ],
-            recipes: {
-                "Ayam Bakar": { unit: "porsi", hargaJual: 30000, ingredients: [ { itemId: 3, qty: 0.25 } ] }
-            },
-            shoppingLists: [],
-            stockTransactions: [],
+            recipes: { "Ayam Bakar": { unit: "porsi", hargaJual: 30000, ingredients: [ { itemId: 3, qty: 0.25 } ] } },
+            shoppingLists: [], stockTransactions: [],
         };
-        await this.set(initialData);
+        await firestore.collection('restaurants').doc(AppState.currentUser.uid).set(initialData);
         showToast("Selamat datang! Data awal telah disiapkan.", "success");
         return initialData;
     }
@@ -248,15 +254,23 @@ const API = {
 // #############################################################################
 // --- file: src/auth.js ---
 // #############################################################################
-const Auth = {
+import { auth } from './config/firebase.js';
+import AppState from './state.js';
+import { App } from './main.js';
+import { API } from './api.js';
+
+export const Auth = {
     listen() {
         auth.onAuthStateChanged(user => {
-            const loginPage = document.getElementById('login-page'); const appRoot = document.getElementById('app-root');
+            const loginPage = document.getElementById('login-page');
+            const appRoot = document.getElementById('app-root');
             if (user) {
-                AppState.currentUser = user; loginPage.style.display = 'none'; appRoot.style.display = 'block';
+                AppState.currentUser = user;
+                loginPage.style.display = 'none'; appRoot.style.display = 'block';
                 App.initOnLogin();
             } else {
-                AppState.currentUser = null; loginPage.style.display = 'flex'; appRoot.style.display = 'none';
+                AppState.currentUser = null;
+                loginPage.style.display = 'flex'; appRoot.style.display = 'none';
                 API.stopListeningToData(); AppState.isDataLoaded = false;
             }
         });
@@ -270,24 +284,18 @@ const Auth = {
 // #############################################################################
 // --- file: src/ui/pages.js ---
 // #############################################################################
-const Pages = {
+// Pages hanya merender "kerangka" statis dari halaman.
+// Konten dinamis (seperti tabel) akan diisi oleh updateDynamicContent().
+export const Pages = {
     dashboard() {
-        const lowStockItems = AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
-        return `<div class="card">
-                    <div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div>
-                    <p>Selamat datang di RestoApp! Gunakan menu di samping untuk mengelola inventaris Anda.</p>
-                </div>
-                <div class="card">
-                    <div class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Stok Kritis</div>
-                    ${lowStockItems.length > 0 ? 
-                        `<p>Ada <strong>${lowStockItems.length} item</strong> yang stoknya di bawah batas minimum.</p>
-                         <ul>${lowStockItems.map(item => `<li>${item.name} (Stok: ${item.stock} ${item.unit}, Min: ${item.minStock} ${item.unit})</li>`).join('')}</ul>` : 
-                        `<p class="text-success">Semua stok aman!</p>`
-                    }
+        return `<div id="dashboard-content">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div>
+                        <p>Memuat data...</p>
+                    </div>
                 </div>`;
     },
     managerItems() {
-        const categories = [...new Set(AppState.masterItems.map(item => item.category))];
         return `
             <div class="card">
                 <h3 class="card-title" id="item-form-title">Tambah Barang Baru</h3>
@@ -301,18 +309,24 @@ const Pages = {
                         <div class="form-group"><label for="item-min-stock" class="form-label">Stok Minimum</label><input type="number" id="item-min-stock" class="form-control" min="0" step="any"></div>
                     </div>
                     <div style="display:flex; gap:10px; margin-top: 1rem;">
-                        <button type="submit" class="btn btn-primary" id="save-item-btn" data-action="save-item"><i class="fas fa-save"></i> Simpan Barang</button>
+                        <button type="submit" class="btn btn-primary" id="save-item-btn"><i class="fas fa-save"></i> Simpan Barang</button>
                         <button type="button" class="btn" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
                     </div>
                 </form>
-                <datalist id="category-suggestions">${categories.map(cat => `<option value="${cat}">`).join('')}</datalist>
+                <datalist id="category-suggestions"></datalist>
             </div>
             <div class="card">
-                <div class="card-header"><h3 class="card-title"><i class="fas fa-database"></i> Daftar Barang</h3><button class="btn btn-primary btn-sm" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></div>
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-database"></i> Daftar Barang</h3>
+                    <button class="btn btn-primary btn-sm" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button>
+                </div>
                 <p class="stock-hint" style="padding: 0 1.5rem 1rem 1.5rem; margin:0;">Tahan dan geser ikon <i class="fas fa-grip-vertical"></i> untuk mengubah urutan.</p>
-                <div class="table-container" style="overflow-x:auto;"><table class="table">
-                    <thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Harga Beli</th><th>Stok Min.</th><th>Aksi</th></tr></thead>
-                    <tbody id="db-editor-tbody"></tbody> </table></div>
+                <div class="table-container" style="overflow-x:auto;">
+                    <table class="table">
+                        <thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Harga Beli</th><th>Stok Min.</th><th>Aksi</th></tr></thead>
+                        <tbody id="db-editor-tbody"></tbody>
+                    </table>
+                </div>
             </div>`;
     },
 };
@@ -320,6 +334,11 @@ const Pages = {
 // #############################################################################
 // --- file: src/ui/ui.js ---
 // #############################################################################
+import AppState from '../state.js';
+import { Pages } from './pages.js';
+import { setupDraggableList } from '../eventHandlers.js';
+import { formatCurrency } from '../utils/helpers.js';
+
 const mainContent = document.getElementById('main-content');
 const pageTitle = document.getElementById('page-title');
 const sidebarMenuContainer = document.getElementById('sidebar-menu-container');
@@ -329,24 +348,39 @@ const menuConfig = [
     { id: 'page-manager-items', icon: 'fa-database', text: 'Database Barang', page: Pages.managerItems },
 ];
 
-function renderPage(pageId) {
+export function renderPage(pageId) {
     const pageConfig = menuConfig.find(p => p.id === pageId) || menuConfig[0];
     if (location.hash !== `#${pageConfig.id}`) { location.hash = pageConfig.id; }
     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.toggle('active', a.dataset.page === pageConfig.id));
-    mainContent.innerHTML = pageConfig.page ? pageConfig.page() : `<div class="card">Segera hadir.</div>`;
+    mainContent.innerHTML = pageConfig.page();
     pageTitle.textContent = pageConfig.text;
     document.title = `${pageConfig.text} - RestoApp`;
-    // FIXED: Page-specific rendering is now handled by a central update function
-    updateDynamicContent(); 
+    updateDynamicContent(); // Panggil update setelah merender kerangka halaman
 }
 
-// ADDED: New function to render only the parts of the page that change with data updates
-function updateDynamicContent() {
+// Fungsi BARU untuk mengisi/memperbarui konten dinamis tanpa merender ulang seluruh halaman
+export function updateDynamicContent() {
     if (!AppState.isDataLoaded) return;
     const currentPageId = location.hash.substring(1) || 'page-dashboard';
 
-    // Update only the item manager table to avoid wiping form state
-    if (currentPageId === 'page-manager-items') {
+    if (currentPageId === 'page-dashboard') {
+        const lowStockItems = AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+        const content = document.getElementById('dashboard-content');
+        if (content) {
+            content.innerHTML = `<div class="card">
+                <div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div>
+                <p>Selamat datang di RestoApp! Gunakan menu di samping untuk mengelola inventaris Anda.</p>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Stok Kritis</div>
+                ${lowStockItems.length > 0 ? 
+                    `<p>Ada <strong>${lowStockItems.length} item</strong> yang stoknya di bawah batas minimum.</p>
+                     <ul>${lowStockItems.map(item => `<li>${item.name} (Stok: ${item.stock} ${item.unit}, Min: ${item.minStock} ${item.unit})</li>`).join('')}</ul>` : 
+                    `<p class="text-success">Semua stok aman!</p>`
+                }
+            </div>`;
+        }
+    } else if (currentPageId === 'page-manager-items') {
         const tbody = document.getElementById('db-editor-tbody');
         if (tbody) {
             const itemRows = AppState.masterItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
@@ -364,20 +398,20 @@ function updateDynamicContent() {
                     </tr>
                 `).join('');
             tbody.innerHTML = itemRows;
-            setupDraggableList(tbody); // Re-attach listeners after re-rendering
+            setupDraggableList(tbody);
         }
-        // update datalist
         const categories = [...new Set(AppState.masterItems.map(item => item.category))];
         const datalist = document.getElementById('category-suggestions');
-        if (datalist) datalist.innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
+        if (datalist) datalist.innerHTML = categories.map(cat => `<option value="${cat}"></option>`).join('');
     }
 }
 
-function renderSidebar() {
+export function renderSidebar() {
     sidebarMenuContainer.innerHTML = menuConfig.map(item => `<li><a href="#${item.id}" data-page="${item.id}"><i class="fas ${item.icon}"></i><span>${item.text}</span></a></li>`).join('');
     document.getElementById('user-email-display').textContent = AppState.currentUser.email;
 }
-function showToast(message, type = 'success') {
+
+export function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container'); const toast = document.createElement('div');
     toast.className = `toast ${type}`; const icon = { success: 'fa-check-circle', error: 'fa-times-circle' }[type] || 'fa-info-circle';
     toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><span>${message}</span>`;
@@ -388,62 +422,26 @@ function showToast(message, type = 'success') {
 // #############################################################################
 // --- file: src/eventHandlers.js ---
 // #############################################################################
-function setupDraggableList(tbody) {
+import AppState from './state.js';
+import { Auth } from './auth.js';
+import { showToast } from './ui/ui.js';
+import { API } from './api.js';
+
+export function setupDraggableList(tbody) {
     let draggedItem = null;
-    tbody.addEventListener('dragstart', e => {
-        draggedItem = e.target;
-        setTimeout(() => e.target.classList.add('dragging'), 0);
-    });
-    tbody.addEventListener('dragend', e => {
-        setTimeout(() => { e.target.classList.remove('dragging'); draggedItem = null; }, 0);
-    });
-    tbody.addEventListener('dragover', e => {
-        e.preventDefault();
-        const afterElement = getDragAfterElement(tbody, e.clientY);
-        if (afterElement == null) {
-            tbody.appendChild(draggedItem);
-        } else {
-            tbody.insertBefore(draggedItem, afterElement);
-        }
-    });
-    // ADDED: Touch event handlers for mobile drag-and-drop
-    tbody.addEventListener('touchstart', e => {
-        if (e.target.closest('.drag-handle')) {
-            draggedItem = e.target.closest('tr');
-            draggedItem.classList.add('dragging');
-        }
-    });
-    tbody.addEventListener('touchmove', e => {
-        if (!draggedItem) return;
-        e.preventDefault();
-        const touch = e.touches[0];
-        const afterElement = getDragAfterElement(tbody, touch.clientY);
-        if (afterElement == null) {
-            tbody.appendChild(draggedItem);
-        } else {
-            tbody.insertBefore(draggedItem, afterElement);
-        }
-    });
-    tbody.addEventListener('touchend', () => {
-        if (!draggedItem) return;
-        draggedItem.classList.remove('dragging');
-        draggedItem = null;
-    });
+    tbody.addEventListener('dragstart', e => { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); });
+    tbody.addEventListener('dragend', e => { setTimeout(() => { e.target.classList.remove('dragging'); draggedItem = null; }, 0); });
+    tbody.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(tbody, e.clientY); if (afterElement == null) { tbody.appendChild(draggedItem); } else { tbody.insertBefore(draggedItem, afterElement); } });
+    tbody.addEventListener('touchstart', e => { if (e.target.closest('.drag-handle')) { draggedItem = e.target.closest('tr'); draggedItem.classList.add('dragging'); } });
+    tbody.addEventListener('touchmove', e => { if (!draggedItem) return; e.preventDefault(); const touch = e.touches[0]; const afterElement = getDragAfterElement(tbody, touch.clientY); if (afterElement == null) { tbody.appendChild(draggedItem); } else { tbody.insertBefore(draggedItem, afterElement); } });
+    tbody.addEventListener('touchend', () => { if (draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } });
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+        return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 }
 
-const ActionHandlers = {
+export const ActionHandlers = {
     'logout': Auth.logout,
     'toggle-theme': () => {
         document.body.classList.toggle('dark-mode');
@@ -456,14 +454,8 @@ const ActionHandlers = {
             const rows = document.querySelectorAll('#db-editor-tbody tr');
             const newMasterItems = [...AppState.masterItems];
             const idOrderMap = new Map();
-            rows.forEach((row, index) => {
-                idOrderMap.set(parseInt(row.dataset.id), index);
-            });
-            newMasterItems.forEach(item => {
-                if (idOrderMap.has(item.id)) {
-                    item.sortOrder = idOrderMap.get(item.id);
-                }
-            });
+            rows.forEach((row, index) => { idOrderMap.set(parseInt(row.dataset.id), index); });
+            newMasterItems.forEach(item => { if (idOrderMap.has(item.id)) { item.sortOrder = idOrderMap.get(item.id); } });
             await API.setKey('masterItems', newMasterItems);
             showToast('Urutan barang berhasil disimpan!', 'success');
         } catch (e) { showToast('Gagal menyimpan urutan.', 'error'); } 
@@ -483,18 +475,15 @@ const ActionHandlers = {
         const masterItems = [...AppState.masterItems];
         if (id) {
             const index = masterItems.findIndex(item => item.id == id);
-            if (index > -1) {
-                masterItems[index] = { ...masterItems[index], ...newItemData };
-            }
+            if (index > -1) { masterItems[index] = { ...masterItems[index], ...newItemData }; }
         } else {
-            // FIXED: Use a more robust method for ID generation like timestamp + random number
             const newId = Date.now() + Math.floor(Math.random() * 100);
             const newSortOrder = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.sortOrder || 0)) + 1 : 0;
             masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: newSortOrder });
         }
         await API.setKey('masterItems', masterItems);
         showToast(`Barang berhasil ${id ? 'diperbarui' : 'ditambahkan'}!`, 'success');
-        ActionHandlers['cancel-edit'](); // FIXED: Call cancel-edit to clear the form
+        ActionHandlers['cancel-edit']();
     },
     'edit-item': ({ id }) => {
         const item = AppState.masterItems.find(i => i.id == id);
@@ -518,46 +507,47 @@ const ActionHandlers = {
         document.getElementById('cancel-edit-btn').style.display = 'none';
     },
     'delete-item': async ({ id }) => {
-        const item = AppState.masterItems.find(i => i.id == id);
         const itemId = parseInt(id);
+        const item = AppState.masterItems.find(i => i.id === itemId);
         if (!item) return;
-
-        // FIXED: Check if item is used in any recipe
-        const isInUse = Object.values(AppState.recipes).some(recipe => 
-            recipe.ingredients.some(ing => ing.itemId === itemId)
-        );
-
+        const isInUse = Object.values(AppState.recipes).some(recipe => recipe.ingredients.some(ing => ing.itemId === itemId));
         if (isInUse) {
-            showToast(`Tidak bisa menghapus "${item.name}" karena masih digunakan dalam resep.`, 'error');
-            return;
+            return showToast(`Tidak bisa menghapus "${item.name}" karena masih digunakan dalam resep.`, 'error');
         }
-
-        if (!confirm(`Apakah Anda yakin ingin menghapus "${item.name}"? Aksi ini tidak bisa dibatalkan.`)) return;
-        
-        const updatedItems = AppState.masterItems.filter(i => i.id != itemId);
-        await API.setKey('masterItems', updatedItems);
-        showToast(`"${item.name}" telah dihapus.`, 'success');
+        if (confirm(`Apakah Anda yakin ingin menghapus "${item.name}"? Aksi ini tidak bisa dibatalkan.`)) {
+            const updatedItems = AppState.masterItems.filter(i => i.id !== itemId);
+            await API.setKey('masterItems', updatedItems);
+            showToast(`"${item.name}" telah dihapus.`, 'success');
+        }
     },
 };
+
 
 // #############################################################################
 // --- file: src/main.js ---
 // #############################################################################
-const App = {
+import { Auth } from './auth.js';
+import { API } from './api.js';
+import { renderPage, renderSidebar, updateDynamicContent } from './ui/ui.js';
+import { ActionHandlers } from './eventHandlers.js';
+
+export const App = {
     init() {
         Auth.listen();
         
-        // --- Event Listeners Setup ---
+        // --- Event Listener Terpusat ---
         document.addEventListener('submit', async (e) => {
             if (e.target.id === 'login-form') {
                 e.preventDefault();
                 const button = e.target.querySelector('button[type="submit"]');
                 const errorEl = document.getElementById('login-error');
                 button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                errorEl.style.display = 'none'; // Sembunyikan pesan error lama
                 try {
                     await Auth.login(document.getElementById('email').value, document.getElementById('password').value);
                 } catch (error) {
-                    errorEl.textContent = "Login Gagal: " + error.message; errorEl.style.display = 'block';
+                    errorEl.textContent = "Login Gagal: Email atau password salah.";
+                    errorEl.style.display = 'block';
                 } finally {
                     button.disabled = false; button.innerHTML = 'Login';
                 }
@@ -572,14 +562,12 @@ const App = {
             if (actionTarget) {
                 e.preventDefault();
                 const { action, id } = actionTarget.dataset;
-                if (ActionHandlers[action]) {
-                    ActionHandlers[action]({ target: actionTarget, id });
-                }
+                if (ActionHandlers[action]) ActionHandlers[action]({ target: actionTarget, id });
             }
-            
             const pageTarget = e.target.closest('[data-page]');
             if (pageTarget) {
                 e.preventDefault();
+                document.getElementById('sidebar').classList.remove('open'); // Tutup sidebar saat ganti halaman di mobile
                 renderPage(pageTarget.dataset.page);
             }
         });
@@ -588,9 +576,10 @@ const App = {
     },
     initOnLogin() {
         renderSidebar();
-        renderPage(location.hash.substring(1));
+        renderPage(location.hash.substring(1) || 'page-dashboard');
         API.listenToData(() => {
-            // FIXED: Only update dynamic content, don't re-render the whole page
+            // Setiap data dari Firebase berubah, panggil fungsi ini untuk
+            // memperbarui bagian-bagian dinamis dari halaman tanpa refresh.
             updateDynamicContent();
         });
     }
