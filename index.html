@@ -124,11 +124,13 @@
     <div id="login-page">
         <div class="card" id="login-card">
             <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.2</h1>
-            <form id="login-form">
+            
+            <form id="login-form" data-action="login">
                 <div class="form-group" style="text-align: left;"><label for="email" class="form-label">Email</label><input type="email" id="email" class="form-control" required></div>
                 <div class="form-group" style="text-align: left;"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
             </form>
+
             <p id="login-error"></p>
         </div>
     </div>
@@ -223,7 +225,6 @@ export const API = {
         try { await docRef.set(data, { merge: true }); }
         catch (e) { console.error(`Error set:`, e); showToast("Gagal menyimpan data.", "error"); throw e; }
     },
-    /* --- PERBAIKAN: Mengembalikan data inisialisasi yang lengkap --- */
     async initializeDefaultData() {
         const initialData = {
             masterItems: [
@@ -264,15 +265,9 @@ export const Auth = {
                 API.stopListeningToData(); AppState.isDataLoaded = false;
             }
         });
-        document.getElementById('login-form').addEventListener('submit', async e => {
-            e.preventDefault();
-            const email = document.getElementById('email').value, password = document.getElementById('password').value;
-            const errorEl = document.getElementById('login-error'), button = e.target.querySelector('button');
-            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            try { await auth.signInWithEmailAndPassword(email, password); } 
-            catch (error) { errorEl.textContent = "Login Gagal: " + error.message; errorEl.style.display = 'block'; } 
-            finally { button.disabled = false; button.innerHTML = 'Login'; }
-        });
+        
+        // ### PERBAIKAN 2: Menghapus event listener khusus dari sini ###
+        // Logika login sekarang ditangani oleh ActionHandlers
     },
     async logout() { await auth.signOut(); }
 };
@@ -401,16 +396,43 @@ export function setupDraggableList(tbody) {
 export function handleGlobalClick(event) {
     const target = event.target.closest('[data-action]');
     if (!target) return;
+    
+    // Mencegah aksi default untuk semua event yang ditangani di sini
+    // kecuali untuk submit form (yang akan dicegah di level form)
+    if (event.type !== 'submit') {
+        event.preventDefault();
+    }
+
     const { action, id } = target.dataset;
     const handler = ActionHandlers[action];
     if (handler) {
-        if (action !== 'save-item') event.preventDefault();
         handler({ target, id });
     }
 }
 
-/* --- PERBAIKAN: Mengembalikan logika lengkap untuk form dan konfirmasi hapus --- */
 const ActionHandlers = {
+    // ### PERBAIKAN 2: Menambahkan handler login di sini ###
+    'login': async ({ target }) => {
+        const form = target; // target adalah form itu sendiri
+        const button = form.querySelector('button');
+        const errorEl = document.getElementById('login-error');
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        errorEl.style.display = 'none';
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+            errorEl.textContent = "Login Gagal: " + error.message;
+            errorEl.style.display = 'block';
+        } finally {
+            button.disabled = false;
+            button.innerHTML = 'Login';
+        }
+    },
     'logout': Auth.logout,
     'toggle-theme': () => {
         document.body.classList.toggle('dark-mode');
@@ -501,20 +523,23 @@ export const App = {
     init() {
         Auth.listen();
         document.body.addEventListener('click', (e) => {
+            // Handler khusus untuk navigasi halaman
             const targetPage = e.target.closest('[data-page]');
             if (targetPage) {
                 e.preventDefault();
                 renderPage(targetPage.dataset.page);
+                return; // Hentikan di sini agar tidak ditangani oleh handleGlobalClick
             }
+            // Handler untuk aksi klik lainnya
+            handleGlobalClick(e);
         });
+
+        // ### PERBAIKAN 3: Menyederhanakan handler submit global ###
         document.body.addEventListener('submit', (e) => {
-            const targetAction = e.target.closest('[data-action]');
-            if (targetAction) {
-                e.preventDefault();
-                handleGlobalClick(e);
-            }
+            e.preventDefault(); // Mencegah reload halaman untuk semua form
+            handleGlobalClick(e); // Delegasikan ke handler global
         });
-        document.body.addEventListener('click', handleGlobalClick); // For non-page, non-submit clicks
+        
         window.addEventListener('hashchange', () => renderPage(location.hash.substring(1)));
     },
     initOnLogin() {
