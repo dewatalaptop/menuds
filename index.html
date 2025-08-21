@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V7.6 Patched</title>
+    <title>RestoApp - V7.7 Reactive UI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -84,7 +84,7 @@
 <body>
     <div id="login-page">
         <div class="card" id="login-card">
-            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.6</h1>
+            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.7</h1>
             <form id="login-form">
                 <div class="form-group" style="text-align: left;"><label for="email" class="form-label">Email</label><input type="email" id="email" class="form-control" required></div>
                 <div class="form-group" style="text-align: left;"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
@@ -128,7 +128,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
 <script>
-// --- Inisialisasi Firebase & Konfigurasi Global ---
 const firebaseConfig = {
     apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
     authDomain: "restoapp-v6.firebaseapp.com",
@@ -237,21 +236,32 @@ window.RestoApp = {
             document.getElementById('main-content').innerHTML = pageContent;
             document.getElementById('page-title').textContent = pageConfig.text;
             document.title = `${pageConfig.text} - RestoApp`;
-            this.updateDynamicContent();
             
-            // Post-render actions, especially for complex pages
             if(pageId === 'page-manager-items') RestoApp.Utils.addDragDropHandlers(document.getElementById('db-editor-tbody'));
+            this.updateDynamicContent(); // Panggil update setelah render awal
         },
         updateDynamicContent() {
              if (!RestoApp.AppState.isDataLoaded) return;
              this.lowStockAlerts();
              const currentPageId = location.hash.substring(1);
-             if (currentPageId === 'page-manager-display') {
-                const { masterItems, recipes, menuKeluarActive, gudangItemIds } = RestoApp.AppState;
-                const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
-                const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
-                const container = document.getElementById('display-config-container');
-                if (container) container.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
+
+             // PERBAIKAN: Fungsi ini sekarang memperbarui konten halaman aktif secara spesifik
+             const contentUpdater = {
+                'page-manager-items': () => {
+                    const tbody = document.getElementById('db-editor-tbody');
+                    if(tbody) tbody.innerHTML = RestoApp.AppState.masterItems.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+                },
+                'page-manager-display': () => {
+                    const { masterItems, recipes, menuKeluarActive, gudangItemIds } = RestoApp.AppState;
+                    const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
+                    const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
+                    const container = document.getElementById('display-config-container');
+                    if (container) container.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
+                }
+             };
+
+             if (contentUpdater[currentPageId]) {
+                contentUpdater[currentPageId]();
              }
         },
         renderSidebar() {
@@ -320,7 +330,7 @@ window.RestoApp = {
             'page-riwayat-stok': () => {
                 const { stockTransactions, masterItems } = RestoApp.AppState;
                 const rows = [...stockTransactions].reverse().map(t => { const item = masterItems.find(i => i.id === t.itemId); const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
-                    let itemName = 'N/A'; if (item) { itemName = item.name; } else if (t.type === 'Produksi Menu') { itemName = t.details; }
+                    let itemName = item ? item.name : (t.type === 'Produksi Menu' ? t.details : 'Item Dihapus');
                     return `<tr><td>${new Date(t.date).toLocaleString('id-ID')}</td><td>${itemName}</td><td>${t.type}</td><td style="${changeClass}">${t.change > 0 ? '+' : ''}${t.change.toFixed(2)}</td><td>${(t.newStock !== null ? t.newStock.toFixed(2) : '-')}</td></tr>`; }).join('');
                 return `<div class="card"><div class="card-header"><div class="card-title"><span>Riwayat Stok</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Waktu</th><th>Item/Menu</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             },
@@ -364,9 +374,9 @@ window.RestoApp = {
     Events: {
         handle(event) {
             const target = event.target.closest('[data-action], [data-page]'); if (!target) return;
-            event.preventDefault(); const { action, page } = target.dataset;
+            event.preventDefault(); const { action, page, ...data } = target.dataset;
             if (page) { RestoApp.UI.renderPage(page); return; }
-            if (action) { const handler = RestoApp.Events.ActionHandlers[action]; if (handler) handler({target}); }
+            if (action) { const handler = RestoApp.Events.ActionHandlers[action]; if (handler) handler({ target, ...data }); }
         },
         ActionHandlers: {
             'logout': () => RestoApp.Auth.logout(),
@@ -379,9 +389,9 @@ window.RestoApp = {
                 const shoppingLists = RestoApp.AppState.shoppingLists || []; shoppingLists.push({ date: new Date().toISOString(), items });
                 await RestoApp.API.setKey('shoppingLists', shoppingLists); RestoApp.UI.showToast('List belanja disimpan!', 'success'); RestoApp.UI.renderPage('page-dashboard');
             },
-            'select-pending-list': ({target}) => RestoApp.UI.renderPage('page-input-belanja-datang', target.closest('[data-date]').dataset.date),
-            'process-stock-in': async ({target}) => {
-                const date = target.dataset.date; const shoppingList = RestoApp.AppState.shoppingLists.find(l => l.date === date); let { masterItems, stockTransactions } = RestoApp.AppState;
+            'select-pending-list': ({date}) => RestoApp.UI.renderPage('page-input-belanja-datang', date),
+            'process-stock-in': async ({date}) => {
+                const shoppingList = RestoApp.AppState.shoppingLists.find(l => l.date === date); let { masterItems, stockTransactions } = RestoApp.AppState;
                 shoppingList.items.forEach(item => {
                     const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
                     if (qtyReceived > 0) {
@@ -395,7 +405,7 @@ window.RestoApp = {
                 await RestoApp.API.set({ shoppingLists: RestoApp.AppState.shoppingLists.filter(l => l.date !== date), masterItems, stockTransactions });
                 RestoApp.UI.showToast('Stok diperbarui!', 'success'); RestoApp.UI.renderPage('page-dashboard');
             },
-            'cancel-shopping-list': async ({target}) => { if (!confirm('Batalkan list ini?')) return; await RestoApp.API.setKey('shoppingLists', RestoApp.AppState.shoppingLists.filter(l => l.date !== target.dataset.date)); RestoApp.UI.showToast('List belanja dibatalkan.', 'success'); RestoApp.UI.renderPage('page-input-belanja-datang'); },
+            'cancel-shopping-list': async ({date}) => { if (!confirm('Batalkan list ini?')) return; await RestoApp.API.setKey('shoppingLists', RestoApp.AppState.shoppingLists.filter(l => l.date !== date)); RestoApp.UI.showToast('List belanja dibatalkan.', 'success'); RestoApp.UI.renderPage('page-input-belanja-datang'); },
             'process-stock-out': async ({target}) => {
                 const type = document.getElementById('stockout-list').dataset.type; let { masterItems, recipes, stockTransactions } = RestoApp.AppState; const txDate = new Date().toISOString();
                 document.querySelectorAll('#stockout-list input[data-name]').forEach(input => {
@@ -419,13 +429,16 @@ window.RestoApp = {
                 await RestoApp.API.set({ masterItems, stockTransactions }); RestoApp.UI.showToast('Stok dikeluarkan!', 'success'); RestoApp.UI.renderPage(type === 'menu' ? 'page-input-menu-keluar' : 'page-ambil-gudang');
             },
             'save-item': async () => {
-                const id = document.getElementById('edit-item-id').value;
+                const newName = document.getElementById('item-name').value.trim(); const id = document.getElementById('edit-item-id').value;
+                if (!newName) return RestoApp.UI.showToast('Nama harus diisi!', 'error');
+                const isNameDuplicate = RestoApp.AppState.masterItems.some(item => item.name.toLowerCase() === newName.toLowerCase() && item.id != id);
+                if (isNameDuplicate) return RestoApp.UI.showToast(`Nama barang "${newName}" sudah ada.`, 'error');
+
                 const newItemData = {
-                    name: document.getElementById('item-name').value.trim(), category: document.getElementById('item-category').value.trim() || 'Lainnya', unit: document.getElementById('item-unit').value.trim(), 
+                    name: newName, category: document.getElementById('item-category').value.trim() || 'Lainnya', unit: document.getElementById('item-unit').value.trim(), 
                     purchaseUnit: document.getElementById('item-purchase-unit').value.trim() || document.getElementById('item-unit').value.trim(), 
                     purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1, minStock: parseFloat(document.getElementById('item-min-stock').value) || 0
                 };
-                if (!newItemData.name) return RestoApp.UI.showToast('Nama harus diisi!', 'error');
                 let masterItems = RestoApp.AppState.masterItems;
                 if (id) {
                     const index = masterItems.findIndex(i => i.id == id); masterItems[index] = { ...masterItems[index], ...newItemData };
@@ -435,14 +448,14 @@ window.RestoApp = {
                 }
                 await RestoApp.API.setKey('masterItems', masterItems); RestoApp.UI.showToast('Barang disimpan!', 'success'); this['cancel-edit'](); RestoApp.UI.renderPage('page-manager-items');
             },
-            'edit-item': ({target}) => {
-                const id = target.closest('[data-id]').dataset.id; const item = RestoApp.AppState.masterItems.find(i => i.id == id); if(!item) return;
+            'edit-item': ({id}) => {
+                const item = RestoApp.AppState.masterItems.find(i => i.id == id); if(!item) return;
                 document.getElementById('edit-item-id').value = item.id; document.getElementById('item-name').value = item.name; document.getElementById('item-category').value = item.category; document.getElementById('item-unit').value = item.unit; document.getElementById('item-purchase-unit').value = item.purchaseUnit; document.getElementById('item-conversion').value = item.purchaseUnitConversion; document.getElementById('item-min-stock').value = item.minStock;
                 document.getElementById('save-item-btn').innerHTML = 'Update'; document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
             },
             'cancel-edit': () => { document.getElementById('add-item-form').reset(); document.getElementById('edit-item-id').value = ''; document.getElementById('save-item-btn').innerHTML = 'Simpan'; document.getElementById('cancel-edit-btn').style.display = 'none'; },
-            'delete-item': async ({target}) => {
-                const id = target.closest('[data-id]').dataset.id; const item = RestoApp.AppState.masterItems.find(i => i.id == id);
+            'delete-item': async ({id}) => {
+                const item = RestoApp.AppState.masterItems.find(i => i.id == id);
                 if ((item.stock || 0) > 0) return RestoApp.UI.showToast('Tidak bisa hapus, barang masih ada stok.', 'error');
                 if (Object.values(RestoApp.AppState.recipes).some(r => r.ingredients.some(i => i.itemId == id))) return RestoApp.UI.showToast(`Gagal! "${item.name}" masih digunakan di resep.`, 'error');
                 if (!confirm(`Hapus "${item.name}"?`)) return; 
@@ -453,9 +466,9 @@ window.RestoApp = {
                 await RestoApp.API.setKey('masterItems', masterItems); RestoApp.UI.showToast('Urutan disimpan!', 'success');
             },
             'add-recipe': () => RestoApp.UI.renderPage('page-manager-recipes', null),
-            'edit-recipe': ({target}) => RestoApp.UI.renderPage('page-manager-recipes', target.dataset.name),
-            'delete-recipe': async ({target}) => {
-                const name = target.dataset.name; if (!confirm(`Hapus resep "${name}"?`)) return; let { recipes, menuKeluarActive } = RestoApp.AppState;
+            'edit-recipe': ({name}) => RestoApp.UI.renderPage('page-manager-recipes', name),
+            'delete-recipe': async ({name}) => {
+                if (!confirm(`Hapus resep "${name}"?`)) return; let { recipes, menuKeluarActive } = RestoApp.AppState;
                 delete recipes[name]; menuKeluarActive = menuKeluarActive.filter(menu => menu !== name);
                 await RestoApp.API.set({ recipes, menuKeluarActive }); RestoApp.UI.showToast('Resep dihapus.', 'success'); RestoApp.UI.renderPage('page-manager-recipes');
             },
@@ -507,13 +520,13 @@ window.RestoApp = {
     App: {
         init() {
             RestoApp.Auth.listen();
-            document.addEventListener('submit', async (e) => {
+            document.addEventListener('submit', (e) => {
                 if (e.target.id === 'login-form') {
                     e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const errorEl = document.getElementById('login-error');
                     button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; errorEl.style.display = 'none';
-                    try { await RestoApp.Auth.login(document.getElementById('email').value, document.getElementById('password').value); } 
-                    catch (error) { errorEl.textContent = "Login Gagal: " + error.message; errorEl.style.display = 'block'; } 
-                    finally { button.disabled = false; button.innerHTML = 'Login'; }
+                    RestoApp.Auth.login(document.getElementById('email').value, document.getElementById('password').value)
+                        .catch(error => { errorEl.textContent = "Login Gagal: " + error.message; errorEl.style.display = 'block'; })
+                        .finally(() => { button.disabled = false; button.innerHTML = 'Login'; });
                 }
             });
             document.addEventListener('click', (e) => RestoApp.Events.handle(e));
@@ -521,7 +534,6 @@ window.RestoApp = {
         },
         initOnLogin() {
             RestoApp.UI.renderSidebar();
-            // PERBAIKAN: Listener hanya merender halaman sekali, lalu hanya update konten dinamis
             RestoApp.API.listenToData(() => {
                 const isInitialLoad = !document.getElementById('main-content').hasChildNodes();
                 if (isInitialLoad) {
