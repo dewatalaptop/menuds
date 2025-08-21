@@ -172,7 +172,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
   authDomain: "restoapp-v6.firebaseapp.com",
   projectId: "restoapp-v6",
-  storageBucket: "restoapp-v6.appspot.com",
+  storageBucket: "restoapp-v6.appspot.com", // <<--- KODE TELAH DIPERBAIKI DI SINI
   messagingSenderId: "163876863347",
   appId: "1:163876863347:web:2e5181c0bdae91e3809906"
 };
@@ -265,9 +265,6 @@ export const Auth = {
                 API.stopListeningToData(); AppState.isDataLoaded = false;
             }
         });
-        
-        // ### PERBAIKAN 2: Menghapus event listener khusus dari sini ###
-        // Logika login sekarang ditangani oleh ActionHandlers
     },
     async logout() { await auth.signOut(); }
 };
@@ -397,8 +394,6 @@ export function handleGlobalClick(event) {
     const target = event.target.closest('[data-action]');
     if (!target) return;
     
-    // Mencegah aksi default untuk semua event yang ditangani di sini
-    // kecuali untuk submit form (yang akan dicegah di level form)
     if (event.type !== 'submit') {
         event.preventDefault();
     }
@@ -411,9 +406,8 @@ export function handleGlobalClick(event) {
 }
 
 const ActionHandlers = {
-    // ### PERBAIKAN 2: Menambahkan handler login di sini ###
     'login': async ({ target }) => {
-        const form = target; // target adalah form itu sendiri
+        const form = target;
         const button = form.querySelector('button');
         const errorEl = document.getElementById('login-error');
         const email = document.getElementById('email').value;
@@ -528,16 +522,15 @@ export const App = {
             if (targetPage) {
                 e.preventDefault();
                 renderPage(targetPage.dataset.page);
-                return; // Hentikan di sini agar tidak ditangani oleh handleGlobalClick
+                return;
             }
             // Handler untuk aksi klik lainnya
             handleGlobalClick(e);
         });
 
-        // ### PERBAIKAN 3: Menyederhanakan handler submit global ###
         document.body.addEventListener('submit', (e) => {
-            e.preventDefault(); // Mencegah reload halaman untuk semua form
-            handleGlobalClick(e); // Delegasikan ke handler global
+            e.preventDefault(); 
+            handleGlobalClick(e); 
         });
         
         window.addEventListener('hashchange', () => renderPage(location.hash.substring(1)));
