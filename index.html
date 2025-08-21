@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V6.1 UX Enhanced</title>
+    <title>RestoApp - V7.0 Enterprise Ready</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -12,186 +12,136 @@
 
         /* --- Color Variables --- */
         :root {
-            --primary-color: #4a7c59; --primary-light: #6b9d7a; --secondary-color: #f8f9fa;
-            --text-color: #2d3748; --text-light: #718096; --white-color: #ffffff;
-            --border-color: #e2e8f0; --danger-color: #e53e3e; --danger-light: #fed7d7;
-            --warning-color: #dd6b20; --warning-light: #feebc8; --success-color: #38a169;
-            --success-light: #c6f6d5; --info-color: #3182ce; --info-light: #bee3f8;
-            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --border-radius: 0.5rem; --border-radius-lg: 0.75rem; --transition: all 0.2s ease-in-out;
+            --primary-color: #4a7c59; --primary-light: #6b9d7a; --primary-dark: #385f46;
+            --secondary-color: #f1f5f9; --white-color: #ffffff;
+            --text-color: #1e293b; --text-light: #64748b;
+            --border-color: #e2e8f0; --danger-color: #e53e3e; --warning-color: #dd6b20;
+            --success-color: #38a169; --info-color: #3182ce;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --border-radius: 0.5rem; --transition: all 0.2s ease-in-out;
+            --sidebar-width: 240px;
+        }
+
+        body.dark-mode {
+            --primary-color: #6b9d7a; --primary-light: #4a7c59; --primary-dark: #8bc39d;
+            --secondary-color: #1e293b; --white-color: #0f172a;
+            --text-color: #f1f5f9; --text-light: #94a3b8;
+            --border-color: #334155; --danger-color: #f87171; --warning-color: #fbbf24;
+            --success-color: #4ade80; --info-color: #60a5fa;
         }
 
         /* --- Reset & Global Styles --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--secondary-color); color: var(--text-color); line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--secondary-color); color: var(--text-color); line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
+        .app-wrapper { display: flex; }
+
+        /* --- Sidebar Navigation --- */
+        #sidebar {
+            width: var(--sidebar-width); background-color: var(--white-color); border-right: 1px solid var(--border-color);
+            height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000;
+            display: flex; flex-direction: column; transition: transform 0.3s ease-in-out; box-shadow: var(--shadow-md);
+        }
+        .sidebar-header { padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-header h1 { font-size: 1.5rem; color: var(--primary-color); font-weight: 600; margin: 0; }
+        .sidebar-menu { flex-grow: 1; list-style: none; padding: 1rem 0; }
+        .sidebar-menu a {
+            display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1.5rem;
+            color: var(--text-light); text-decoration: none; font-weight: 500;
+            border-left: 3px solid transparent; transition: var(--transition);
+        }
+        .sidebar-menu a:hover { background-color: var(--secondary-color); color: var(--primary-dark); }
+        .sidebar-menu a.active { background-color: var(--secondary-color); color: var(--primary-color); border-left-color: var(--primary-color); font-weight: 600; }
+        .sidebar-menu a i { width: 20px; text-align: center; font-size: 1.1rem; }
+        .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-light); }
+
+        /* --- Main App Container --- */
+        #app-container {
+            flex-grow: 1; transition: margin-left 0.3s ease-in-out;
+            padding-left: var(--sidebar-width);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 
         /* --- Header Styles --- */
-        header { 
-            background-color: var(--primary-color); color: var(--white-color); padding: 1.25rem 1.5rem; 
-            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0; box-shadow: var(--shadow-md); 
-            display: flex; justify-content: space-between; align-items: center;
+        header {
+            background-color: var(--white-color); color: var(--text-color); padding: 1rem 1.5rem;
+            border-radius: var(--border-radius); box-shadow: var(--shadow-md); margin-bottom: 1.5rem;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);
         }
-        header h1 { font-weight: 600; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; margin: 0; }
-        header h1 i { font-size: 1.75rem; }
+        header h2 { font-weight: 600; font-size: 1.5rem; color: var(--primary-color); margin: 0; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-light); width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: var(--transition); }
+        .theme-toggle:hover { background-color: var(--secondary-color); color: var(--primary-color); }
 
-        /* --- Header Alerts Icon --- */
-        #header-alerts { position: relative; cursor: pointer; }
-        #header-alerts .alert-icon { font-size: 1.5rem; color: var(--white-color); transition: transform 0.2s; }
-        #header-alerts:hover .alert-icon { transform: scale(1.1); }
-        #header-alerts .alert-badge {
-            position: absolute; top: -5px; right: -10px; background-color: var(--danger-color);
-            color: var(--white-color); border-radius: 50%; width: 22px; height: 22px;
-            display: flex; justify-content: center; align-items: center; font-size: 0.75rem;
-            font-weight: 600; border: 2px solid var(--primary-color); animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(229, 62, 62, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            #sidebar { transform: translateX(calc(-1 * var(--sidebar-width))); }
+            #sidebar.open { transform: translateX(0); }
+            #app-container { padding-left: 0; }
+            .mobile-menu-toggle { display: block !important; z-index: 1001; }
+            .page-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none;}
+            #sidebar.open ~ #app-container .page-overlay { display: block; }
         }
 
-        /* --- Modal Styles --- */
-        .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(45, 55, 72, 0.6); backdrop-filter: blur(2px);
-            z-index: 1040; display: flex; justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.2s ease; visibility: hidden;
-        }
-        .modal-backdrop.show { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: var(--white-color); border-radius: var(--border-radius-lg); padding: 1.5rem;
-            width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
-            transform: scale(0.95); transition: transform 0.2s ease;
-        }
-        .modal-backdrop.show .modal-content { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
-        .modal-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); }
-        .modal-close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
-
-        /* --- Main Content & Page Styles --- */
-        main { background-color: var(--white-color); border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg); box-shadow: var(--shadow-md); overflow: hidden; }
-        .page { display: none; padding: 1.5rem; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .page.active { display: block; }
-        
-        /* --- General Component Styles --- */
+        /* --- General Components (Unchanged or slightly tweaked) --- */
         .card { background: var(--white-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
         .card-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: var(--border-radius); font-weight: 500; cursor: pointer; transition: var(--transition); border: none; font-size: 0.9rem; }
-        .btn-primary { background-color: var(--primary-color); color: var(--white-color); } .btn-primary:hover { background-color: var(--primary-light); }
-        .btn-secondary { background-color: #6c757d; color: var(--white-color); } .btn-secondary:hover { background-color: #5a6268; }
-        .btn-danger { background-color: var(--danger-color); color: var(--white-color); } .btn-danger:hover { background-color: #c53030; }
-        .btn-warning { background-color: var(--warning-color); color: var(--white-color); } .btn-warning:hover { background-color: #c05621; }
-        .btn-success { background-color: var(--success-color); color: var(--white-color); } .btn-success:hover { background-color: #2f855a; }
-        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8rem; }
-        .alert { padding: 0.875rem 1.25rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-        .alert-info { background-color: var(--info-light); color: var(--info-color); border-left: 4px solid var(--info-color); }
-        
-        /* --- ⭐ NEW: Form Enhancement Styles --- */
+        .btn:disabled { background-color: var(--text-light); cursor: not-allowed; }
+        .btn-primary { background-color: var(--primary-color); color: #fff; } .btn-primary:hover:not(:disabled) { background-color: var(--primary-light); }
+        .btn-danger { background-color: var(--danger-color); color: #fff; }
         .form-group { position: relative; margin-bottom: 1rem; }
-        .form-label { display: flex; align-items: center; justify-content: space-between; font-weight: 500; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-color); }
-        .info-btn { background: none; border: none; color: var(--text-light); cursor: pointer; padding: 0 0.25rem; font-size: 0.9rem; line-height: 1; }
-        .info-btn:hover { color: var(--primary-color); }
-        .tooltip {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--text-color);
-            color: var(--white-color);
-            padding: 0.6rem 0.8rem;
-            border-radius: var(--border-radius);
-            font-size: 0.8rem;
-            width: max-content;
-            max-width: 250px;
-            text-align: center;
-            z-index: 100;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
-            pointer-events: none;
-        }
-        .tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: var(--text-color) transparent transparent transparent;
-        }
-        .info-btn .tooltip.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); }
-        .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.2); }
-        #add-item-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 1rem; }
-        
+        .form-label { display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-color); }
+        .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); background-color: var(--white-color); color: var(--text-color); }
+        .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent); }
+        .alert { padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; display: flex; align-items: start; gap: 0.75rem; border-left: 4px solid; }
+        .alert-info { background-color: color-mix(in srgb, var(--info-color) 15%, transparent); color: var(--info-color); border-color: var(--info-color); }
+        .alert-warning { background-color: color-mix(in srgb, var(--warning-color) 15%, transparent); color: var(--warning-color); border-color: var(--warning-color); }
         #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.75rem; max-width: 350px; }
-        .toast { background-color: var(--text-color); color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 0.75rem; }
+        .toast { background-color: #fff; color: var(--text-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 1rem; border-left: 4px solid; }
         .toast.show { opacity: 1; transform: translateX(0); }
-        .toast.success { background-color: var(--success-color); }
-        .toast.error { background-color: var(--danger-color); }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem; }
-        .dashboard-card { background-color: var(--white-color); border-radius: var(--border-radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: var(--transition); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
-        .dashboard-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary-color); }
-        .dashboard-card i { font-size: 2.25rem; color: var(--primary-color); }
-        .dashboard-card h3 { font-size: 1rem; font-weight: 500; color: var(--text-color); }
-        .item-row { display: grid; grid-template-columns: 1fr 120px 80px; gap: 1rem; align-items: center; padding: 0.75rem; border-radius: var(--border-radius); background-color: var(--secondary-color); }
-        .item-list { display: grid; gap: 0.75rem; }
-        .item-label { font-weight: 500; word-break: break-word; }
-        .stock-hint { color: var(--text-light); font-size: 0.85rem; }
-        .category-group { margin-bottom: 1.5rem; }
-        .category-title { font-weight: 600; color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-        .table-container { overflow-x: auto; }
+        .toast.success { border-color: var(--success-color); } .toast.success .toast-icon { color: var(--success-color); }
+        .toast.error { border-color: var(--danger-color); } .toast.error .toast-icon { color: var(--danger-color); }
+        .toast-icon { font-size: 1.5rem; }
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page.active { display: block; }
         .table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         .table th, .table td { padding: 0.875rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .table th { background-color: #f7fafc; font-weight: 600; color: var(--text-color); }
-        .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; }
-        .dragging { opacity: 0.5; }
-        .time-display { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-light); }
-        .report-list { list-style: none; padding-left: 0; }
-        .report-list li { display: flex; justify-content: space-between; padding: 0.5rem; border-radius: 0.25rem; }
-        .report-list li:nth-child(odd) { background-color: var(--secondary-color); }
+        .table th { background-color: var(--secondary-color); font-weight: 600; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem; }
+        .dashboard-card { background-color: var(--white-color); border-radius: var(--border-radius); padding: 1.5rem; transition: var(--transition); border: 1px solid var(--border-color); text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+        .dashboard-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary-color); }
+        .dashboard-card-header { display: flex; align-items: center; gap: 1rem; }
+        .dashboard-card-icon { font-size: 1.8rem; color: var(--primary-color); width: 40px; height: 40px; display: grid; place-items: center; }
+        .dashboard-card-title { font-size: 1.1rem; font-weight: 600; color: var(--text-color); }
+        .dashboard-card-body { margin-top: 1rem; font-size: 0.9rem; color: var(--text-light); flex-grow: 1; }
+        .dashboard-card-value { font-size: 1.5rem; font-weight: 600; color: var(--text-color); display: block; margin-top: 0.5rem; }
+        .text-danger { color: var(--danger-color); }
+        .text-success { color: var(--success-color); }
+        .item-list { display: grid; gap: 0.75rem; }
+        .item-row { display: grid; grid-template-columns: 1fr 120px 80px; gap: 1rem; align-items: center; padding: 0.75rem; border-radius: var(--border-radius); background-color: var(--secondary-color); }
 
         /* --- Login Page Styles --- */
-        #login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        #login-card { width: 100%; max-width: 400px; text-align: center; padding: 2.5rem; }
+        #login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--secondary-color); }
+        #login-card { width: 100%; max-width: 400px; text-align: center; }
         #login-error { color: var(--danger-color); margin-top: 1rem; display: none; }
-        #app-container { display: none; } /* Hide app until logged in */
+        #app-root { display: none; }
     </style>
 </head>
 <body>
     <div id="login-page">
         <div class="card" id="login-card">
-            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 1.5rem;"><i class="fas fa-utensils"></i> RestoApp</h1>
+            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7</h1>
             <form id="login-form">
-                <div class="form-group">
-                    <div class="form-label">
-                        <span>Email</span>
-                        <div class="info-btn" data-action="toggle-tooltip">
-                            <i class="fas fa-info-circle"></i>
-                            <span class="tooltip">Gunakan email yang telah Anda daftarkan di Firebase Authentication.</span>
-                        </div>
-                    </div>
+                <div class="form-group" style="text-align: left;">
+                    <label for="email" class="form-label">Email</label>
                     <input type="email" id="email" class="form-control" required>
                 </div>
-                <div class="form-group">
-                     <div class="form-label">
-                        <span>Password</span>
-                         <div class="info-btn" data-action="toggle-tooltip">
-                            <i class="fas fa-info-circle"></i>
-                            <span class="tooltip">Masukkan password yang sesuai dengan akun email Anda.</span>
-                        </div>
-                    </div>
+                <div class="form-group" style="text-align: left;">
+                    <label for="password" class="form-label">Password</label>
                     <input type="password" id="password" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
@@ -199,43 +149,50 @@
             <p id="login-error"></p>
         </div>
     </div>
-    
-    <div id="app-container">
-        <div id="modal-container"></div>
-        <div class="container">
-            <div id="toast-container"></div>
-            
-            <header>
-                <h1><i class="fas fa-utensils"></i> RestoApp V6.1</h1>
-                <div class="header-actions">
-                    <div id="header-alerts"></div>
-                    <button class="btn btn-sm btn-danger" data-action="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                </div>
-            </header>
-            
-            <main id="main-content">
-                <div id="page-dashboard" class="page"></div>
-                <div id="page-input-belanja" class="page"></div>
-                <div id="page-input-belanja-datang" class="page"></div>
-                <div id="page-input-menu-keluar" class="page"></div>
-                <div id="page-ambil-gudang" class="page"></div>
-                <div id="page-riwayat-stok" class="page"></div>
-                <div id="page-laporan-harian" class="page"></div>
-                <div id="page-manager-area" class="page"></div>
-                <div id="page-manager-items" class="page"></div>
-                <div id="page-manager-recipes" class="page"></div>
-                <div id="page-manager-display" class="page"></div>
-                <div id="page-manager-backup" class="page"></div>
-            </main>
+
+    <div id="app-root">
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-utensils"></i> RestoApp</h1>
+            </div>
+            <ul class="sidebar-menu" id="sidebar-menu-container">
+                </ul>
+            <div class="sidebar-footer">
+                <span id="user-email-display"></span><br>
+                V7.0 &copy; 2025
+            </div>
+        </nav>
+
+        <div id="app-container">
+            <div class="page-overlay" data-action="toggle-sidebar"></div>
+            <div class="container">
+                <header>
+                    <h2 id="page-title">Dashboard</h2>
+                    <div class="header-actions">
+                        <button class="theme-toggle" id="theme-toggle" data-action="toggle-theme">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                         <button class="btn btn-sm btn-danger" data-action="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                         <button class="mobile-menu-toggle btn btn-primary" data-action="toggle-sidebar" style="display: none;"><i class="fas fa-bars"></i></button>
+                    </div>
+                </header>
+                <main id="main-content">
+                    </main>
+            </div>
         </div>
     </div>
+    
+    <div id="toast-container"></div>
+    <div id="modal-container"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<script>
-// Konfigurasi Firebase Anda
+<script type="module">
+// #############################################################################
+// --- file: src/config/firebase.js ---
+// #############################################################################
 const firebaseConfig = {
     apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
     authDomain: "restoapp-v6.firebaseapp.com",
@@ -244,479 +201,696 @@ const firebaseConfig = {
     messagingSenderId: "163876863347",
     appId: "1:163876863347:web:2e5181c0bdae91e3809906"
 };
-
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const firestore = firebase.firestore();
+export const auth = firebase.auth();
+export const firestore = firebase.firestore();
 
-const App = {
-    state: {
-        masterItems: [], recipes: {}, gudangItemIds: [], menuKeluarActive: [],
-        shoppingLists: [], stockTransactions: [], currentUser: null
+
+// #############################################################################
+// --- file: src/state.js ---
+// #############################################################################
+// Centralized state management for the application
+const AppState = {
+    currentUser: null,
+    masterItems: [],
+    recipes: {},
+    gudangItemIds: [],
+    menuKeluarActive: [],
+    shoppingLists: [],
+    stockTransactions: [],
+    settings: {
+        theme: 'light', // 'light' or 'dark'
     },
-    data: { /* ... Data awal tidak perlu diubah ... */
-        initialMasterItems: [
-            { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.5 }, { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.5 }, { id: 3, name: "Cabai Merah", category: "Sayuran", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.2 }, { id: 4, name: "Ayam Paha", category: "Daging", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 2 }, { id: 5, name: "Beras", category: "Pokok", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 25, stock: 0, minStock: 5 }, { id: 6, name: "Minyak Goreng", category: "Pokok", unit: "liter", purchaseUnit: "jerigen", purchaseUnitConversion: 5, stock: 0, minStock: 1 }, { id: 7, name: "Kecap Manis", category: "Bumbu", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0, minStock: 300 }, { id: 8, name: "Garam", category: "Bumbu", unit: "gram", purchaseUnit: "bks", purchaseUnitConversion: 250, stock: 0, minStock: 250 }, { id: 9, name: "Telur Ayam", category: "Daging", unit: "butir", purchaseUnit: "kg", purchaseUnitConversion: 16, stock: 0, minStock: 10 }, { id: 10, name: "Teh Celup", category: "Minuman", unit: "pcs", purchaseUnit: "box", purchaseUnitConversion: 25, stock: 0, minStock: 25 }, { id: 11, name: "Gula Pasir", category: "Pokok", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 1 }, { id: 13, name: "Saus Sambal", category: "Gudang", unit: "ml", purchaseUnit: "botol", purchaseUnitConversion: 600, stock: 0, minStock: 600 }, { id: 14, name: "Gas LPG 12kg", category: "Operasional", unit: "tabung", purchaseUnit: "tabung", purchaseUnitConversion: 1, stock: 0, minStock: 1 },
-        ],
-        initialRecipes: {
-            "Nasi Goreng Spesial": { unit: "porsi", ingredients: [ { itemId: 5, qty: 0.15 }, { itemId: 9, qty: 1 }, { itemId: 1, qty: 0.02 }, { itemId: 2, qty: 0.01 }, { itemId: 7, qty: 15 }, { itemId: 8, qty: 2 }, { itemId: 6, qty: 0.02 } ] }, "Ayam Bakar Madu": { unit: "porsi", ingredients: [ { itemId: 4, qty: 0.25 }, { itemId: 7, qty: 20 }, { itemId: 2, qty: 0.015}, { itemId: 11, qty: 0.01} ] }, "Es Teh Manis": { unit: "gelas", ingredients: [ { itemId: 10, qty: 1 }, { itemId: 11, qty: 0.02 } ] }
-        },
-        initialGudangItemIds: [13, 14]
-    },
-    db: {
-        async get() { if (!App.state.currentUser) return null; const docRef = firestore.collection('restaurants').doc(App.state.currentUser.uid); const doc = await docRef.get(); return doc.exists ? doc.data() : null; },
-        async set(data) { if (!App.state.currentUser) return; const docRef = firestore.collection('restaurants').doc(App.state.currentUser.uid); await docRef.set(data, { merge: true }); },
-        async setKey(key, value) { if (!App.state.currentUser) return; const docRef = firestore.collection('restaurants').doc(App.state.currentUser.uid); await docRef.set({ [key]: value }, { merge: true }); App.state[key] = value; }
-    },
-    async init() {
-        document.body.addEventListener('click', this.handle.click.bind(this));
-        App.auth.listen();
-    },
-    auth: {
-        listen() {
-            auth.onAuthStateChanged(user => {
-                const loginPage = document.getElementById('login-page'); const appContainer = document.getElementById('app-container');
-                if (user) { App.state.currentUser = user; loginPage.style.display = 'none'; appContainer.style.display = 'block'; App.loadDataAndRender();
-                } else { App.state.currentUser = null; loginPage.style.display = 'flex'; appContainer.style.display = 'none'; }
-            });
-            document.getElementById('login-form').addEventListener('submit', async e => {
-                e.preventDefault(); const email = document.getElementById('email').value; const password = document.getElementById('password').value; const errorEl = document.getElementById('login-error');
-                try { errorEl.style.display = 'none'; await auth.signInWithEmailAndPassword(email, password);
-                } catch (error) { errorEl.textContent = "Login Gagal: " + error.message; errorEl.style.display = 'block'; }
-            });
-        },
-        async logout() { await auth.signOut(); }
-    },
-    async loadDataAndRender() {
-        try {
-            let data = await this.db.get();
-            if (!data) {
-                App.utils.showToast('Selamat datang! Menginisialisasi data awal...', 'info');
-                data = {
-                    masterItems: this.data.initialMasterItems.map((item, index) => ({...item, sortOrder: index})), recipes: this.data.initialRecipes, gudangItemIds: this.data.initialGudangItemIds,
-                    menuKeluarActive: Object.keys(this.data.initialRecipes), shoppingLists: [], stockTransactions: []
-                };
-                await this.db.set(data);
-            }
-            Object.keys(data).forEach(key => { App.state[key] = data[key]; });
-            this.utils.updateTime(); setInterval(this.utils.updateTime, 1000); this.render.page('page-dashboard');
-        } catch (e) { console.error("Error initializing app:", e); App.utils.showToast('Gagal memuat data dari server.', 'error'); }
-    },
-    showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        const page = document.getElementById(pageId); if (page) { page.classList.add('active'); window.scrollTo(0, 0); }
-    },
-    render: { /* ... Render functions tidak perlu diubah ... */ 
-        page(pageId, data = null) {
-            const targetPage = document.getElementById(pageId); if (!targetPage) return;
-            const pageRenderFunction = App.pages[pageId];
-            if (pageRenderFunction) {
-                targetPage.innerHTML = pageRenderFunction(data);
-                if (pageId === 'page-manager-items') { App.render.managerItemsContent(); } else if (pageId === 'page-manager-recipes') { App.render.managerRecipesContent(); } else if (pageId === 'page-manager-display') { App.render.managerDisplayContent(); } else if (pageId === 'page-input-belanja-datang' && typeof data === 'string') { targetPage.innerHTML = App.pages.stockInDetail(data); }
-            }
-            this.lowStockAlerts(); App.utils.updateTime(); App.showPage(pageId);
-        },
-        lowStockAlerts() {
-            const container = document.getElementById('header-alerts'); const masterItems = App.state.masterItems; if (!container || !masterItems) return;
-            const lowStockItems = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
-            if (lowStockItems.length > 0) { container.innerHTML = `<div data-action="show-low-stock-modal"><i class="fas fa-bell alert-icon"></i><span class="alert-badge">${lowStockItems.length}</span></div>`; } else { container.innerHTML = ''; }
-        },
-        lowStockModal() {
-            const masterItems = App.state.masterItems; const lowStockItems = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0)).sort((a,b) => (a.stock/a.minStock) - (b.stock/b.minStock)); if (lowStockItems.length === 0) return;
-            const modalContainer = document.getElementById('modal-container');
-            modalContainer.innerHTML = `<div class="modal-backdrop" data-action="close-modal"><div class="modal-content"><div class="modal-header"><h3 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Peringatan Stok Rendah</h3><button class="modal-close-btn" data-action="close-modal">&times;</button></div><div class="modal-body"><p>Grafik ini membandingkan stok saat ini (hijau) dengan batas minimum (merah).</p><div style="position: relative; height:60vh;"><canvas id="lowStockChart"></canvas></div></div></div></div>`;
-            const backdrop = modalContainer.querySelector('.modal-backdrop'); setTimeout(() => backdrop.classList.add('show'), 10);
-            const ctx = document.getElementById('lowStockChart').getContext('2d');
-            new Chart(ctx, { type: 'bar', data: { labels: lowStockItems.map(item => `${item.name} (${item.unit})`), datasets: [{ label: 'Stok Saat Ini', data: lowStockItems.map(item => item.stock), backgroundColor: 'rgba(56, 161, 105, 0.7)' }, { label: 'Stok Minimum', data: lowStockItems.map(item => item.minStock), backgroundColor: 'rgba(229, 62, 62, 0.7)' }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { y: { ticks: { color: '#2d3748' } }, x: { ticks: { color: '#2d3748' }, beginAtZero: true } }, plugins: { legend: { labels: { color: '#2d3748' } } } } });
-        },
-        closeModal() {
-            const modalContainer = document.getElementById('modal-container'); const backdrop = modalContainer.querySelector('.modal-backdrop');
-            if (backdrop) { backdrop.classList.remove('show'); backdrop.addEventListener('transitionend', () => { modalContainer.innerHTML = ''; }, { once: true }); }
-        },
-        managerItemsContent() {
-            const masterItems = App.state.masterItems.sort((a, b) => a.sortOrder - b.sortOrder);
-            document.getElementById('db-editor-tbody').innerHTML = masterItems.map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
-            App.utils.addDragDropHandlers(document.getElementById('db-editor-tbody')); const categories = [...new Set(masterItems.map(item => item.category))];
-            document.getElementById('category-suggestions').innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
-        },
-        managerRecipesContent() {
-            const recipes = App.state.recipes; document.getElementById('recipe-list-container').innerHTML = Object.keys(recipes).sort().map(name => `<div class="item-row" style="padding: 0.5rem;"><span>${name}</span><span>${recipes[name].unit}</span><div style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-warning" data-action="edit-recipe" data-name="${name}">Edit</button><button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}">Hapus</button></div></div>`).join('') || 'Belum ada resep.';
-        },
-        managerDisplayContent() {
-            const { masterItems, recipes, menuKeluarActive, gudangItemIds } = App.state;
-            const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
-            const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
-            document.getElementById('display-config-container').innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
-        }
-    },
-    
-    // ⭐ PAGES: Functions that generate HTML are updated
-    pages: {
-        'page-dashboard': () => `<div class="alert alert-info"><i class="fas fa-info-circle"></i><div><strong>Selamat Datang, ${App.state.currentUser.email}!</strong> Gunakan menu di bawah untuk mengelola inventaris.</div></div><div class="dashboard-grid"><a href="#" class="dashboard-card" data-page="page-input-belanja-datang"><i class="fas fa-truck-loading"></i><h3>Input Belanja Datang</h3></a><a href="#" class="dashboard-card" data-page="page-input-menu-keluar"><i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3></a><a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a><a href="#" class="dashboard-card" data-page="page-input-belanja"><i class="fas fa-shopping-cart"></i><h3>Input List Belanja</h3></a><a href="#" class="dashboard-card" data-page="page-riwayat-stok"><i class="fas fa-history"></i><h3>Riwayat Stok</h3></a><a href="#" class="dashboard-card" data-page="page-manager-area"><i class="fas fa-user-tie"></i><h3>Manager Area</h3></a><a href="#" class="dashboard-card" data-page="page-laporan-harian"><i class="fas fa-chart-line"></i><h3>Laporan Harian</h3></a></div><div class="time-display"><i class="far fa-clock"></i> <span id="current-time"></span></div>`,
-        'page-input-belanja': () => {
-            const masterItems = App.state.masterItems.sort((a, b) => a.sortOrder - b.sortOrder); const categories = [...new Set(masterItems.map(item => item.category))];
-            let formHTML = categories.map(cat => {
-                let itemsHTML = masterItems.filter(item => item.category === cat).map(item => `<div class="item-row" style="grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;"><label for="shopitem-${item.id}" class="item-label">${item.name}<div class="stock-hint">Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}</div></label><input type="number" id="shopitem-${item.id}" class="form-control" placeholder="Jumlah" min="0" step="any" data-item-id="${item.id}"><span class="item-unit">${item.purchaseUnit}</span></div>`).join('');
-                return `<div class="card" style="padding:1rem; margin-bottom:1rem;"><h3 class="category-title" style="margin-bottom:1rem; font-size:1.1rem;">${cat}</h3><div class="item-list">${itemsHTML}</div></div>`;
-            }).join('');
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-shopping-cart"></i><span>Buat List Belanja</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div style="padding:1rem;">${formHTML}</div><button class="btn btn-primary" style="width:100%" data-action="save-shopping-list"><i class="fas fa-save"></i> Simpan List Belanja</button></div>`;
-        },
-        'page-input-belanja-datang': (data) => {
-            if(typeof data === 'string') return App.pages.stockInDetail(data); const shoppingLists = App.state.shoppingLists || [];
-            let content = (shoppingLists.length === 0) ? `<div class="alert alert-info"><i class="fas fa-info-circle"></i> Tidak ada list belanja yang pending.</div>` : shoppingLists.map(list => `<div class="card" style="cursor:pointer;" data-action="select-pending-list" data-date="${list.date}"><strong>List Belanja - ${new Date(list.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong><div>${list.items.length} item</div></div>`).join('');
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-truck-loading"></i><span>Pilih List Belanja</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
-        },
-        'stockInDetail': (listDate) => {
-            const shoppingList = App.state.shoppingLists.find(l => l.date === listDate); if (!shoppingList) return `Error: List not found. <button data-page="page-input-belanja-datang">Kembali</button>`;
-            const masterItems = App.state.masterItems; const itemsHTML = shoppingList.items.map(item => {
-                const masterItem = masterItems.find(mi => mi.id === item.id); if (!masterItem) return '';
-                return `<div class="item-row"><label for="stockin-${item.id}" class="item-label">${masterItem.name}</label><input type="number" id="stockin-${item.id}" class="form-control" value="${item.qty}" min="0" step="any"><span class="item-unit">${masterItem.purchaseUnit}</span></div>`;
-            }).join('');
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-clipboard-check"></i><span>Konfirmasi Barang Datang</span></div><button class="btn btn-secondary" data-page="page-input-belanja-datang"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list">${itemsHTML}</div><div style="display:flex; gap: 10px; margin-top:1rem;"><button class="btn btn-primary" style="flex-grow:1;" data-action="process-stock-in" data-date="${listDate}"><i class="fas fa-check"></i> Proses Stok</button><button class="btn btn-danger" data-action="cancel-shopping-list" data-date="${listDate}"><i class="fas fa-trash"></i> Batalkan</button></div></div>`;
-        },
-        'page-input-menu-keluar': () => App.pages.stockOutPage('menu'),
-        'page-ambil-gudang': () => App.pages.stockOutPage('gudang'),
-        'stockOutPage': (type) => {
-            const { masterItems, recipes, gudangItemIds, menuKeluarActive } = App.state; let itemsToRender, title, icon;
-            if (type === 'gudang') { title = "Ambil Barang dari Gudang"; icon = "fa-warehouse"; itemsToRender = masterItems.filter(item => gudangItemIds.includes(item.id)).sort((a,b) => a.sortOrder - b.sortOrder); } 
-            else { title = "Input Menu Keluar"; icon = "fa-utensils"; itemsToRender = menuKeluarActive.map(key => ({ name: key, ...recipes[key] })).sort((a,b) => a.name.localeCompare(b.name)); }
-            let formHTML = itemsToRender.map(item => {
-                const stockHint = (type === 'gudang') ? `Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}` : `Stok cukup untuk: ${App.utils.calculateAvailablePortions(item.name)} ${item.unit}`;
-                return `<div class="item-row"><label class="item-label">${item.name}<div class="stock-hint">${stockHint}</div></label><input type="number" class="form-control" data-name="${item.name}" placeholder="Jumlah" min="0" step="any"><span class="item-unit">${item.unit}</span></div>`;
-            }).join('');
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas ${icon}"></i><span>${title}</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list" id="stockout-list" data-type="${type}">${formHTML}</div><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="process-stock-out" data-type="${type}"><i class="fas fa-check"></i> Proses</button></div>`;
-        },
-        'page-riwayat-stok': () => {
-             const { stockTransactions: transactions, masterItems } = App.state; let content;
-            if (!transactions || transactions.length === 0) { content = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Belum ada riwayat transaksi.</div>'; } 
-            else {
-                const rows = [...transactions].reverse().map(t => {
-                    const item = masterItems.find(i => i.id === t.itemId); let changeHTML;
-                    if (t.type === 'Produksi Menu') { changeHTML = `<td>+${t.change} porsi</td><td>${t.details}</td>`; } 
-                    else { const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);'; changeHTML = `<td style="${changeClass}">${t.change > 0 ? '+' : ''}${(t.change || 0).toFixed(2)}</td><td>${(t.newStock || 0).toFixed(2)}</td>`; }
-                    return `<tr><td>${new Date(t.date).toLocaleString('id-ID')}</td><td>${item ? item.name : (t.type === 'Produksi Menu' ? '---' : 'Barang Dihapus')}</td><td>${t.type}</td>${changeHTML}</tr>`;
-                }).join('');
-                content = `<div class="table-container"><table class="table"><thead><tr><th>Waktu</th><th>Barang</th><th>Jenis</th><th>+/-</th><th>Sisa/Detail</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-            }
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-history"></i><span>Riwayat Stok</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
-        },
-        'page-laporan-harian': () => {
-            const reportData = App.utils.generateDailyReport();
-            const createListHTML = (data, unit = '') => (data.length === 0) ? `<p class="stock-hint">Tidak ada data.</p>` : `<ul class="report-list">${data.map(item => `<li><span>${item[0]}</span> <strong>${parseFloat(item[1]).toFixed(1)} ${unit}</strong></li>`).join('')}</ul>`;
-            const stokRendahHTML = reportData.stokRendah.length > 0 ? `<ul class="report-list">${reportData.stokRendah.map(item => `<li><span>${item.name}</span> <strong>Sisa: ${item.stock} ${item.unit}</strong></li>`).join('')}</ul>` : `<p class="stock-hint">Tidak ada stok kritis.</p>`;
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-chart-line"></i><span>Laporan Harian</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="alert alert-info" style="margin-bottom: 1.5rem;"><i class="fas fa-info-circle"></i><div>Laporan dibuat pada <strong>${reportData.reportDate.toLocaleString('id-ID')}</strong> (24 jam terakhir).</div></div><div class="card"><h3 class="card-title">📈 Top 5 Menu Diproduksi</h3>${createListHTML(reportData.topMenus, 'porsi')}</div><div class="card"><h3 class="card-title">🥕 Top 5 Bahan Terpakai</h3>${createListHTML(reportData.topBahan, 'unit')}</div><div class="card"><h3 class="card-title">⚠️ Stok Kritis Saat Ini</h3>${stokRendahHTML}</div></div>`;
-        },
-        'page-manager-area': () => `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-user-tie"></i><span>Manager Area</span></div><button class="btn btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="dashboard-grid"><a href="#" class="dashboard-card" data-page="page-manager-items"><i class="fas fa-database"></i><h3>Database Barang</h3></a><a href="#" class="dashboard-card" data-page="page-manager-recipes"><i class="fas fa-book-open"></i><h3>Manajemen Resep</h3></a><a href="#" class="dashboard-card" data-page="page-manager-display"><i class="fas fa-desktop"></i><h3>Atur Tampilan</h3></a><a href="#" class="dashboard-card" data-page="page-manager-backup"><i class="fas fa-cloud-upload-alt"></i><h3>Cadangkan Data</h3></a></div></div>`,
-        
-        'page-manager-items': () => `
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-database"></i><span>Database Barang</span></div>
-                    <button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button>
-                </div>
-                <h3 class="category-title"><span>Tambah / Edit Barang</span></h3>
-                <form id="add-item-form">
-                    <input type="hidden" id="edit-item-id">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <div class="form-label"><span>Nama Barang</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Tulis nama unik untuk barang ini. Contoh: 'Ayam Paha Atas'</span></div></div>
-                        <input class="form-control" type="text" id="item-name" placeholder="Contoh: Ayam Paha Atas" required>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-label"><span>Kategori</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Kelompokkan barang untuk mempermudah pengelolaan. Contoh: 'Daging', 'Sayuran', 'Bumbu'.</span></div></div>
-                        <input class="form-control" type="text" id="item-category" placeholder="Contoh: Daging" list="category-suggestions" required>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-label"><span>Satuan Stok</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Satuan yang digunakan untuk resep dan menghitung stok. Contoh: kg, liter, pcs.</span></div></div>
-                        <input class="form-control" type="text" id="item-unit" placeholder="Contoh: kg" required>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-label"><span>Satuan Beli</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Satuan saat membeli barang dari supplier. Contoh: karung, jerigen, box.</span></div></div>
-                        <input class="form-control" type="text" id="item-purchase-unit" placeholder="Contoh: karung">
-                    </div>
-                    <div class="form-group">
-                        <div class="form-label"><span>Konversi</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Jumlah 'Satuan Stok' dalam 1 'Satuan Beli'. Contoh: 1 karung beras = 25 kg, isi 25.</span></div></div>
-                        <input class="form-control" type="number" id="item-conversion" placeholder="Contoh: 25" min="0" step="any">
-                    </div>
-                     <div class="form-group" style="grid-column: 1 / -1;">
-                        <div class="form-label"><span>Stok Minimum</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Batas stok dalam 'Satuan Stok'. Jika stok kurang dari ini, akan muncul peringatan.</span></div></div>
-                        <input class="form-control" type="number" id="item-min-stock" placeholder="Contoh: 5" min="0" step="any">
-                    </div>
-                    <div style="display:flex; gap:10px; grid-column:1/-1; margin-top: 1rem;">
-                        <button type="button" class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow:1;"><i class="fas fa-save"></i> Simpan</button>
-                        <button type="button" class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
-                    </div>
-                </form>
-                <datalist id="category-suggestions"></datalist>
-                <h3 class="category-title" style="margin-top: 2rem;"><span>Daftar Barang</span><button class="btn btn-sm btn-primary" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></h3>
-                <p class="stock-hint" style="margin-bottom: 1rem;">Anda dapat menarik dan melepas baris untuk mengubah urutan.</p>
-                <div class="table-container"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div>
-            </div>`,
-        'page-manager-recipes': (data) => {
-            if (data?.mode === 'add-recipe' || data?.mode === 'edit-recipe') return App.pages.recipeEditor(data.name);
-            return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-book-open"></i><span>Manajemen Resep</span></div><button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="category-title"><span>Daftar Resep</span><button class="btn btn-sm btn-primary" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah Resep</button></div><div id="recipe-list-container"></div></div>`;
-        },
-        'page-manager-display': () => `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-desktop"></i><span>Atur Tampilan Menu & Gudang</span></div><button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button></div><div id="display-config-container"></div></div>`,
-        'page-manager-backup': () => `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-cloud-upload-alt"></i><span>Export & Import Data</span></div><button class="btn btn-secondary" data-page="page-manager-area"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="alert alert-info"><i class="fas fa-info-circle"></i><div>Fitur ini akan menyimpan atau memuat semua data dari file JSON. Import akan menimpa data saat ini.</div></div><div style="display:flex; gap:10px;"><button class="btn btn-primary" data-action="export-data"><i class="fas fa-download"></i> Export Data</button><button class="btn btn-warning" data-action="import-data"><i class="fas fa-upload"></i> Import Data</button><input type="file" id="import-file-input" accept=".json" style="display:none;"></div></div>`,
-        'recipeEditor': (recipeName = null) => {
-            const isEditing = recipeName !== null; const { recipes, masterItems } = App.state;
-            const recipe = isEditing ? recipes[recipeName] : { unit: '', ingredients: [] };
-            const itemOptions = masterItems.sort((a, b) => a.name.localeCompare(b.name)).map(item => `<option value="${item.id}">${item.name} (${item.unit})</option>`).join('');
-            let ingredientsHTML = recipe.ingredients.map(ing => { const item = masterItems.find(mi => mi.id === ing.itemId); return `<div class="item-row ingredient-item" data-item-id="${ing.itemId}"><span>${item ? item.name : 'N/A'}</span><input type="number" class="form-control" value="${ing.qty}" step="any" min="0"><div><span>${item ? item.unit : ''}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div></div>`; }).join('');
-            return `<div class="card">
-                        <div class="card-header"><h2 class="card-title"><i class="fas fa-edit"></i> ${isEditing ? 'Edit Resep' : 'Tambah Resep'}</h2><button class="btn btn-secondary" data-page="page-manager-recipes"><i class="fas fa-arrow-left"></i> Kembali</button></div>
-                        <div class="form-group">
-                            <div class="form-label"><span>Nama Menu</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Nama menu yang akan ditampilkan. Nama ini harus unik.</span></div></div>
-                            <input type="text" id="recipe-name" class="form-control" value="${isEditing ? recipeName : ''}" ${isEditing ? 'readonly' : ''}>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-label"><span>Satuan Hasil</span><div class="info-btn" data-action="toggle-tooltip"><i class="fas fa-info-circle"></i><span class="tooltip">Satuan dari menu yang dibuat. Contoh: porsi, gelas, mangkok.</span></div></div>
-                            <input type="text" id="recipe-unit" class="form-control" value="${recipe.unit}">
-                        </div>
-                        <div class="card"><h3 class="card-title">Bahan-Bahan</h3><div id="ingredients-list">${ingredientsHTML}</div><div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed #ccc;display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:center;"><select id="new-ingredient-item" class="form-control">${itemOptions}</select><input type="number" id="new-ingredient-qty" class="form-control" placeholder="Jumlah" step="any" min="0"><button class="btn btn-primary" data-action="add-ingredient">+</button></div></div>
-                        <button class="btn btn-success" style="width:100%;margin-top:1rem;" data-action="save-recipe" data-original-name="${isEditing ? recipeName : ''}"><i class="fas fa-save"></i> Simpan Resep</button>
-                    </div>`;
-        }
-    },
-    
-    // Actions and other functions remain largely the same, only handle.click is modified
-    actions: { /* ... Semua action functions tidak diubah ... */
-        showLowStockModal() { App.render.lowStockModal(); },
-        closeModal() { App.render.closeModal(); },
-        async saveShoppingList() {
-            const items = Array.from(document.querySelectorAll('#page-input-belanja input[data-item-id]')).map(input => ({ id: parseInt(input.dataset.itemId), qty: parseFloat(input.value) })).filter(item => item.qty > 0);
-            if (items.length === 0) return App.utils.showToast('List belanja kosong.', 'info');
-            const shoppingLists = App.state.shoppingLists || []; shoppingLists.push({ date: new Date().toISOString(), items });
-            await App.db.setKey('shoppingLists', shoppingLists); App.utils.showToast('List belanja berhasil disimpan!', 'success'); App.render.page('page-dashboard');
-        },
-        async processStockIn(date) {
-            const shoppingList = App.state.shoppingLists.find(l => l.date === date); let { masterItems, stockTransactions: transactions } = App.state;
-            shoppingList.items.forEach(item => {
-                const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
-                if (qtyReceived > 0) {
-                    const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
-                    if (itemIndex > -1) {
-                        const masterItem = masterItems[itemIndex]; const stockIncrease = qtyReceived * masterItem.purchaseUnitConversion;
-                        masterItem.stock = (masterItem.stock || 0) + stockIncrease;
-                        transactions.push({ date: new Date().toISOString(), itemId: masterItem.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItem.stock, details: null });
-                    }
-                }
-            });
-            await App.db.set({ shoppingLists: App.state.shoppingLists.filter(l => l.date !== date), masterItems: masterItems, stockTransactions: transactions });
-            App.utils.showToast('Stok berhasil diperbarui!', 'success'); App.render.page('page-dashboard');
-        },
-        async cancelShoppingList(date) { if (!confirm('Batalkan list belanja ini?')) return; await App.db.setKey('shoppingLists', App.state.shoppingLists.filter(l => l.date !== date)); App.utils.showToast('List belanja dibatalkan.', 'success'); App.render.page('page-input-belanja-datang'); },
-        async processStockOut(type) {
-            const inputs = document.querySelectorAll('#stockout-list input[data-name]'); let { masterItems, recipes, stockTransactions: transactions } = App.state; let changesMade = false; const transactionDate = new Date().toISOString();
-            inputs.forEach(input => {
-                const qty = parseFloat(input.value);
-                if (qty > 0) {
-                    changesMade = true; const itemName = input.dataset.name;
-                    if (type === 'menu') {
-                        transactions.push({ date: transactionDate, itemId: null, type: 'Produksi Menu', change: qty, newStock: null, details: itemName });
-                        const recipe = recipes[itemName]; if (!recipe) return;
-                        recipe.ingredients.forEach(ing => {
-                            const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
-                            if (itemIndex > -1) {
-                                const stockDecrease = ing.qty * qty; masterItems[itemIndex].stock -= stockDecrease;
-                                transactions.push({ date: transactionDate, itemId: ing.itemId, type: `Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: `${qty} porsi` });
-                            }
-                        });
-                    } else {
-                        const itemIndex = masterItems.findIndex(mi => mi.name === itemName);
-                        if (itemIndex > -1) {
-                            masterItems[itemIndex].stock -= qty;
-                            transactions.push({ date: transactionDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -qty, newStock: masterItems[itemIndex].stock, details: null });
-                        }
-                    }
-                }
-            });
-            if (!changesMade) return App.utils.showToast('Tidak ada jumlah yang diinput.', 'info');
-            await App.db.set({ masterItems, stockTransactions: transactions }); App.utils.showToast('Stok berhasil dikeluarkan!', 'success'); App.render.page(type === 'menu' ? 'page-input-menu-keluar' : 'page-ambil-gudang');
-        },
-        async saveItem() {
-            const id = document.getElementById('edit-item-id').value;
-            const newItemData = {
-                name: document.getElementById('item-name').value.trim(), category: document.getElementById('item-category').value.trim(), unit: document.getElementById('item-unit').value.trim(), purchaseUnit: document.getElementById('item-purchase-unit').value.trim() || document.getElementById('item-unit').value.trim(), purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1, minStock: parseFloat(document.getElementById('item-min-stock').value) || 0
-            };
-            if (!newItemData.name || !newItemData.category || !newItemData.unit) return App.utils.showToast('Nama, Kategori, dan Satuan Stok harus diisi!', 'error');
-            let masterItems = App.state.masterItems;
-            if (id) {
-                const itemIndex = masterItems.findIndex(item => item.id == id); masterItems[itemIndex] = { ...masterItems[itemIndex], ...newItemData }; App.utils.showToast('Barang diperbarui!', 'success');
+    isDataLoaded: false,
+    unsubscribe: null, // To store the real-time listener unsub function
+};
+export default AppState;
+
+
+// #############################################################################
+// --- file: src/utils/helpers.js ---
+// #############################################################################
+// Utility functions that don't depend on AppState
+export const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+};
+
+export const debounce = (func, delay) => {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+};
+
+
+// #############################################################################
+// --- file: src/api.js ---
+// #############################################################################
+import AppState from './state.js';
+import { firestore } from './config/firebase.js';
+import { showToast } from './ui/ui.js';
+
+export const API = {
+    // Sets up a real-time listener for the restaurant's data
+    listenToData(callback) {
+        if (AppState.unsubscribe) AppState.unsubscribe(); // Unsubscribe from previous listener
+        if (!AppState.currentUser) return;
+        const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
+        AppState.unsubscribe = docRef.onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                Object.keys(data).forEach(key => { AppState[key] = data[key]; });
+                AppState.isDataLoaded = true;
+                callback(data);
             } else {
-                const newId = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.id)) + 1 : 1; const newSortOrder = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.sortOrder)) + 1 : 0;
-                masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: newSortOrder }); App.utils.showToast('Barang baru ditambahkan!', 'success');
+                // If no data exists, initialize with default data
+                this.initializeDefaultData().then(callback);
             }
-            await App.db.setKey('masterItems', masterItems); this.cancelEdit(); App.render.managerItemsContent();
-        },
-        editItem(id) {
-            const item = App.state.masterItems.find(item => item.id == id); if(!item) return;
-            document.getElementById('edit-item-id').value = item.id; document.getElementById('item-name').value = item.name; document.getElementById('item-category').value = item.category; document.getElementById('item-unit').value = item.unit; document.getElementById('item-purchase-unit').value = item.purchaseUnit || ''; document.getElementById('item-conversion').value = item.purchaseUnitConversion || ''; document.getElementById('item-min-stock').value = item.minStock || 0;
-            document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update'; document.getElementById('cancel-edit-btn').style.display = 'inline-flex'; window.scrollTo(0, 0);
-        },
-        cancelEdit() { document.getElementById('add-item-form').reset(); document.getElementById('edit-item-id').value = ''; document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan'; document.getElementById('cancel-edit-btn').style.display = 'none'; },
-        async deleteItem(id) {
-            let masterItems = App.state.masterItems; const item = masterItems.find(item => item.id == id);
-            if ((item.stock || 0) > 0) return App.utils.showToast('Tidak dapat menghapus, barang masih ada stok.', 'error');
-            if (Object.values(App.state.recipes).some(r => r.ingredients.some(i => i.itemId == id))) return App.utils.showToast(`Gagal! "${item.name}" masih digunakan di resep.`, 'error');
-            if (!confirm(`Hapus "${item.name}"?`)) return; await App.db.setKey('masterItems', masterItems.filter(item => item.id != id)); App.render.managerItemsContent(); App.utils.showToast('Barang berhasil dihapus.', 'success');
-        },
-        async saveItemOrder() {
-            const masterItems = App.state.masterItems; const rows = document.querySelectorAll('#db-editor-tbody tr');
-            rows.forEach((row, index) => { const item = masterItems.find(i => i.id == row.dataset.id); if (item) item.sortOrder = index; });
-            await App.db.setKey('masterItems', masterItems); App.utils.showToast('Urutan barang disimpan!', 'success');
-        },
-        async saveDisplayConfig() {
-            const container = document.getElementById('display-config-container');
-            const menuKeluarActive = Array.from(container.querySelectorAll('input[data-type="menu"]:checked')).map(cb => cb.value); const gudangItemIds = Array.from(container.querySelectorAll('input[data-type="gudang"]:checked')).map(cb => parseInt(cb.value));
-            await App.db.set({ menuKeluarActive, gudangItemIds }); App.utils.showToast('Pengaturan tampilan disimpan!', 'success');
-        },
-        addIngredient() {
-            const list = document.getElementById('ingredients-list'); const itemId = document.getElementById('new-ingredient-item').value; const qty = parseFloat(document.getElementById('new-ingredient-qty').value);
-            if (!itemId || !(qty > 0)) return App.utils.showToast('Pilih barang dan isi jumlah.', 'error'); if (list.querySelector(`[data-item-id="${itemId}"]`)) return App.utils.showToast('Barang sudah ada di resep.', 'warning');
-            const item = App.state.masterItems.find(mi => mi.id == itemId); const newIngredientHTML = document.createElement('div');
-            newIngredientHTML.className = 'item-row ingredient-item'; newIngredientHTML.dataset.itemId = item.id;
-            newIngredientHTML.innerHTML = `<span>${item.name}</span><input type="number" class="form-control" value="${qty}" step="any" min="0"><div><span>${item.unit}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div>`;
-            list.appendChild(newIngredientHTML); document.getElementById('new-ingredient-qty').value = '';
-        },
-        removeIngredient(button) { button.closest('.ingredient-item').remove(); },
-        async saveRecipe(button) {
-            const originalName = button.dataset.originalName; const newName = document.getElementById('recipe-name').value.trim(); const unit = document.getElementById('recipe-unit').value.trim();
-            if (!newName || !unit) return App.utils.showToast('Nama menu dan satuan harus diisi.', 'error');
-            const ingredients = Array.from(document.querySelectorAll('.ingredient-item')).map(el => ({ itemId: parseInt(el.dataset.itemId), qty: parseFloat(el.querySelector('input').value) })).filter(ing => ing.qty > 0);
-            if (ingredients.length === 0) return App.utils.showToast('Resep harus punya minimal 1 bahan.', 'error');
-            let recipes = App.state.recipes; if (!originalName && recipes[newName]) return App.utils.showToast('Nama menu sudah ada.', 'error');
-            if (originalName && originalName !== newName) delete recipes[originalName]; recipes[newName] = { unit, ingredients }; let menuKeluarActive = App.state.menuKeluarActive;
-            if (!originalName && !menuKeluarActive.includes(newName)) { menuKeluarActive.push(newName); }
-            await App.db.set({ recipes, menuKeluarActive }); App.utils.showToast(`Resep "${newName}" disimpan.`, 'success'); App.render.page('page-manager-recipes');
-        },
-        async deleteRecipe(name) {
-            if (!confirm(`Hapus resep "${name}"?`)) return; let { recipes, menuKeluarActive } = App.state;
-            delete recipes[name]; menuKeluarActive = menuKeluarActive.filter(menu => menu !== name);
-            await App.db.set({ recipes, menuKeluarActive }); App.utils.showToast('Resep dihapus.', 'success'); App.render.page('page-manager-recipes');
-        },
-        exportData() {
-            const dataToExport = { ...App.state }; delete dataToExport.currentUser;
-            const a = document.createElement('a'); a.href = 'data:application/json;charset=utf-8,'+ encodeURIComponent(JSON.stringify(dataToExport, null, 2));
-            a.download = `restoapp_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); App.utils.showToast('Data berhasil diekspor!', 'success');
-        },
-        importData() {
-            const fileInput = document.getElementById('import-file-input');
-            fileInput.onchange = e => {
-                const file = e.target.files[0]; if (!file) return; if (!confirm("PENTING: Ini akan menimpa semua data Anda di server. Lanjutkan?")) return fileInput.value = '';
-                const reader = new FileReader();
-                reader.onload = async event => {
-                    try {
-                        const data = JSON.parse(event.target.result); const requiredKeys = ['masterItems', 'recipes', 'gudangItemIds', 'menuKeluarActive', 'shoppingLists', 'stockTransactions'];
-                        if (!requiredKeys.every(key => key in data)) throw new Error("File tidak valid atau format lama."); await App.db.set(data);
-                        App.utils.showToast('Data berhasil diimpor! Halaman akan dimuat ulang.', 'success'); setTimeout(() => window.location.reload(), 2000);
-                    } catch (error) { App.utils.showToast('Gagal impor: ' + error.message, 'error'); }
-                };
-                reader.readAsText(file);
-            };
-            fileInput.click();
+        }, error => {
+            console.error("Error listening to data:", error);
+            showToast("Gagal menyinkronkan data. Coba muat ulang.", "error");
+        });
+    },
+
+    // Stops listening to data changes
+    stopListeningToData() {
+        if (AppState.unsubscribe) {
+            AppState.unsubscribe();
+            AppState.unsubscribe = null;
         }
     },
     
-    // ⭐ HANDLE: Click handler is updated for tooltips
-    handle: {
-        click(event) {
-            // Close any open tooltip if clicking outside
-            if (!event.target.closest('.info-btn')) {
-                document.querySelectorAll('.tooltip.show').forEach(tooltip => tooltip.classList.remove('show'));
-            }
-
-            const target = event.target.closest('[data-action], [data-page]');
-            if (!target) return;
-            const { page, action, date, id, name } = target.dataset;
-
-            if (page) { event.preventDefault(); App.render.page(page); } 
-            else if (action) {
-                event.preventDefault();
-                const actionMap = {
-                    'toggle-tooltip': () => App.utils.toggleTooltip(target),
-                    'logout': App.auth.logout,
-                    'show-low-stock-modal': App.actions.showLowStockModal,
-                    'close-modal': (e) => { if (e.target.classList.contains('modal-backdrop') || e.target.closest('.modal-close-btn')) App.actions.closeModal(); },
-                    'save-shopping-list': App.actions.saveShoppingList,
-                    'select-pending-list': () => App.render.page('page-input-belanja-datang', date),
-                    'process-stock-in': () => App.actions.processStockIn(date),
-                    'cancel-shopping-list': () => App.actions.cancelShoppingList(date),
-                    'process-stock-out': () => App.actions.processStockOut(document.getElementById('stockout-list').dataset.type),
-                    'save-item': App.actions.saveItem, 'edit-item': () => App.actions.editItem(id), 'cancel-edit': App.actions.cancelEdit, 'delete-item': () => App.actions.deleteItem(id), 'save-item-order': App.actions.saveItemOrder,
-                    'add-recipe': () => App.render.page('page-manager-recipes', { mode: 'add-recipe' }),
-                    'edit-recipe': () => App.render.page('page-manager-recipes', { mode: 'edit-recipe', name: name }),
-                    'delete-recipe': () => App.actions.deleteRecipe(name), 'save-recipe': () => App.actions.saveRecipe(target), 'add-ingredient': App.actions.addIngredient, 'remove-ingredient': () => App.actions.removeIngredient(target),
-                    'save-display-config': App.actions.saveDisplayConfig, 'export-data': App.actions.exportData, 'import-data': App.actions.importData,
-                };
-                if(actionMap[action]) actionMap[action](event);
-            }
+    // Updates a specific key in the database
+    async setKey(key, value) {
+        if (!AppState.currentUser) return;
+        const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
+        try {
+            await docRef.set({ [key]: value }, { merge: true });
+        } catch(e) {
+            console.error(`Error setting key ${key}:`, e);
+            showToast("Gagal menyimpan data.", "error");
+            throw e; // re-throw to be caught by the caller
         }
     },
     
-    utils: { // Other utils are unchanged
-        // ⭐ NEW: Tooltip toggle function
-        toggleTooltip(btn) {
-            const tooltip = btn.querySelector('.tooltip');
-            if (!tooltip) return;
-            const isShown = tooltip.classList.contains('show');
-            // Close all other tooltips first
-            document.querySelectorAll('.tooltip.show').forEach(t => t.classList.remove('show'));
-            // Then toggle the current one
-            if (!isShown) {
-                tooltip.classList.add('show');
-            }
-        },
-        updateTime() { const timeEl = document.getElementById('current-time'); if (timeEl) timeEl.textContent = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' }); },
-        showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
-            toast.className = `toast ${type}`; const iconClass = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
-            toast.innerHTML = `<i class="fas ${iconClass[type] || 'fa-info-circle'}"></i><span>${message}</span>`;
-            container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000);
-        },
-        addDragDropHandlers(container) {
-            container.addEventListener('dragstart', e => e.target.classList.add('dragging'));
-            container.addEventListener('dragend', e => e.target.classList.remove('dragging'));
-            container.addEventListener('dragover', e => {
-                e.preventDefault(); const afterElement = this.getDragAfterElement(container, e.clientY);
-                const draggable = document.querySelector('.dragging');
-                if (draggable) { if (afterElement == null) container.appendChild(draggable); else container.insertBefore(draggable, afterElement); }
-            });
-        },
-        getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child }; else return closest;
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        },
-        calculateAvailablePortions(menuName) {
-            const { recipes, masterItems } = App.state; if(!recipes || !masterItems) return 0;
-            const recipe = recipes[menuName]; if (!recipe || !recipe.ingredients) return 0; let minPortions = Infinity;
-            recipe.ingredients.forEach(ing => {
-                const item = masterItems.find(mi => mi.id === ing.itemId);
-                if (item && ing.qty > 0) minPortions = Math.min(minPortions, Math.floor((item.stock || 0) / ing.qty));
-                else if (ing.qty > 0) minPortions = 0;
-            });
-            return minPortions === Infinity ? 0 : minPortions;
-        },
-        generateDailyReport() {
-            const { stockTransactions, masterItems } = App.state; const now = new Date(); const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-            const recentTransactions = (stockTransactions || []).filter(t => new Date(t.date) > yesterday);
-            const stokRendah = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
-            const menuProduksi = recentTransactions.filter(t => t.type === 'Produksi Menu');
-            const menuCount = menuProduksi.reduce((acc, t) => { const menuName = t.details; const qty = t.change; acc[menuName] = (acc[menuName] || 0) + qty; return acc; }, {});
-            const topMenus = Object.entries(menuCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            const bahanTerpakai = recentTransactions.filter(t => t.change < 0 && t.type !== 'Produksi Menu');
-            const bahanCount = bahanTerpakai.reduce((acc, t) => { const item = masterItems.find(i => i.id === t.itemId); if (item) { const change = Math.abs(t.change); const key = `${item.name} (${item.unit})`; acc[key] = (acc[key] || 0) + change; } return acc; }, {});
-            const topBahan = Object.entries(bahanCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            return { topMenus, topBahan, stokRendah, reportDate: now };
-        },
+    // Updates multiple keys in the database
+    async set(dataObject) {
+        if (!AppState.currentUser) return;
+        const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
+         try {
+            await docRef.set(dataObject, { merge: true });
+        } catch(e) {
+            console.error("Error setting data:", e);
+            showToast("Gagal menyimpan data.", "error");
+            throw e; // re-throw to be caught by the caller
+        }
+    },
+
+    // Creates the initial data set for a new user
+    async initializeDefaultData() {
+        console.log("Initializing default data for new user...");
+        const initialData = {
+            masterItems: [
+                { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.5, hargaBeli: 35000, sortOrder: 0 },
+                { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 0.5, hargaBeli: 40000, sortOrder: 1 },
+                { id: 4, name: "Ayam Paha", category: "Daging", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 2, hargaBeli: 45000, sortOrder: 2 },
+                { id: 5, name: "Beras", category: "Pokok", unit: "kg", purchaseUnit: "karung", purchaseUnitConversion: 25, stock: 0, minStock: 5, hargaBeli: 12000, sortOrder: 3 },
+                { id: 9, name: "Telur Ayam", category: "Daging", unit: "butir", purchaseUnit: "kg", purchaseUnitConversion: 16, stock: 0, minStock: 10, hargaBeli: 2000, sortOrder: 4 },
+                { id: 10, name: "Teh Celup", category: "Minuman", unit: "pcs", purchaseUnit: "box", purchaseUnitConversion: 25, stock: 0, minStock: 25, hargaBeli: 200, sortOrder: 5 },
+                { id: 11, name: "Gula Pasir", category: "Pokok", unit: "kg", purchaseUnit: "kg", purchaseUnitConversion: 1, stock: 0, minStock: 1, hargaBeli: 15000, sortOrder: 6 },
+            ],
+            recipes: {
+                "Nasi Goreng Spesial": { unit: "porsi", hargaJual: 25000, ingredients: [ { itemId: 5, qty: 0.15 }, { itemId: 9, qty: 1 }, { itemId: 1, qty: 0.02 }, { itemId: 2, qty: 0.01 } ] },
+                "Ayam Bakar Madu": { unit: "porsi", hargaJual: 30000, ingredients: [ { itemId: 4, qty: 0.25 } ] },
+                "Es Teh Manis": { unit: "gelas", hargaJual: 5000, ingredients: [ { itemId: 10, qty: 1 }, { itemId: 11, qty: 0.02 } ] }
+            },
+            gudangItemIds: [],
+            menuKeluarActive: ["Nasi Goreng Spesial", "Ayam Bakar Madu", "Es Teh Manis"],
+            shoppingLists: [],
+            stockTransactions: [],
+        };
+        await this.set(initialData);
+        showToast("Selamat datang! Data awal telah disiapkan.", "success");
+        return initialData;
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+
+// #############################################################################
+// --- file: src/auth.js ---
+// #############################################################################
+import { auth } from './config/firebase.js';
+import AppState from './state.js';
+import { App } from './main.js';
+import { API } from './api.js';
+
+export const Auth = {
+    listen() {
+        auth.onAuthStateChanged(user => {
+            const loginPage = document.getElementById('login-page');
+            const appRoot = document.getElementById('app-root');
+            if (user) {
+                AppState.currentUser = user;
+                loginPage.style.display = 'none';
+                appRoot.style.display = 'block';
+                App.initOnLogin(); // Initialize app after user logs in
+            } else {
+                AppState.currentUser = null;
+                loginPage.style.display = 'flex';
+                appRoot.style.display = 'none';
+                API.stopListeningToData();
+                AppState.isDataLoaded = false;
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('login-error');
+            const button = e.target.querySelector('button');
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            try {
+                errorEl.style.display = 'none';
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                errorEl.textContent = "Login Gagal: " + error.message;
+                errorEl.style.display = 'block';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = 'Login';
+            }
+        });
+    },
+
+    async logout() {
+        await auth.signOut();
+    }
+};
+
+
+// #############################################################################
+// --- file: src/ui/components.js ---
+// #############################################################################
+import AppState from '../state.js';
+import { formatCurrency } from '../utils/helpers.js';
+
+// Reusable component functions to generate HTML
+export const Components = {
+    dashboardCard({ icon, title, description, value = null, page, dataAction = null }) {
+        const actionAttr = page ? `data-page="${page}"` : (dataAction ? `data-action="${dataAction}"` : '');
+        return `
+            <a href="#" class="dashboard-card" ${actionAttr}>
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-icon"><i class="fas ${icon}"></i></div>
+                    <h3 class="dashboard-card-title">${title}</h3>
+                </div>
+                <div class="dashboard-card-body">
+                    <p>${description}</p>
+                    ${value !== null ? `<span class="dashboard-card-value">${value}</span>` : ''}
+                </div>
+            </a>`;
+    },
+
+    formGroup({ id, label, type = 'text', value = '', placeholder = '', required = false, list = null, step = null, min = null }) {
+        return `
+            <div class="form-group">
+                <label for="${id}" class="form-label">${label}</label>
+                <input type="${type}" id="${id}" class="form-control" value="${value}" placeholder="${placeholder}" 
+                       ${required ? 'required' : ''} 
+                       ${list ? `list="${list}"` : ''}
+                       ${step ? `step="${step}"` : ''}
+                       ${min !== null ? `min="${min}"` : ''}>
+            </div>`;
+    },
+    
+    calculateRecipeCost(recipeName) {
+        const { recipes, masterItems } = AppState;
+        const recipe = recipes[recipeName];
+        if (!recipe) return 0;
+
+        return recipe.ingredients.reduce((total, ing) => {
+            const item = masterItems.find(mi => mi.id === ing.itemId);
+            const itemCost = item ? (item.hargaBeli || 0) * ing.qty : 0;
+            return total + itemCost;
+        }, 0);
+    }
+};
+
+
+// #############################################################################
+// --- file: src/ui/pages.js ---
+// #############################################################################
+import AppState from '../state.js';
+import { Components } from './components.js';
+import { formatCurrency } from '../utils/helpers.js';
+
+// Functions to generate HTML for each page
+export const Pages = {
+    dashboard() {
+        const lowStockItems = AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+        const pendingLists = AppState.shoppingLists.filter(list => !list.completed);
+
+        return `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <div><strong>Selamat Datang, ${AppState.currentUser.email}!</strong><br>Gunakan menu di sidebar untuk navigasi atau pilih aksi cepat di bawah.</div>
+            </div>
+            <div class="dashboard-grid">
+                ${Components.dashboardCard({
+                    icon: 'fa-exclamation-triangle',
+                    title: 'Stok Kritis',
+                    description: 'Item yang stoknya di bawah batas minimum.',
+                    value: `<span class="${lowStockItems.length > 0 ? 'text-danger' : 'text-success'}">${lowStockItems.length} Item</span>`,
+                    page: 'page-stok-kritis'
+                })}
+                ${Components.dashboardCard({
+                    icon: 'fa-clipboard-list',
+                    title: 'List Belanja Pending',
+                    description: 'List belanja yang perlu diproses kedatangannya.',
+                    value: `${pendingLists.length} List`,
+                    page: 'page-input-belanja-datang'
+                })}
+                ${Components.dashboardCard({
+                    icon: 'fa-utensils',
+                    title: 'Input Menu Keluar',
+                    description: 'Catat menu yang terjual atau diproduksi.',
+                    page: 'page-input-menu-keluar'
+                })}
+                 ${Components.dashboardCard({
+                    icon: 'fa-warehouse',
+                    title: 'Ambil dari Gudang',
+                    description: 'Catat pengambilan bahan baku non-produksi.',
+                    page: 'page-ambil-gudang'
+                })}
+                ${Components.dashboardCard({
+                    icon: 'fa-history',
+                    title: 'Riwayat Stok',
+                    description: 'Lihat semua transaksi stok masuk dan keluar.',
+                    page: 'page-riwayat-stok'
+                })}
+                ${Components.dashboardCard({
+                    icon: 'fa-user-tie',
+                    title: 'Manager Area',
+                    description: 'Kelola database barang, resep, dan lainnya.',
+                    page: 'page-manager-area'
+                })}
+            </div>`;
+    },
+
+    managerArea() {
+         return `
+            <div class="dashboard-grid">
+                ${Components.dashboardCard({ icon: 'fa-database', title: 'Database Barang', description: 'Tambah, edit, dan kelola semua bahan baku.', page: 'page-manager-items' })}
+                ${Components.dashboardCard({ icon: 'fa-book-open', title: 'Manajemen Resep', description: 'Atur resep, bahan, harga jual, dan profitabilitas.', page: 'page-manager-recipes' })}
+            </div>`;
+    },
+
+    managerItems() {
+        const categories = [...new Set(AppState.masterItems.map(item => item.category))];
+        const itemRows = AppState.masterItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .map(item => `
+                <tr data-id="${item.id}">
+                    <td>${item.name}<div style="font-size:0.8rem; color: var(--text-light);">${item.category}</div></td>
+                    <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
+                    <td>${formatCurrency(item.hargaBeli || 0)} / ${item.unit}</td>
+                    <td><span class="${(item.stock || 0) < (item.minStock || 0) ? 'text-danger' : ''}">${item.minStock || 0} ${item.unit}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+        return `
+            <div class="card">
+                <h3 class="card-title" id="item-form-title">Tambah Barang Baru</h3>
+                <form id="add-item-form">
+                    <input type="hidden" id="edit-item-id">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        ${Components.formGroup({id: 'item-name', label: 'Nama Barang', placeholder: 'Contoh: Ayam Paha Atas', required: true})}
+                        ${Components.formGroup({id: 'item-category', label: 'Kategori', placeholder: 'Contoh: Daging', required: true, list: 'category-suggestions'})}
+                        ${Components.formGroup({id: 'item-unit', label: 'Satuan Stok (Contoh: kg)', required: true})}
+                        ${Components.formGroup({id: 'item-purchase-unit', label: 'Satuan Beli (Contoh: karung)'})}
+                        ${Components.formGroup({id: 'item-conversion', label: 'Konversi (1 Satuan Beli = ? Satuan Stok)', type: 'number', step: 'any', min: 0})}
+                        ${Components.formGroup({id: 'item-harga-beli', label: 'Harga Beli per Satuan Stok', type: 'number', step: 'any', min: 0})}
+                        ${Components.formGroup({id: 'item-min-stock', label: 'Stok Minimum', type: 'number', step: 'any', min: 0})}
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary" id="save-item-btn"><i class="fas fa-save"></i> Simpan</button>
+                        <button type="button" class="btn btn-secondary" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
+                    </div>
+                </form>
+                <datalist id="category-suggestions">${categories.map(cat => `<option value="${cat}">`).join('')}</datalist>
+            </div>
+            <div class="card">
+                 <div class="card-header">
+                    <h3 class="card-title">Daftar Barang</h3>
+                 </div>
+                 <div class="table-container" style="overflow-x:auto;">
+                    <table class="table">
+                        <thead><tr><th>Nama</th><th>Stok</th><th>Harga Beli</th><th>Stok Min.</th><th>Aksi</th></tr></thead>
+                        <tbody id="db-editor-tbody">${itemRows}</tbody>
+                    </table>
+                 </div>
+            </div>`;
+    },
+
+    managerRecipes() {
+        const recipeList = Object.keys(AppState.recipes).sort().map(name => {
+            const recipe = AppState.recipes[name];
+            const cost = Components.calculateRecipeCost(name);
+            const profit = (recipe.hargaJual || 0) - cost;
+            return `
+                <tr data-name="${name}">
+                    <td>${name}</td>
+                    <td>${formatCurrency(cost)}</td>
+                    <td>${formatCurrency(recipe.hargaJual || 0)}</td>
+                    <td class="${profit < 0 ? 'text-danger' : 'text-success'}">${formatCurrency(profit)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" data-action="edit-recipe" data-name="${name}"><i class="fas fa-pencil-alt"></i> Edit</button>
+                        <button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}"><i class="fas fa-trash"></i> Hapus</button>
+                    </td>
+                </tr>`;
+        }).join('');
+
+        return `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Daftar Resep</h3>
+                    <button class="btn btn-primary" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah Resep</button>
+                </div>
+                <div class="table-container" style="overflow-x:auto;">
+                    <table class="table">
+                        <thead><tr><th>Nama Menu</th><th>Biaya Produksi (HPP)</th><th>Harga Jual</th><th>Profit</th><th>Aksi</th></tr></thead>
+                        <tbody>${recipeList}</tbody>
+                    </table>
+                </div>
+            </div>`;
+    },
+
+    riwayatStok() {
+        // Initial render, table body will be populated by event handler
+        return `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Filter Riwayat</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+                    <div class="form-group">
+                        <label for="history-search" class="form-label">Cari Nama Barang/Menu</label>
+                        <input type="text" id="history-search" class="form-control" placeholder="Ketik untuk mencari...">
+                    </div>
+                    <div class="form-group">
+                        <label for="history-start-date" class="form-label">Dari Tanggal</label>
+                        <input type="date" id="history-start-date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="history-end-date" class="form-label">Sampai Tanggal</label>
+                        <input type="date" id="history-end-date" class="form-control">
+                    </div>
+                    <button class="btn btn-secondary" data-action="reset-history-filter">Reset</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="table-container" style="overflow-x:auto;">
+                    <table class="table">
+                        <thead><tr><th>Waktu</th><th>Barang</th><th>Jenis Transaksi</th><th>Perubahan</th><th>Sisa Stok</th><th>Detail</th></tr></thead>
+                        <tbody id="history-table-body">
+                            <tr><td colspan="6">Memuat riwayat...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+    }
+};
+
+// #############################################################################
+// --- file: src/ui/ui.js ---
+// #############################################################################
+import AppState from '../state.js';
+import { Auth } from '../auth.js';
+import { Pages } from './pages.js';
+import { API } from '../api.js';
+import { debounce } from '../utils/helpers.js';
+
+const mainContent = document.getElementById('main-content');
+const pageTitle = document.getElementById('page-title');
+const sidebarMenuContainer = document.getElementById('sidebar-menu-container');
+
+const menuConfig = [
+    { id: 'page-dashboard', icon: 'fa-tachometer-alt', text: 'Dashboard', page: Pages.dashboard },
+    { id: 'page-input-menu-keluar', icon: 'fa-utensils', text: 'Input Menu Keluar' },
+    { id: 'page-ambil-gudang', icon: 'fa-warehouse', text: 'Ambil Gudang' },
+    { id: 'page-stok-kritis', icon: 'fa-exclamation-triangle', text: 'Stok Kritis' },
+    { id: 'page-input-belanja', icon: 'fa-shopping-cart', text: 'Buat List Belanja' },
+    { id: 'page-input-belanja-datang', icon: 'fa-truck-loading', text: 'Belanja Datang' },
+    { id: 'page-riwayat-stok', icon: 'fa-history', text: 'Riwayat Stok', page: Pages.riwayatStok },
+    { id: 'page-manager-area', icon: 'fa-user-tie', text: 'Manager Area', page: Pages.managerArea, adminOnly: true },
+];
+
+export function renderApp() {
+    if (!AppState.isDataLoaded) return;
+    renderSidebar();
+    const currentPageId = location.hash.substring(1) || 'page-dashboard';
+    renderPage(currentPageId);
+}
+
+export function renderPage(pageId, data = null) {
+    const pageConfig = menuConfig.find(p => p.id === pageId);
+    if (!pageConfig) {
+        pageId = 'page-dashboard'; // Default to dashboard if page not found
+    }
+
+    // Update URL hash
+    location.hash = pageId;
+
+    // Update active link in sidebar
+    document.querySelectorAll('.sidebar-menu a').forEach(a => {
+        a.classList.toggle('active', a.dataset.page === pageId);
+    });
+
+    // Render page content
+    if (Pages[pageId.replace('page-','')]) {
+        mainContent.innerHTML = Pages[pageId.replace('page-','')]();
+    } else {
+         mainContent.innerHTML = `<div class="card">Konten untuk halaman ini belum dibuat.</div>`;
+    }
+    
+    // Update page title
+    const title = menuConfig.find(p => p.id === pageId)?.text || 'RestoApp';
+    pageTitle.textContent = title;
+    document.title = `${title} - RestoApp V7`;
+    
+    // Post-render actions
+    if (pageId === 'page-riwayat-stok') {
+        setupHistoryPageListeners();
+        updateHistoryTable();
+    }
+    if (pageId === 'page-manager-items') {
+        // Any specific setup for manager items page
+    }
+}
+
+function renderSidebar() {
+    sidebarMenuContainer.innerHTML = menuConfig
+        .map(item => `
+            <li>
+                <a href="#${item.id}" data-page="${item.id}" class="${location.hash === `#${item.id}` ? 'active' : ''}">
+                    <i class="fas ${item.icon}"></i>
+                    <span>${item.text}</span>
+                </a>
+            </li>
+        `).join('');
+    document.getElementById('user-email-display').textContent = AppState.currentUser.email;
+}
+
+function setupHistoryPageListeners() {
+    const searchInput = document.getElementById('history-search');
+    const startDateInput = document.getElementById('history-start-date');
+    const endDateInput = document.getElementById('history-end-date');
+
+    const debouncedUpdate = debounce(updateHistoryTable, 300);
+
+    searchInput.addEventListener('input', debouncedUpdate);
+    startDateInput.addEventListener('change', updateHistoryTable);
+    endDateInput.addEventListener('change', updateHistoryTable);
+}
+
+function updateHistoryTable() {
+    const tableBody = document.getElementById('history-table-body');
+    if (!tableBody) return;
+
+    const searchTerm = document.getElementById('history-search').value.toLowerCase();
+    const startDate = document.getElementById('history-start-date').value;
+    const endDate = document.getElementById('history-end-date').value;
+
+    const filteredTransactions = AppState.stockTransactions
+        .filter(t => {
+            const transactionDate = new Date(t.date);
+            const item = AppState.masterItems.find(i => i.id === t.itemId);
+            const itemName = item ? item.name.toLowerCase() : '';
+            const details = t.details ? t.details.toLowerCase() : '';
+            
+            const matchesSearch = itemName.includes(searchTerm) || details.includes(searchTerm);
+            const matchesStartDate = !startDate || transactionDate >= new Date(startDate);
+            const matchesEndDate = !endDate || transactionDate <= new Date(endDate).setHours(23, 59, 59, 999);
+            
+            return matchesSearch && matchesStartDate && matchesEndDate;
+        });
+
+    if (filteredTransactions.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Tidak ada riwayat yang cocok dengan filter.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = [...filteredTransactions].reverse().map(t => {
+        const item = AppState.masterItems.find(i => i.id === t.itemId);
+        const changeClass = t.change > 0 ? 'text-success' : 'text-danger';
+        const changePrefix = t.change > 0 ? '+' : '';
+        return `
+            <tr>
+                <td>${new Date(t.date).toLocaleString('id-ID')}</td>
+                <td>${item ? item.name : (t.type === 'Produksi Menu' ? '---' : 'Barang Dihapus')}</td>
+                <td>${t.type}</td>
+                <td class="${changeClass}">${changePrefix}${t.change.toFixed(2)}</td>
+                <td>${(t.newStock || 0).toFixed(2)}</td>
+                <td>${t.details || '---'}</td>
+            </tr>`;
+    }).join('');
+}
+
+
+export function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const iconClass = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+    toast.innerHTML = `<i class="fas ${iconClass[type] || 'fa-info-circle'} toast-icon"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => toast.remove());
+    }, 4000);
+}
+
+// #############################################################################
+// --- file: src/eventHandlers.js ---
+// #############################################################################
+import AppState from './state.js';
+import { Auth } from './auth.js';
+import { renderPage } from './ui/ui.js';
+import { API } from './api.js';
+
+// Centralized event handler for the whole application
+export function handleGlobalClick(event) {
+    const target = event.target.closest('[data-action], [data-page]');
+    if (!target) return;
+    
+    event.preventDefault();
+
+    const { action, page, id, name } = target.dataset;
+
+    if (page) {
+        renderPage(page);
+    } 
+    else if (action) {
+        const actionHandler = ActionHandlers[action];
+        if (actionHandler) {
+            actionHandler({ target, id, name });
+        } else {
+            console.warn(`No action handler for: ${action}`);
+        }
+    }
+}
+
+// Object mapping action names to functions
+const ActionHandlers = {
+    'logout': Auth.logout,
+
+    'toggle-theme': () => {
+        const body = document.body;
+        body.classList.toggle('dark-mode');
+        const isDarkMode = body.classList.contains('dark-mode');
+        document.querySelector('#theme-toggle i').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+        // You might want to save this preference to localStorage or Firestore
+        // API.setKey('settings.theme', isDarkMode ? 'dark' : 'light');
+    },
+
+    'toggle-sidebar': () => {
+        document.getElementById('sidebar').classList.toggle('open');
+    },
+    
+    'reset-history-filter': () => {
+        document.getElementById('history-search').value = '';
+        document.getElementById('history-start-date').value = '';
+        document.getElementById('history-end-date').value = '';
+        renderPage('page-riwayat-stok');
+    },
+
+    'save-item': async ({ target }) => {
+        const form = document.getElementById('add-item-form');
+        const id = document.getElementById('edit-item-id').value;
+        // Logic to save item...
+        // ...
+        // After saving:
+        // form.reset();
+        // showToast('Item saved!');
+    },
+
+    'edit-item': ({ id }) => {
+        // Logic to populate form for editing
+    },
+    
+    'delete-item': async ({ id }) => {
+        // Logic to delete item after confirmation
+    }
+    // ... more action handlers ...
+};
+
+
+// #############################################################################
+// --- file: src/main.js ---
+// #############################################################################
+import AppState from './state.js';
+import { Auth } from './auth.js';
+import { API } from './api.js';
+import { renderApp, renderPage } from './ui/ui.js';
+import { handleGlobalClick } from './eventHandlers.js';
+
+export const App = {
+    init() {
+        Auth.listen();
+        document.body.addEventListener('click', handleGlobalClick);
+        window.addEventListener('hashchange', () => {
+            const pageId = location.hash.substring(1) || 'page-dashboard';
+            renderPage(pageId);
+        });
+    },
+
+    initOnLogin() {
+        document.getElementById('app-root').style.opacity = 0;
+        API.listenToData(data => {
+            // This callback runs every time data changes on Firestore
+            console.log("Data synchronized from Firestore.");
+            if (AppState.isDataLoaded) {
+                 renderApp();
+            }
+            if (document.getElementById('app-root').style.opacity == 0) {
+                 document.getElementById('app-root').style.opacity = 1;
+            }
+        });
+    }
+};
+
+// Start the application
+App.init();
+
 </script>
 </body>
 </html>
