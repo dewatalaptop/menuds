@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V7.2 Final</title>
+    <title>RestoApp - V7.3 Refactored</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -84,6 +84,15 @@
             #sidebar.open ~ #app-container .page-overlay { display: block; }
         }
 
+        /* --- PERBAIKAN: Tambahan Media Query untuk Layar Kecil --- */
+        @media (max-width: 480px) {
+            .container { padding: 1rem; }
+            .card { padding: 1rem; }
+            header h2 { font-size: 1.2rem; }
+            .sidebar-header h1 { font-size: 1.2rem; }
+            .btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+        }
+
         /* --- General Components --- */
         .card { background: var(--white-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
@@ -114,8 +123,6 @@
         .stock-hint { font-size: 0.85rem; color: var(--text-light); }
         .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         tr.dragging { opacity: 0.5; background: var(--secondary-color); }
-
-        /* --- Login Page Styles --- */
         #login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--secondary-color); }
         #login-card { width: 100%; max-width: 400px; text-align: center; }
         #login-error { color: var(--danger-color); margin-top: 1rem; display: none; font-size: 0.9rem; }
@@ -125,16 +132,10 @@
 <body>
     <div id="login-page">
         <div class="card" id="login-card">
-            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.2</h1>
+            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.3</h1>
             <form id="login-form">
-                <div class="form-group" style="text-align: left;">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" class="form-control" required>
-                </div>
-                <div class="form-group" style="text-align: left;">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" class="form-control" required>
-                </div>
+                <div class="form-group" style="text-align: left;"><label for="email" class="form-label">Email</label><input type="email" id="email" class="form-control" required></div>
+                <div class="form-group" style="text-align: left;"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
             </form>
             <p id="login-error"></p>
@@ -143,16 +144,10 @@
 
     <div id="app-root">
         <nav id="sidebar">
-            <div class="sidebar-header">
-                <h1><i class="fas fa-utensils"></i> RestoApp</h1>
-            </div>
+            <div class="sidebar-header"><h1><i class="fas fa-utensils"></i> RestoApp</h1></div>
             <ul class="sidebar-menu" id="sidebar-menu-container"></ul>
-            <div class="sidebar-footer">
-                <span id="user-email-display"></span><br>
-                V7.2 &copy; 2025
-            </div>
+            <div class="sidebar-footer"><span id="user-email-display"></span><br>V7.3 &copy; 2025</div>
         </nav>
-
         <div id="app-container">
             <div class="page-overlay" data-action="toggle-sidebar"></div>
             <div class="container">
@@ -176,10 +171,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<script type="module">
-// #############################################################################
-// --- file: src/config/firebase.js ---
-// #############################################################################
+<script>
+// --- Inisialisasi Firebase & Konfigurasi Global ---
 const firebaseConfig = {
     apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
     authDomain: "restoapp-v6.firebaseapp.com",
@@ -189,403 +182,367 @@ const firebaseConfig = {
     appId: "1:163876863347:web:2e5181c0bdae91e3809906"
 };
 firebase.initializeApp(firebaseConfig);
-export const auth = firebase.auth();
-export const firestore = firebase.firestore();
+const auth = firebase.auth();
+const firestore = firebase.firestore();
 
-// #############################################################################
-// --- file: src/state.js ---
-// #############################################################################
-const AppState = { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], isDataLoaded: false, unsubscribe: null };
-export default AppState;
+// --- PERBAIKAN: Menggunakan Pola Namespace untuk Menghindari Konflik Global ---
+window.RestoApp = {
+    // #############################################################################
+    // --- State: Menyimpan semua data aplikasi ---
+    // #############################################################################
+    AppState: { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], isDataLoaded: false, unsubscribe: null },
 
-// #############################################################################
-// --- file: src/utils/helpers.js ---
-// #############################################################################
-export const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
-
-// #############################################################################
-// --- file: src/api.js ---
-// #############################################################################
-import AppState from './state.js';
-import { firestore } from './config/firebase.js';
-import { showToast } from './ui/ui.js';
-
-export const API = {
-    listenToData(onUpdate) {
-        if (AppState.unsubscribe) AppState.unsubscribe();
-        if (!AppState.currentUser) return;
-        const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
-        AppState.unsubscribe = docRef.onSnapshot(doc => {
-            if (doc.exists) {
-                const data = doc.data();
-                Object.keys(data).forEach(key => { AppState[key] = data[key]; });
-                AppState.isDataLoaded = true;
-            } else {
-                this.initializeDefaultData();
-                AppState.isDataLoaded = true;
-            }
-            onUpdate(); // Panggil callback setiap ada update data
-        }, error => { console.error("Error listening:", error); showToast("Gagal sinkronisasi data.", "error"); });
+    // #############################################################################
+    // --- Utils: Fungsi bantuan ---
+    // #############################################################################
+    Utils: {
+        formatCurrency: (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0),
     },
-    stopListeningToData() { if (AppState.unsubscribe) { AppState.unsubscribe(); AppState.unsubscribe = null; } },
-    async setKey(key, value) {
-        if (!AppState.currentUser) return;
-        const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
-        try { await docRef.set({ [key]: value }, { merge: true }); } 
-        catch (e) { console.error(`Error setKey ${key}:`, e); showToast("Gagal menyimpan data.", "error"); throw e; }
-    },
-    async initializeDefaultData() {
-        const initialData = {
-            masterItems: [
-                { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", stock: 0, minStock: 0.5, hargaBeli: 35000, sortOrder: 0 },
-                { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", stock: 0, minStock: 0.5, hargaBeli: 40000, sortOrder: 1 },
-                { id: 3, name: "Ayam Paha", category: "Daging", unit: "kg", stock: 0, minStock: 2, hargaBeli: 45000, sortOrder: 2 },
-                { id: 4, name: "Beras", category: "Pokok", unit: "kg", stock: 0, minStock: 5, hargaBeli: 12000, sortOrder: 3 },
-            ],
-            recipes: { "Ayam Bakar": { unit: "porsi", hargaJual: 30000, ingredients: [ { itemId: 3, qty: 0.25 } ] } },
-            shoppingLists: [], stockTransactions: [],
-        };
-        await firestore.collection('restaurants').doc(AppState.currentUser.uid).set(initialData);
-        showToast("Selamat datang! Data awal telah disiapkan.", "success");
-        return initialData;
-    }
-};
 
-// #############################################################################
-// --- file: src/auth.js ---
-// #############################################################################
-import { auth } from './config/firebase.js';
-import AppState from './state.js';
-import { App } from './main.js';
-import { API } from './api.js';
+    // #############################################################################
+    // --- API: Komunikasi dengan Firebase Firestore ---
+    // #############################################################################
+    API: {
+        listenToData(onUpdate) {
+            const AppState = RestoApp.AppState;
+            if (AppState.unsubscribe) AppState.unsubscribe();
+            if (!AppState.currentUser) return;
 
-export const Auth = {
-    listen() {
-        auth.onAuthStateChanged(user => {
-            const loginPage = document.getElementById('login-page');
-            const appRoot = document.getElementById('app-root');
-            if (user) {
-                AppState.currentUser = user;
-                loginPage.style.display = 'none'; appRoot.style.display = 'block';
-                App.initOnLogin();
-            } else {
-                AppState.currentUser = null;
-                loginPage.style.display = 'flex'; appRoot.style.display = 'none';
-                API.stopListeningToData(); AppState.isDataLoaded = false;
-            }
-        });
-    },
-    async login(email, password) {
-        await auth.signInWithEmailAndPassword(email, password);
-    },
-    async logout() { await auth.signOut(); }
-};
-
-// #############################################################################
-// --- file: src/ui/pages.js ---
-// #############################################################################
-// Pages hanya merender "kerangka" statis dari halaman.
-// Konten dinamis (seperti tabel) akan diisi oleh updateDynamicContent().
-export const Pages = {
-    dashboard() {
-        return `<div id="dashboard-content">
-                    <div class="card">
-                        <div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div>
-                        <p>Memuat data...</p>
-                    </div>
-                </div>`;
-    },
-    managerItems() {
-        return `
-            <div class="card">
-                <h3 class="card-title" id="item-form-title">Tambah Barang Baru</h3>
-                <form id="add-item-form">
-                    <input type="hidden" id="edit-item-id">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                        <div class="form-group"><label for="item-name" class="form-label">Nama Barang</label><input type="text" id="item-name" class="form-control" required></div>
-                        <div class="form-group"><label for="item-category" class="form-label">Kategori</label><input type="text" id="item-category" class="form-control" list="category-suggestions" required></div>
-                        <div class="form-group"><label for="item-unit" class="form-label">Satuan Stok</label><input type="text" id="item-unit" class="form-control" required></div>
-                        <div class="form-group"><label for="item-harga-beli" class="form-label">Harga Beli / Satuan Stok</label><input type="number" id="item-harga-beli" class="form-control" min="0" step="any"></div>
-                        <div class="form-group"><label for="item-min-stock" class="form-label">Stok Minimum</label><input type="number" id="item-min-stock" class="form-control" min="0" step="any"></div>
-                    </div>
-                    <div style="display:flex; gap:10px; margin-top: 1rem;">
-                        <button type="submit" class="btn btn-primary" id="save-item-btn"><i class="fas fa-save"></i> Simpan Barang</button>
-                        <button type="button" class="btn" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
-                    </div>
-                </form>
-                <datalist id="category-suggestions"></datalist>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-database"></i> Daftar Barang</h3>
-                    <button class="btn btn-primary btn-sm" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button>
-                </div>
-                <p class="stock-hint" style="padding: 0 1.5rem 1rem 1.5rem; margin:0;">Tahan dan geser ikon <i class="fas fa-grip-vertical"></i> untuk mengubah urutan.</p>
-                <div class="table-container" style="overflow-x:auto;">
-                    <table class="table">
-                        <thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Harga Beli</th><th>Stok Min.</th><th>Aksi</th></tr></thead>
-                        <tbody id="db-editor-tbody"></tbody>
-                    </table>
-                </div>
-            </div>`;
-    },
-};
-
-// #############################################################################
-// --- file: src/ui/ui.js ---
-// #############################################################################
-import AppState from '../state.js';
-import { Pages } from './pages.js';
-import { setupDraggableList } from '../eventHandlers.js';
-import { formatCurrency } from '../utils/helpers.js';
-
-const mainContent = document.getElementById('main-content');
-const pageTitle = document.getElementById('page-title');
-const sidebarMenuContainer = document.getElementById('sidebar-menu-container');
-
-const menuConfig = [
-    { id: 'page-dashboard', icon: 'fa-tachometer-alt', text: 'Dashboard', page: Pages.dashboard },
-    { id: 'page-manager-items', icon: 'fa-database', text: 'Database Barang', page: Pages.managerItems },
-];
-
-export function renderPage(pageId) {
-    const pageConfig = menuConfig.find(p => p.id === pageId) || menuConfig[0];
-    if (location.hash !== `#${pageConfig.id}`) { location.hash = pageConfig.id; }
-    document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.toggle('active', a.dataset.page === pageConfig.id));
-    mainContent.innerHTML = pageConfig.page();
-    pageTitle.textContent = pageConfig.text;
-    document.title = `${pageConfig.text} - RestoApp`;
-    updateDynamicContent(); // Panggil update setelah merender kerangka halaman
-}
-
-// Fungsi BARU untuk mengisi/memperbarui konten dinamis tanpa merender ulang seluruh halaman
-export function updateDynamicContent() {
-    if (!AppState.isDataLoaded) return;
-    const currentPageId = location.hash.substring(1) || 'page-dashboard';
-
-    if (currentPageId === 'page-dashboard') {
-        const lowStockItems = AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
-        const content = document.getElementById('dashboard-content');
-        if (content) {
-            content.innerHTML = `<div class="card">
-                <div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div>
-                <p>Selamat datang di RestoApp! Gunakan menu di samping untuk mengelola inventaris Anda.</p>
-            </div>
-            <div class="card">
-                <div class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Stok Kritis</div>
-                ${lowStockItems.length > 0 ? 
-                    `<p>Ada <strong>${lowStockItems.length} item</strong> yang stoknya di bawah batas minimum.</p>
-                     <ul>${lowStockItems.map(item => `<li>${item.name} (Stok: ${item.stock} ${item.unit}, Min: ${item.minStock} ${item.unit})</li>`).join('')}</ul>` : 
-                    `<p class="text-success">Semua stok aman!</p>`
+            const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
+            AppState.unsubscribe = docRef.onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    Object.keys(data).forEach(key => { AppState[key] = data[key]; });
+                    AppState.isDataLoaded = true;
+                } else {
+                    this.initializeDefaultData();
+                    AppState.isDataLoaded = true;
                 }
-            </div>`;
-        }
-    } else if (currentPageId === 'page-manager-items') {
-        const tbody = document.getElementById('db-editor-tbody');
-        if (tbody) {
-            const itemRows = AppState.masterItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-                .map(item => `
-                    <tr data-id="${item.id}" draggable="true">
-                        <td class="drag-handle"><i class="fas fa-grip-vertical"></i></td>
-                        <td>${item.name}<div class="stock-hint">${item.category}</div></td>
-                        <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
-                        <td>${formatCurrency(item.hargaBeli)} / ${item.unit}</td>
-                        <td><span class="${(item.stock || 0) < (item.minStock || 0) ? 'text-danger' : ''}">${item.minStock || 0} ${item.unit}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-            tbody.innerHTML = itemRows;
-            setupDraggableList(tbody);
-        }
-        const categories = [...new Set(AppState.masterItems.map(item => item.category))];
-        const datalist = document.getElementById('category-suggestions');
-        if (datalist) datalist.innerHTML = categories.map(cat => `<option value="${cat}"></option>`).join('');
-    }
-}
-
-export function renderSidebar() {
-    sidebarMenuContainer.innerHTML = menuConfig.map(item => `<li><a href="#${item.id}" data-page="${item.id}"><i class="fas ${item.icon}"></i><span>${item.text}</span></a></li>`).join('');
-    document.getElementById('user-email-display').textContent = AppState.currentUser.email;
-}
-
-export function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container'); const toast = document.createElement('div');
-    toast.className = `toast ${type}`; const icon = { success: 'fa-check-circle', error: 'fa-times-circle' }[type] || 'fa-info-circle';
-    toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><span>${message}</span>`;
-    container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 4000);
-}
-
-// #############################################################################
-// --- file: src/eventHandlers.js ---
-// #############################################################################
-import AppState from './state.js';
-import { Auth } from './auth.js';
-import { showToast } from './ui/ui.js';
-import { API } from './api.js';
-
-export function setupDraggableList(tbody) {
-    let draggedItem = null;
-    tbody.addEventListener('dragstart', e => { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); });
-    tbody.addEventListener('dragend', e => { setTimeout(() => { e.target.classList.remove('dragging'); draggedItem = null; }, 0); });
-    tbody.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(tbody, e.clientY); if (afterElement == null) { tbody.appendChild(draggedItem); } else { tbody.insertBefore(draggedItem, afterElement); } });
-    tbody.addEventListener('touchstart', e => { if (e.target.closest('.drag-handle')) { draggedItem = e.target.closest('tr'); draggedItem.classList.add('dragging'); } });
-    tbody.addEventListener('touchmove', e => { if (!draggedItem) return; e.preventDefault(); const touch = e.touches[0]; const afterElement = getDragAfterElement(tbody, touch.clientY); if (afterElement == null) { tbody.appendChild(draggedItem); } else { tbody.insertBefore(draggedItem, afterElement); } });
-    tbody.addEventListener('touchend', () => { if (draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } });
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-}
-
-export const ActionHandlers = {
-    'logout': Auth.logout,
-    'toggle-theme': () => {
-        document.body.classList.toggle('dark-mode');
-        document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
-    },
-    'toggle-sidebar': () => document.getElementById('sidebar').classList.toggle('open'),
-    'save-item-order': async ({ target }) => {
-        target.disabled = true; target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-        try {
-            const rows = document.querySelectorAll('#db-editor-tbody tr');
-            const newMasterItems = [...AppState.masterItems];
-            const idOrderMap = new Map();
-            rows.forEach((row, index) => { idOrderMap.set(parseInt(row.dataset.id), index); });
-            newMasterItems.forEach(item => { if (idOrderMap.has(item.id)) { item.sortOrder = idOrderMap.get(item.id); } });
-            await API.setKey('masterItems', newMasterItems);
-            showToast('Urutan barang berhasil disimpan!', 'success');
-        } catch (e) { showToast('Gagal menyimpan urutan.', 'error'); } 
-        finally { target.disabled = false; target.innerHTML = '<i class="fas fa-save"></i> Simpan Urutan'; }
-    },
-    'save-item': async () => {
-        const id = document.getElementById('edit-item-id').value;
-        const newItemData = {
-            name: document.getElementById('item-name').value.trim(),
-            category: document.getElementById('item-category').value.trim(),
-            unit: document.getElementById('item-unit').value.trim(),
-            hargaBeli: parseFloat(document.getElementById('item-harga-beli').value) || 0,
-            minStock: parseFloat(document.getElementById('item-min-stock').value) || 0,
-        };
-        if (!newItemData.name || !newItemData.category || !newItemData.unit) return showToast('Nama, Kategori, dan Satuan harus diisi!', 'error');
-        
-        const masterItems = [...AppState.masterItems];
-        if (id) {
-            const index = masterItems.findIndex(item => item.id == id);
-            if (index > -1) { masterItems[index] = { ...masterItems[index], ...newItemData }; }
-        } else {
-            const newId = Date.now() + Math.floor(Math.random() * 100);
-            const newSortOrder = masterItems.length > 0 ? Math.max(...masterItems.map(item => item.sortOrder || 0)) + 1 : 0;
-            masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: newSortOrder });
-        }
-        await API.setKey('masterItems', masterItems);
-        showToast(`Barang berhasil ${id ? 'diperbarui' : 'ditambahkan'}!`, 'success');
-        ActionHandlers['cancel-edit']();
-    },
-    'edit-item': ({ id }) => {
-        const item = AppState.masterItems.find(i => i.id == id);
-        if (!item) return;
-        document.getElementById('edit-item-id').value = item.id;
-        document.getElementById('item-name').value = item.name;
-        document.getElementById('item-category').value = item.category;
-        document.getElementById('item-unit').value = item.unit;
-        document.getElementById('item-harga-beli').value = item.hargaBeli || 0;
-        document.getElementById('item-min-stock').value = item.minStock || 0;
-        document.getElementById('item-form-title').textContent = 'Edit Barang';
-        document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update Barang';
-        document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
-        document.getElementById('add-item-form').scrollIntoView({ behavior: 'smooth' });
-    },
-    'cancel-edit': () => {
-        document.getElementById('add-item-form').reset();
-        document.getElementById('edit-item-id').value = '';
-        document.getElementById('item-form-title').textContent = 'Tambah Barang Baru';
-        document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
-        document.getElementById('cancel-edit-btn').style.display = 'none';
-    },
-    'delete-item': async ({ id }) => {
-        const itemId = parseInt(id);
-        const item = AppState.masterItems.find(i => i.id === itemId);
-        if (!item) return;
-        const isInUse = Object.values(AppState.recipes).some(recipe => recipe.ingredients.some(ing => ing.itemId === itemId));
-        if (isInUse) {
-            return showToast(`Tidak bisa menghapus "${item.name}" karena masih digunakan dalam resep.`, 'error');
-        }
-        if (confirm(`Apakah Anda yakin ingin menghapus "${item.name}"? Aksi ini tidak bisa dibatalkan.`)) {
-            const updatedItems = AppState.masterItems.filter(i => i.id !== itemId);
-            await API.setKey('masterItems', updatedItems);
-            showToast(`"${item.name}" telah dihapus.`, 'success');
+                onUpdate();
+            }, error => {
+                console.error("Firebase listen error:", error);
+                RestoApp.UI.showToast("Gagal sinkronisasi data.", "error");
+            });
+        },
+        stopListeningToData() {
+            if (RestoApp.AppState.unsubscribe) {
+                RestoApp.AppState.unsubscribe();
+                RestoApp.AppState.unsubscribe = null;
+            }
+        },
+        async setKey(key, value) {
+            const AppState = RestoApp.AppState;
+            if (!AppState.currentUser) return;
+            const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
+            try {
+                await docRef.set({ [key]: value }, { merge: true });
+            } catch (e) {
+                console.error(`Error setKey ${key}:`, e);
+                RestoApp.UI.showToast("Gagal menyimpan data.", "error");
+                throw e;
+            }
+        },
+        async initializeDefaultData() {
+            try {
+                const initialData = {
+                    masterItems: [
+                        { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", stock: 0, minStock: 0.5, hargaBeli: 35000, sortOrder: 0 },
+                        { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", stock: 0, minStock: 0.5, hargaBeli: 40000, sortOrder: 1 },
+                    ],
+                    recipes: { "Ayam Bakar": { unit: "porsi", hargaJual: 30000, ingredients: [ { itemId: 1, qty: 0.05 }, { itemId: 2, qty: 0.03 } ] } },
+                    shoppingLists: [], stockTransactions: [],
+                };
+                await firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid).set(initialData);
+                RestoApp.UI.showToast("Selamat datang! Data awal telah disiapkan.", "success");
+            } catch (e) {
+                console.error("Error initializing data:", e);
+                RestoApp.UI.showToast("Gagal menyiapkan data awal.", "error");
+            }
         }
     },
-};
 
+    // #############################################################################
+    // --- Auth: Manajemen Otentikasi Pengguna ---
+    // #############################################################################
+    Auth: {
+        listen() {
+            auth.onAuthStateChanged(user => {
+                const loginPage = document.getElementById('login-page');
+                const appRoot = document.getElementById('app-root');
+                if (user) {
+                    RestoApp.AppState.currentUser = user;
+                    loginPage.style.display = 'none';
+                    appRoot.style.display = 'block';
+                    RestoApp.App.initOnLogin();
+                } else {
+                    RestoApp.AppState.currentUser = null;
+                    loginPage.style.display = 'flex';
+                    appRoot.style.display = 'none';
+                    RestoApp.API.stopListeningToData();
+                    RestoApp.AppState.isDataLoaded = false;
+                }
+            });
+        },
+        async login(email, password) {
+            await auth.signInWithEmailAndPassword(email, password);
+        },
+        async logout() {
+            try {
+                await auth.signOut();
+            } catch (e) {
+                console.error("Logout error:", e);
+                RestoApp.UI.showToast("Gagal untuk logout.", "error");
+            }
+        }
+    },
 
-// #############################################################################
-// --- file: src/main.js ---
-// #############################################################################
-import { Auth } from './auth.js';
-import { API } from './api.js';
-import { renderPage, renderSidebar, updateDynamicContent } from './ui/ui.js';
-import { ActionHandlers } from './eventHandlers.js';
+    // #############################################################################
+    // --- UI: Mengelola Tampilan dan Interaksi Pengguna ---
+    // #############################################################################
+    UI: {
+        Pages: {
+            dashboard() {
+                return `<div id="dashboard-content"><div class="card"><p>Memuat data dashboard...</p></div></div>`;
+            },
+            managerItems() {
+                return `<div class="card">
+                            <h3 class="card-title" id="item-form-title">Tambah Barang Baru</h3>
+                            <form id="add-item-form">
+                                <input type="hidden" id="edit-item-id">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                                    <div class="form-group"><label for="item-name" class="form-label">Nama Barang</label><input type="text" id="item-name" class="form-control" required></div>
+                                    <div class="form-group"><label for="item-category" class="form-label">Kategori</label><input type="text" id="item-category" class="form-control" list="category-suggestions" required></div>
+                                    <div class="form-group"><label for="item-unit" class="form-label">Satuan Stok</label><input type="text" id="item-unit" class="form-control" required></div>
+                                    <div class="form-group"><label for="item-harga-beli" class="form-label">Harga Beli / Satuan Stok</label><input type="number" id="item-harga-beli" class="form-control" min="0" step="any"></div>
+                                    <div class="form-group"><label for="item-min-stock" class="form-label">Stok Minimum</label><input type="number" id="item-min-stock" class="form-control" min="0" step="any"></div>
+                                </div>
+                                <div style="display:flex; gap:10px; margin-top: 1rem;">
+                                    <button type="submit" class="btn btn-primary" id="save-item-btn"><i class="fas fa-save"></i> Simpan Barang</button>
+                                    <button type="button" class="btn" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
+                                </div>
+                            </form>
+                            <datalist id="category-suggestions"></datalist>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title"><i class="fas fa-database"></i> Daftar Barang</h3><button class="btn btn-primary btn-sm" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></div>
+                            <p class="stock-hint" style="padding: 0 1.5rem 1rem 1.5rem; margin:0;">Tahan dan geser ikon <i class="fas fa-grip-vertical"></i> untuk mengubah urutan.</p>
+                            <div class="table-container" style="overflow-x:auto;"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Harga Beli</th><th>Stok Min.</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div>
+                        </div>`;
+            },
+        },
+        menuConfig: [
+            { id: 'page-dashboard', icon: 'fa-tachometer-alt', text: 'Dashboard', page: 'dashboard' },
+            { id: 'page-manager-items', icon: 'fa-database', text: 'Database Barang', page: 'managerItems' },
+        ],
+        renderPage(pageId) {
+            const pageConfig = this.menuConfig.find(p => p.id === pageId) || this.menuConfig[0];
+            if (location.hash !== `#${pageConfig.id}`) { location.hash = pageConfig.id; }
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.toggle('active', a.dataset.page === pageConfig.id));
+            document.getElementById('main-content').innerHTML = this.Pages[pageConfig.page]();
+            document.getElementById('page-title').textContent = pageConfig.text;
+            document.title = `${pageConfig.text} - RestoApp`;
+            this.updateDynamicContent();
+        },
+        updateDynamicContent() {
+            if (!RestoApp.AppState.isDataLoaded) return;
+            const currentPageId = location.hash.substring(1) || 'page-dashboard';
 
-export const App = {
-    init() {
-        Auth.listen();
-        
-        // --- Event Listener Terpusat ---
-        document.addEventListener('submit', async (e) => {
-            if (e.target.id === 'login-form') {
+            if (currentPageId === 'page-dashboard') {
+                const lowStockItems = RestoApp.AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+                const content = document.getElementById('dashboard-content');
+                if (content) {
+                    content.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div><p>Selamat datang di RestoApp! Gunakan menu di samping untuk mengelola inventaris Anda.</p></div>
+                                         <div class="card"><div class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Stok Kritis</div>
+                                         ${lowStockItems.length > 0 ? `<p>Ada <strong>${lowStockItems.length} item</strong> yang stoknya di bawah batas minimum.</p><ul>${lowStockItems.map(item => `<li>${item.name} (Stok: ${item.stock} ${item.unit}, Min: ${item.minStock} ${item.unit})</li>`).join('')}</ul>` : `<p class="text-success">Semua stok aman!</p>`}</div>`;
+                }
+            } else if (currentPageId === 'page-manager-items') {
+                const tbody = document.getElementById('db-editor-tbody');
+                if (tbody) {
+                    const itemRows = RestoApp.AppState.masterItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                        .map(item => `
+                            <tr data-id="${item.id}" draggable="true">
+                                <td class="drag-handle"><i class="fas fa-grip-vertical"></i></td>
+                                <td>${item.name}<div class="stock-hint">${item.category}</div></td>
+                                <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
+                                <td>${RestoApp.Utils.formatCurrency(item.hargaBeli)} / ${item.unit}</td>
+                                <td><span class="${(item.stock || 0) < (item.minStock || 0) ? 'text-danger' : ''}">${item.minStock || 0} ${item.unit}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button>
+                                    <button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>`).join('');
+                    tbody.innerHTML = itemRows;
+                    RestoApp.Events.setupDraggableList(tbody);
+                }
+                const categories = [...new Set(RestoApp.AppState.masterItems.map(item => item.category))];
+                const datalist = document.getElementById('category-suggestions');
+                if (datalist) datalist.innerHTML = categories.map(cat => `<option value="${cat}"></option>`).join('');
+            }
+        },
+        renderSidebar() {
+            document.getElementById('sidebar-menu-container').innerHTML = this.menuConfig.map(item => `<li><a href="#${item.id}" data-page="${item.id}"><i class="fas ${item.icon}"></i><span>${item.text}</span></a></li>`).join('');
+            document.getElementById('user-email-display').textContent = RestoApp.AppState.currentUser.email;
+        },
+        showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
+            toast.className = `toast ${type}`; const icon = { success: 'fa-check-circle', error: 'fa-times-circle' }[type] || 'fa-info-circle';
+            toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><span>${message}</span>`;
+            container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 4000);
+        }
+    },
+
+    // #############################################################################
+    // --- Events: Penanganan Aksi dan Interaksi ---
+    // #############################################################################
+    Events: {
+        setupDraggableList(tbody) {
+            let draggedItem = null;
+            const handleDragOver = (e) => {
                 e.preventDefault();
-                const button = e.target.querySelector('button[type="submit"]');
-                const errorEl = document.getElementById('login-error');
-                button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                errorEl.style.display = 'none'; // Sembunyikan pesan error lama
+                const y = e.clientY || e.touches[0].clientY;
+                const afterElement = getDragAfterElement(tbody, y);
+                if (afterElement == null) { tbody.appendChild(draggedItem); } 
+                else { tbody.insertBefore(draggedItem, afterElement); }
+            };
+            const getDragAfterElement = (container, y) => {
+                const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element;
+            };
+            tbody.addEventListener('dragstart', e => { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); });
+            tbody.addEventListener('dragend', e => { e.target.classList.remove('dragging'); draggedItem = null; });
+            tbody.addEventListener('dragover', handleDragOver);
+            tbody.addEventListener('touchstart', e => { if (e.target.closest('.drag-handle')) { draggedItem = e.target.closest('tr'); draggedItem.classList.add('dragging'); } });
+            tbody.addEventListener('touchend', () => { if (draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } });
+            tbody.addEventListener('touchmove', e => { if (draggedItem) handleDragOver(e); });
+        },
+
+        ActionHandlers: {
+            'logout': () => RestoApp.Auth.logout(),
+            'toggle-theme': () => {
+                document.body.classList.toggle('dark-mode');
+                document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+            },
+            'toggle-sidebar': () => document.getElementById('sidebar').classList.toggle('open'),
+            'save-item-order': async ({ target }) => {
+                target.disabled = true; target.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 try {
-                    await Auth.login(document.getElementById('email').value, document.getElementById('password').value);
-                } catch (error) {
-                    errorEl.textContent = "Login Gagal: Email atau password salah.";
-                    errorEl.style.display = 'block';
-                } finally {
-                    button.disabled = false; button.innerHTML = 'Login';
+                    const rows = document.querySelectorAll('#db-editor-tbody tr');
+                    const newMasterItems = [...RestoApp.AppState.masterItems];
+                    const idOrderMap = new Map();
+                    rows.forEach((row, index) => { idOrderMap.set(parseInt(row.dataset.id), index); });
+                    newMasterItems.forEach(item => { if (idOrderMap.has(item.id)) { item.sortOrder = idOrderMap.get(item.id); } });
+                    await RestoApp.API.setKey('masterItems', newMasterItems);
+                    RestoApp.UI.showToast('Urutan barang berhasil disimpan!', 'success');
+                } catch (e) { console.error("Save order error:", e); } 
+                finally { target.disabled = false; target.innerHTML = '<i class="fas fa-save"></i> Simpan Urutan'; }
+            },
+            'save-item': async () => {
+                const id = document.getElementById('edit-item-id').value;
+                const newItemData = {
+                    name: document.getElementById('item-name').value.trim(), category: document.getElementById('item-category').value.trim(),
+                    unit: document.getElementById('item-unit').value.trim(), hargaBeli: parseFloat(document.getElementById('item-harga-beli').value) || 0,
+                    minStock: parseFloat(document.getElementById('item-min-stock').value) || 0,
+                };
+                if (!newItemData.name || !newItemData.category || !newItemData.unit) return RestoApp.UI.showToast('Nama, Kategori, dan Satuan harus diisi!', 'error');
+                
+                const masterItems = [...RestoApp.AppState.masterItems];
+                if (id) {
+                    const index = masterItems.findIndex(item => item.id == id);
+                    if (index > -1) { masterItems[index] = { ...masterItems[index], ...newItemData }; }
+                } else {
+                    masterItems.push({ ...newItemData, id: Date.now(), stock: 0, sortOrder: masterItems.length });
                 }
-            } else if (e.target.id === 'add-item-form') {
-                e.preventDefault();
-                ActionHandlers['save-item']();
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            const actionTarget = e.target.closest('[data-action]');
-            if (actionTarget) {
-                e.preventDefault();
-                const { action, id } = actionTarget.dataset;
-                if (ActionHandlers[action]) ActionHandlers[action]({ target: actionTarget, id });
-            }
-            const pageTarget = e.target.closest('[data-page]');
-            if (pageTarget) {
-                e.preventDefault();
-                document.getElementById('sidebar').classList.remove('open'); // Tutup sidebar saat ganti halaman di mobile
-                renderPage(pageTarget.dataset.page);
-            }
-        });
-        
-        window.addEventListener('hashchange', () => renderPage(location.hash.substring(1)));
+                await RestoApp.API.setKey('masterItems', masterItems);
+                RestoApp.UI.showToast(`Barang berhasil ${id ? 'diperbarui' : 'ditambahkan'}!`, 'success');
+                RestoApp.Events.ActionHandlers['cancel-edit']();
+            },
+            'edit-item': ({ id }) => {
+                const item = RestoApp.AppState.masterItems.find(i => i.id == id); if (!item) return;
+                document.getElementById('edit-item-id').value = item.id; document.getElementById('item-name').value = item.name;
+                document.getElementById('item-category').value = item.category; document.getElementById('item-unit').value = item.unit;
+                document.getElementById('item-harga-beli').value = item.hargaBeli || 0; document.getElementById('item-min-stock').value = item.minStock || 0;
+                document.getElementById('item-form-title').textContent = 'Edit Barang'; document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update Barang';
+                document.getElementById('cancel-edit-btn').style.display = 'inline-flex'; document.getElementById('add-item-form').scrollIntoView({ behavior: 'smooth' });
+            },
+            'cancel-edit': () => {
+                document.getElementById('add-item-form').reset(); document.getElementById('edit-item-id').value = '';
+                document.getElementById('item-form-title').textContent = 'Tambah Barang Baru'; document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
+                document.getElementById('cancel-edit-btn').style.display = 'none';
+            },
+            'delete-item': async ({ id }) => {
+                const itemId = parseInt(id);
+                const item = RestoApp.AppState.masterItems.find(i => i.id === itemId); if (!item) return;
+                const isInUse = Object.values(RestoApp.AppState.recipes).some(r => r.ingredients.some(i => i.itemId === itemId));
+                if (isInUse) return RestoApp.UI.showToast(`"${item.name}" masih digunakan dalam resep.`, 'error');
+                if (confirm(`Yakin ingin menghapus "${item.name}"?`)) {
+                    const updatedItems = RestoApp.AppState.masterItems.filter(i => i.id !== itemId);
+                    await RestoApp.API.setKey('masterItems', updatedItems);
+                    RestoApp.UI.showToast(`"${item.name}" telah dihapus.`, 'success');
+                }
+            },
+        },
     },
-    initOnLogin() {
-        renderSidebar();
-        renderPage(location.hash.substring(1) || 'page-dashboard');
-        API.listenToData(() => {
-            // Setiap data dari Firebase berubah, panggil fungsi ini untuk
-            // memperbarui bagian-bagian dinamis dari halaman tanpa refresh.
-            updateDynamicContent();
-        });
+
+    // #############################################################################
+    // --- App: Titik Masuk Utama dan Inisialisasi ---
+    // #############################################################################
+    App: {
+        init() {
+            RestoApp.Auth.listen();
+            
+            document.addEventListener('submit', async (e) => {
+                if (e.target.id === 'login-form') {
+                    e.preventDefault();
+                    const button = e.target.querySelector('button[type="submit"]');
+                    const errorEl = document.getElementById('login-error');
+                    button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    errorEl.style.display = 'none';
+                    try {
+                        await RestoApp.Auth.login(document.getElementById('email').value, document.getElementById('password').value);
+                    } catch (error) {
+                        console.error("Login error:", error);
+                        errorEl.textContent = "Login Gagal: " + error.message;
+                        errorEl.style.display = 'block';
+                    } finally {
+                        button.disabled = false; button.innerHTML = 'Login';
+                    }
+                } else if (e.target.id === 'add-item-form') {
+                    e.preventDefault();
+                    RestoApp.Events.ActionHandlers['save-item']();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                const actionTarget = e.target.closest('[data-action]');
+                const pageTarget = e.target.closest('[data-page]');
+                if (actionTarget) {
+                    e.preventDefault();
+                    const { action, id } = actionTarget.dataset;
+                    const handler = RestoApp.Events.ActionHandlers[action];
+                    if (handler) handler({ target: actionTarget, id });
+                } else if (pageTarget) {
+                    e.preventDefault();
+                    document.getElementById('sidebar').classList.remove('open');
+                    RestoApp.UI.renderPage(pageTarget.dataset.page);
+                }
+            });
+            
+            window.addEventListener('hashchange', () => RestoApp.UI.renderPage(location.hash.substring(1)));
+        },
+        initOnLogin() {
+            RestoApp.UI.renderSidebar();
+            RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard');
+            RestoApp.API.listenToData(() => {
+                RestoApp.UI.updateDynamicContent();
+            });
+        }
     }
 };
 
-App.init();
+// --- Menjalankan Aplikasi ---
+RestoApp.App.init();
+
 </script>
 </body>
 </html>
