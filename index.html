@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V7.3 Refactored</title>
+    <title>RestoApp - V7.6 Patched</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- Import Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-        /* --- Color Variables --- */
         :root {
             --primary-color: #4a7c59; --primary-light: #6b9d7a; --primary-dark: #385f46;
             --secondary-color: #f1f5f9; --white-color: #ffffff;
@@ -20,119 +17,74 @@
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            --border-radius: 0.5rem; --transition: all 0.2s ease-in-out;
-            --sidebar-width: 240px;
+            --border-radius: 0.5rem; --transition: all 0.2s ease-in-out; --sidebar-width: 240px;
         }
-
-        body.dark-mode {
-            --primary-color: #6b9d7a; --primary-light: #4a7c59; --primary-dark: #8bc39d;
-            --secondary-color: #1e293b; --white-color: #0f172a;
-            --text-color: #f1f5f9; --text-light: #94a3b8;
-            --border-color: #334155; --danger-color: #f87171; --warning-color: #fbbf24;
-            --success-color: #4ade80; --info-color: #60a5fa;
-        }
-
-        /* --- Reset & Global Styles --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--secondary-color); color: var(--text-color); line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
-        .app-wrapper { display: flex; }
-
-        /* --- Sidebar Navigation --- */
-        #sidebar {
-            width: var(--sidebar-width); background-color: var(--white-color); border-right: 1px solid var(--border-color);
-            height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000;
-            display: flex; flex-direction: column; transition: transform 0.3s ease-in-out; box-shadow: var(--shadow-md);
-        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--secondary-color); color: var(--text-color); line-height: 1.6; }
+        #sidebar { width: var(--sidebar-width); background-color: var(--white-color); border-right: 1px solid var(--border-color); height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; display: flex; flex-direction: column; transition: transform 0.3s ease-in-out; box-shadow: var(--shadow-md); }
         .sidebar-header { padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border-color); }
         .sidebar-header h1 { font-size: 1.5rem; color: var(--primary-color); font-weight: 600; margin: 0; }
         .sidebar-menu { flex-grow: 1; list-style: none; padding: 1rem 0; }
-        .sidebar-menu a {
-            display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1.5rem;
-            color: var(--text-light); text-decoration: none; font-weight: 500;
-            border-left: 3px solid transparent; transition: var(--transition);
-        }
+        .sidebar-menu a { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1.5rem; color: var(--text-light); text-decoration: none; font-weight: 500; border-left: 3px solid transparent; transition: var(--transition); }
         .sidebar-menu a:hover { background-color: var(--secondary-color); color: var(--primary-dark); }
         .sidebar-menu a.active { background-color: var(--secondary-color); color: var(--primary-color); border-left-color: var(--primary-color); font-weight: 600; }
         .sidebar-menu a i { width: 20px; text-align: center; font-size: 1.1rem; }
-        .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-light); }
-
-        /* --- Main App Container --- */
-        #app-container {
-            flex-grow: 1; transition: margin-left 0.3s ease-in-out;
-            padding-left: var(--sidebar-width);
-        }
+        .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); }
+        #app-container { flex-grow: 1; transition: margin-left 0.3s ease-in-out; padding-left: var(--sidebar-width); }
         .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-
-        /* --- Header Styles --- */
-        header {
-            background-color: var(--white-color); color: var(--text-color); padding: 1rem 1.5rem;
-            border-radius: var(--border-radius); box-shadow: var(--shadow-md); margin-bottom: 1.5rem;
-            display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);
-        }
+        header { background-color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
         header h2 { font-weight: 600; font-size: 1.5rem; color: var(--primary-color); margin: 0; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
-        .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-light); width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: var(--transition); }
-        .theme-toggle:hover { background-color: var(--secondary-color); color: var(--primary-color); }
-
-        /* --- Mobile Responsiveness --- */
-        @media (max-width: 768px) {
-            #sidebar { transform: translateX(calc(-1 * var(--sidebar-width))); }
-            #sidebar.open { transform: translateX(0); }
-            #app-container { padding-left: 0; }
-            .mobile-menu-toggle { display: block !important; z-index: 1001; }
-            .page-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none;}
-            #sidebar.open ~ #app-container .page-overlay { display: block; }
-        }
-
-        /* --- PERBAIKAN: Tambahan Media Query untuk Layar Kecil --- */
-        @media (max-width: 480px) {
-            .container { padding: 1rem; }
-            .card { padding: 1rem; }
-            header h2 { font-size: 1.2rem; }
-            .sidebar-header h1 { font-size: 1.2rem; }
-            .btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
-        }
-
-        /* --- General Components --- */
+        #header-alerts { position: relative; cursor: pointer; }
+        #header-alerts .alert-icon { font-size: 1.5rem; color: var(--primary-dark); transition: transform 0.2s; }
+        #header-alerts:hover .alert-icon { transform: scale(1.1); }
+        #header-alerts .alert-badge { position: absolute; top: -5px; right: -10px; background-color: var(--danger-color); color: var(--white-color); border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: 600; border: 2px solid var(--white-color); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(229, 62, 62, 0); } 100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); } }
+        @media (max-width: 768px) { #sidebar { transform: translateX(calc(-1 * var(--sidebar-width))); } #sidebar.open { transform: translateX(0); } #app-container { padding-left: 0; } .mobile-menu-toggle { display: block !important; z-index: 1001; } .page-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none;} #sidebar.open ~ #app-container .page-overlay { display: block; } }
+        @media (max-width: 480px) { .container { padding: 1rem; } .card { padding: 1rem; } header h2 { font-size: 1.2rem; } }
         .card { background: var(--white-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
         .card-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: var(--border-radius); font-weight: 500; cursor: pointer; transition: var(--transition); border: none; font-size: 0.9rem; }
         .btn:disabled { background-color: var(--text-light); cursor: not-allowed; opacity: 0.7; }
         .btn-primary { background-color: var(--primary-color); color: #fff; } .btn-primary:hover:not(:disabled) { background-color: var(--primary-light); }
-        .btn-danger { background-color: var(--danger-color); color: #fff; }
-        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8rem; }
+        .btn-danger { background-color: var(--danger-color); color: #fff; } .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8rem; }
         .form-group { position: relative; margin-bottom: 1rem; }
         .form-label { display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-color); }
-        .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); background-color: var(--white-color); color: var(--text-color); }
+        .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); }
         .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent); }
         #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.75rem; max-width: 350px; }
-        .toast { background-color: #fff; color: var(--text-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 1rem; border-left: 4px solid; }
+        .toast { background-color: var(--text-color); color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 1rem; }
         .toast.show { opacity: 1; transform: translateX(0); }
-        .toast.success { border-color: var(--success-color); } .toast.success .toast-icon { color: var(--success-color); }
-        .toast.error { border-color: var(--danger-color); } .toast.error .toast-icon { color: var(--danger-color); }
-        .toast-icon { font-size: 1.5rem; }
-        .page { display: none; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .page.active { display: block; }
-        .table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        .table th, .table td { padding: 0.875rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .table th { background-color: var(--secondary-color); font-weight: 600; }
-        .text-danger { color: var(--danger-color); }
-        .text-success { color: var(--success-color); }
-        .stock-hint { font-size: 0.85rem; color: var(--text-light); }
-        .drag-handle { cursor: grab; text-align: center; color: var(--text-light); font-size: 1.25rem; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-        tr.dragging { opacity: 0.5; background: var(--secondary-color); }
-        #login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--secondary-color); }
+        .toast.success { background-color: var(--success-color); } .toast.error { background-color: var(--danger-color); }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem; }
+        .dashboard-card { background-color: var(--white-color); border-radius: var(--border-radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: var(--transition); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
+        .dashboard-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary-color); }
+        .dashboard-card i { font-size: 2.25rem; color: var(--primary-color); }
+        .dashboard-card h3 { font-size: 1rem; font-weight: 500; color: var(--text-color); }
+        .page { animation: fadeIn 0.3s ease; } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(45, 55, 72, 0.6); backdrop-filter: blur(2px); z-index: 1040; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s ease; visibility: hidden; }
+        .modal-backdrop.show { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--white-color); border-radius: var(--border-radius); padding: 1.5rem; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); transform: scale(0.95); transition: transform 0.2s ease; }
+        .modal-backdrop.show .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); }
+        .modal-close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
+        #login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         #login-card { width: 100%; max-width: 400px; text-align: center; }
         #login-error { color: var(--danger-color); margin-top: 1rem; display: none; font-size: 0.9rem; }
         #app-root { display: none; }
+        .item-row { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center; padding: 0.75rem; border-radius: var(--border-radius); } .item-row:nth-child(odd) { background-color: var(--secondary-color); }
+        .item-list { display: grid; gap: 0.75rem; }
+        .item-label { font-weight: 500; } .stock-hint { color: var(--text-light); font-size: 0.85rem; }
+        .table { width: 100%; border-collapse: collapse; } .table th, .table td { padding: 0.875rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); } .table th { background-color: var(--secondary-color); }
+        .drag-handle { cursor: grab; } .dragging { opacity: 0.5; }
     </style>
 </head>
 <body>
     <div id="login-page">
         <div class="card" id="login-card">
-            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.3</h1>
+            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.6</h1>
             <form id="login-form">
                 <div class="form-group" style="text-align: left;"><label for="email" class="form-label">Email</label><input type="email" id="email" class="form-control" required></div>
                 <div class="form-group" style="text-align: left;"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
@@ -146,16 +98,20 @@
         <nav id="sidebar">
             <div class="sidebar-header"><h1><i class="fas fa-utensils"></i> RestoApp</h1></div>
             <ul class="sidebar-menu" id="sidebar-menu-container"></ul>
-            <div class="sidebar-footer"><span id="user-email-display"></span><br>V7.3 &copy; 2025</div>
+            <div class="sidebar-footer">
+                <div id="user-email-display" style="font-weight: 500; word-break: break-all;"></div>
+                <button class="btn btn-sm btn-danger" data-action="logout" style="width: 100%; margin-top: 0.75rem;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
         </nav>
+
         <div id="app-container">
             <div class="page-overlay" data-action="toggle-sidebar"></div>
+            <div id="modal-container"></div>
             <div class="container">
                 <header>
                     <h2 id="page-title">Dashboard</h2>
                     <div class="header-actions">
-                        <button class="theme-toggle" id="theme-toggle" data-action="toggle-theme"><i class="fas fa-moon"></i></button>
-                        <button class="btn btn-sm btn-danger" data-action="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        <div id="header-alerts"></div>
                         <button class="mobile-menu-toggle btn btn-primary" data-action="toggle-sidebar" style="display: none;"><i class="fas fa-bars"></i></button>
                     </div>
                 </header>
@@ -165,7 +121,7 @@
     </div>
     
     <div id="toast-container"></div>
-    <div id="modal-container"></div>
+    <input type="file" id="import-file-input" accept=".json" style="display:none;">
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -185,364 +141,401 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
-// --- PERBAIKAN: Menggunakan Pola Namespace untuk Menghindari Konflik Global ---
 window.RestoApp = {
-    // #############################################################################
-    // --- State: Menyimpan semua data aplikasi ---
-    // #############################################################################
-    AppState: { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], isDataLoaded: false, unsubscribe: null },
+    AppState: { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], gudangItemIds: [], menuKeluarActive: [], isDataLoaded: false, unsubscribe: null },
 
-    // #############################################################################
-    // --- Utils: Fungsi bantuan ---
-    // #############################################################################
     Utils: {
         formatCurrency: (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0),
+        calculateAvailablePortions(menuName) {
+            const { recipes, masterItems } = RestoApp.AppState; if(!recipes || !masterItems) return 0;
+            const recipe = recipes[menuName]; if (!recipe || !recipe.ingredients) return 0; let minPortions = Infinity;
+            recipe.ingredients.forEach(ing => {
+                const item = masterItems.find(mi => mi.id === ing.itemId);
+                if (item && ing.qty > 0) minPortions = Math.min(minPortions, Math.floor((item.stock || 0) / ing.qty));
+                else if (ing.qty > 0) minPortions = 0;
+            });
+            return minPortions === Infinity ? 0 : minPortions;
+        },
+        generateDailyReport() {
+            const { stockTransactions, masterItems } = RestoApp.AppState; const now = new Date(); const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            const recentTransactions = (stockTransactions || []).filter(t => new Date(t.date) > yesterday);
+            const stokRendah = masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+            const menuProduksi = recentTransactions.filter(t => t.type === 'Produksi Menu');
+            const menuCount = menuProduksi.reduce((acc, t) => { acc[t.details] = (acc[t.details] || 0) + t.change; return acc; }, {});
+            const topMenus = Object.entries(menuCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const bahanTerpakai = recentTransactions.filter(t => t.change < 0 && t.type !== 'Produksi Menu');
+            const bahanCount = bahanTerpakai.reduce((acc, t) => { const item = masterItems.find(i => i.id === t.itemId); if (item) { acc[item.name] = (acc[item.name] || 0) + Math.abs(t.change); } return acc; }, {});
+            const topBahan = Object.entries(bahanCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            return { topMenus, topBahan, stokRendah, reportDate: now };
+        },
+        addDragDropHandlers(container) {
+            container.addEventListener('dragstart', e => e.target.classList.add('dragging'));
+            container.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+            container.addEventListener('dragover', e => {
+                e.preventDefault(); const afterElement = this.getDragAfterElement(container, e.clientY);
+                const draggable = document.querySelector('.dragging');
+                if (draggable) { if (afterElement == null) container.appendChild(draggable); else container.insertBefore(draggable, afterElement); }
+            });
+        },
+        getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) return { offset: offset, element: child }; else return closest; }, { offset: Number.NEGATIVE_INFINITY }).element;
+        },
     },
 
-    // #############################################################################
-    // --- API: Komunikasi dengan Firebase Firestore ---
-    // #############################################################################
     API: {
         listenToData(onUpdate) {
-            const AppState = RestoApp.AppState;
-            if (AppState.unsubscribe) AppState.unsubscribe();
-            if (!AppState.currentUser) return;
-
+            const AppState = RestoApp.AppState; if (AppState.unsubscribe) AppState.unsubscribe(); if (!AppState.currentUser) return;
             const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
             AppState.unsubscribe = docRef.onSnapshot(doc => {
                 if (doc.exists) {
-                    const data = doc.data();
-                    Object.keys(data).forEach(key => { AppState[key] = data[key]; });
-                    AppState.isDataLoaded = true;
+                    const data = doc.data(); Object.keys(AppState).forEach(key => { if(data[key] !== undefined) AppState[key] = data[key]; });
                 } else {
-                    this.initializeDefaultData();
-                    AppState.isDataLoaded = true;
+                    RestoApp.UI.showToast('Data tidak ditemukan, membuat data awal...', 'info'); this.initializeDefaultData();
                 }
-                onUpdate();
-            }, error => {
-                console.error("Firebase listen error:", error);
-                RestoApp.UI.showToast("Gagal sinkronisasi data.", "error");
-            });
+                AppState.isDataLoaded = true; onUpdate();
+            }, error => { console.error("Firebase listen error:", error); RestoApp.UI.showToast("Gagal sinkronisasi data.", "error"); });
         },
-        stopListeningToData() {
-            if (RestoApp.AppState.unsubscribe) {
-                RestoApp.AppState.unsubscribe();
-                RestoApp.AppState.unsubscribe = null;
-            }
-        },
-        async setKey(key, value) {
-            const AppState = RestoApp.AppState;
-            if (!AppState.currentUser) return;
-            const docRef = firestore.collection('restaurants').doc(AppState.currentUser.uid);
-            try {
-                await docRef.set({ [key]: value }, { merge: true });
-            } catch (e) {
-                console.error(`Error setKey ${key}:`, e);
-                RestoApp.UI.showToast("Gagal menyimpan data.", "error");
-                throw e;
-            }
-        },
+        async set(data) { if (!RestoApp.AppState.currentUser) return; await firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid).set(data, { merge: true }); },
+        async setKey(key, value) { if (!RestoApp.AppState.currentUser) return; await firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid).set({ [key]: value }, { merge: true }); },
         async initializeDefaultData() {
-            try {
-                const initialData = {
-                    masterItems: [
-                        { id: 1, name: "Bawang Merah", category: "Bumbu", unit: "kg", stock: 0, minStock: 0.5, hargaBeli: 35000, sortOrder: 0 },
-                        { id: 2, name: "Bawang Putih", category: "Bumbu", unit: "kg", stock: 0, minStock: 0.5, hargaBeli: 40000, sortOrder: 1 },
-                    ],
-                    recipes: { "Ayam Bakar": { unit: "porsi", hargaJual: 30000, ingredients: [ { itemId: 1, qty: 0.05 }, { itemId: 2, qty: 0.03 } ] } },
-                    shoppingLists: [], stockTransactions: [],
-                };
-                await firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid).set(initialData);
-                RestoApp.UI.showToast("Selamat datang! Data awal telah disiapkan.", "success");
-            } catch (e) {
-                console.error("Error initializing data:", e);
-                RestoApp.UI.showToast("Gagal menyiapkan data awal.", "error");
-            }
+            const initialData = { masterItems: [], recipes: {}, gudangItemIds: [], menuKeluarActive: [], shoppingLists: [], stockTransactions: [] };
+            await this.set(initialData); RestoApp.UI.showToast("Selamat datang! Data awal telah disiapkan.", "success");
+            Object.assign(RestoApp.AppState, initialData);
         }
     },
 
-    // #############################################################################
-    // --- Auth: Manajemen Otentikasi Pengguna ---
-    // #############################################################################
     Auth: {
         listen() {
             auth.onAuthStateChanged(user => {
-                const loginPage = document.getElementById('login-page');
-                const appRoot = document.getElementById('app-root');
+                const loginPage = document.getElementById('login-page'); const appRoot = document.getElementById('app-root');
                 if (user) {
-                    RestoApp.AppState.currentUser = user;
-                    loginPage.style.display = 'none';
-                    appRoot.style.display = 'block';
+                    RestoApp.AppState.currentUser = user; loginPage.style.display = 'none'; appRoot.style.display = 'block';
                     RestoApp.App.initOnLogin();
                 } else {
-                    RestoApp.AppState.currentUser = null;
-                    loginPage.style.display = 'flex';
-                    appRoot.style.display = 'none';
-                    RestoApp.API.stopListeningToData();
-                    RestoApp.AppState.isDataLoaded = false;
+                    RestoApp.AppState.currentUser = null; loginPage.style.display = 'flex'; appRoot.style.display = 'none';
+                    if (RestoApp.AppState.unsubscribe) RestoApp.AppState.unsubscribe();
                 }
             });
         },
-        async login(email, password) {
-            await auth.signInWithEmailAndPassword(email, password);
-        },
-        async logout() {
-            try {
-                await auth.signOut();
-            } catch (e) {
-                console.error("Logout error:", e);
-                RestoApp.UI.showToast("Gagal untuk logout.", "error");
-            }
-        }
+        async login(email, password) { await auth.signInWithEmailAndPassword(email, password); },
+        async logout() { await auth.signOut(); }
     },
-
-    // #############################################################################
-    // --- UI: Mengelola Tampilan dan Interaksi Pengguna ---
-    // #############################################################################
+    
     UI: {
-        Pages: {
-            dashboard() {
-                return `<div id="dashboard-content"><div class="card"><p>Memuat data dashboard...</p></div></div>`;
-            },
-            managerItems() {
-                return `<div class="card">
-                            <h3 class="card-title" id="item-form-title">Tambah Barang Baru</h3>
-                            <form id="add-item-form">
-                                <input type="hidden" id="edit-item-id">
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                                    <div class="form-group"><label for="item-name" class="form-label">Nama Barang</label><input type="text" id="item-name" class="form-control" required></div>
-                                    <div class="form-group"><label for="item-category" class="form-label">Kategori</label><input type="text" id="item-category" class="form-control" list="category-suggestions" required></div>
-                                    <div class="form-group"><label for="item-unit" class="form-label">Satuan Stok</label><input type="text" id="item-unit" class="form-control" required></div>
-                                    <div class="form-group"><label for="item-harga-beli" class="form-label">Harga Beli / Satuan Stok</label><input type="number" id="item-harga-beli" class="form-control" min="0" step="any"></div>
-                                    <div class="form-group"><label for="item-min-stock" class="form-label">Stok Minimum</label><input type="number" id="item-min-stock" class="form-control" min="0" step="any"></div>
-                                </div>
-                                <div style="display:flex; gap:10px; margin-top: 1rem;">
-                                    <button type="submit" class="btn btn-primary" id="save-item-btn"><i class="fas fa-save"></i> Simpan Barang</button>
-                                    <button type="button" class="btn" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> Batal</button>
-                                </div>
-                            </form>
-                            <datalist id="category-suggestions"></datalist>
-                        </div>
-                        <div class="card">
-                            <div class="card-header"><h3 class="card-title"><i class="fas fa-database"></i> Daftar Barang</h3><button class="btn btn-primary btn-sm" data-action="save-item-order"><i class="fas fa-save"></i> Simpan Urutan</button></div>
-                            <p class="stock-hint" style="padding: 0 1.5rem 1rem 1.5rem; margin:0;">Tahan dan geser ikon <i class="fas fa-grip-vertical"></i> untuk mengubah urutan.</p>
-                            <div class="table-container" style="overflow-x:auto;"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Harga Beli</th><th>Stok Min.</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody"></tbody></table></div>
-                        </div>`;
-            },
-        },
         menuConfig: [
-            { id: 'page-dashboard', icon: 'fa-tachometer-alt', text: 'Dashboard', page: 'dashboard' },
-            { id: 'page-manager-items', icon: 'fa-database', text: 'Database Barang', page: 'managerItems' },
+            { id: 'page-dashboard', icon: 'fa-tachometer-alt', text: 'Dashboard' },
+            { id: 'page-input-belanja', icon: 'fa-shopping-cart', text: 'Buat List Belanja' },
+            { id: 'page-riwayat-stok', icon: 'fa-history', text: 'Riwayat Stok' },
+            { id: 'page-manager-area', icon: 'fa-user-tie', text: 'Manager Area' },
         ],
-        renderPage(pageId) {
-            const pageConfig = this.menuConfig.find(p => p.id === pageId) || this.menuConfig[0];
-            if (location.hash !== `#${pageConfig.id}`) { location.hash = pageConfig.id; }
-            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.toggle('active', a.dataset.page === pageConfig.id));
-            document.getElementById('main-content').innerHTML = this.Pages[pageConfig.page]();
+        renderPage(pageId, data = null) {
+            const pageConfig = this.menuConfig.find(p => p.id === pageId) || {id: pageId, text: pageId.replace('page-','').replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase())};
+            if (location.hash !== `#${pageId}`) { location.hash = `#${pageId}`; }
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.toggle('active', a.dataset.page === pageId));
+            const pageContent = this.Pages[pageId] ? this.Pages[pageId](data) : `<div class="card"><p>Halaman tidak ditemukan.</p></div>`;
+            document.getElementById('main-content').innerHTML = pageContent;
             document.getElementById('page-title').textContent = pageConfig.text;
             document.title = `${pageConfig.text} - RestoApp`;
             this.updateDynamicContent();
+            
+            // Post-render actions, especially for complex pages
+            if(pageId === 'page-manager-items') RestoApp.Utils.addDragDropHandlers(document.getElementById('db-editor-tbody'));
         },
         updateDynamicContent() {
-            if (!RestoApp.AppState.isDataLoaded) return;
-            const currentPageId = location.hash.substring(1) || 'page-dashboard';
-
-            if (currentPageId === 'page-dashboard') {
-                const lowStockItems = RestoApp.AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
-                const content = document.getElementById('dashboard-content');
-                if (content) {
-                    content.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-chart-line"></i> Dashboard</div><p>Selamat datang di RestoApp! Gunakan menu di samping untuk mengelola inventaris Anda.</p></div>
-                                         <div class="card"><div class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Stok Kritis</div>
-                                         ${lowStockItems.length > 0 ? `<p>Ada <strong>${lowStockItems.length} item</strong> yang stoknya di bawah batas minimum.</p><ul>${lowStockItems.map(item => `<li>${item.name} (Stok: ${item.stock} ${item.unit}, Min: ${item.minStock} ${item.unit})</li>`).join('')}</ul>` : `<p class="text-success">Semua stok aman!</p>`}</div>`;
-                }
-            } else if (currentPageId === 'page-manager-items') {
-                const tbody = document.getElementById('db-editor-tbody');
-                if (tbody) {
-                    const itemRows = RestoApp.AppState.masterItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-                        .map(item => `
-                            <tr data-id="${item.id}" draggable="true">
-                                <td class="drag-handle"><i class="fas fa-grip-vertical"></i></td>
-                                <td>${item.name}<div class="stock-hint">${item.category}</div></td>
-                                <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
-                                <td>${RestoApp.Utils.formatCurrency(item.hargaBeli)} / ${item.unit}</td>
-                                <td><span class="${(item.stock || 0) < (item.minStock || 0) ? 'text-danger' : ''}">${item.minStock || 0} ${item.unit}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-warning" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button>
-                                    <button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>`).join('');
-                    tbody.innerHTML = itemRows;
-                    RestoApp.Events.setupDraggableList(tbody);
-                }
-                const categories = [...new Set(RestoApp.AppState.masterItems.map(item => item.category))];
-                const datalist = document.getElementById('category-suggestions');
-                if (datalist) datalist.innerHTML = categories.map(cat => `<option value="${cat}"></option>`).join('');
-            }
+             if (!RestoApp.AppState.isDataLoaded) return;
+             this.lowStockAlerts();
+             const currentPageId = location.hash.substring(1);
+             if (currentPageId === 'page-manager-display') {
+                const { masterItems, recipes, menuKeluarActive, gudangItemIds } = RestoApp.AppState;
+                const menuCheckboxes = Object.keys(recipes).sort().map(name => `<label><input type="checkbox" data-type="menu" value="${name}" ${menuKeluarActive.includes(name) ? 'checked' : ''}> ${name}</label>`).join('');
+                const gudangCheckboxes = masterItems.filter(item => item.category === 'Gudang' || item.category === 'Operasional').sort((a,b)=>a.name.localeCompare(b.name)).map(item => `<label><input type="checkbox" data-type="gudang" value="${item.id}" ${gudangItemIds.includes(item.id) ? 'checked' : ''}> ${item.name}</label>`).join('');
+                const container = document.getElementById('display-config-container');
+                if (container) container.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Menu Keluar</h4>${menuCheckboxes}</div><div style="display:flex;flex-direction:column;gap:0.5rem;"><h4>Ambil Gudang</h4>${gudangCheckboxes}</div></div><button class="btn btn-primary" style="margin-top:1rem;" data-action="save-display-config">Simpan</button>`;
+             }
         },
         renderSidebar() {
             document.getElementById('sidebar-menu-container').innerHTML = this.menuConfig.map(item => `<li><a href="#${item.id}" data-page="${item.id}"><i class="fas ${item.icon}"></i><span>${item.text}</span></a></li>`).join('');
             document.getElementById('user-email-display').textContent = RestoApp.AppState.currentUser.email;
         },
+        lowStockAlerts() {
+            const container = document.getElementById('header-alerts'); if (!container) return;
+            const lowStockItems = RestoApp.AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0));
+            container.innerHTML = lowStockItems.length > 0 ? `<div data-action="show-low-stock-modal"><i class="fas fa-bell alert-icon"></i><span class="alert-badge">${lowStockItems.length}</span></div>` : '';
+        },
+        showLowStockModal() {
+            const lowStockItems = RestoApp.AppState.masterItems.filter(item => (item.stock || 0) < (item.minStock || 0)); if (lowStockItems.length === 0) return;
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `<div class="modal-backdrop show" data-action="close-modal"><div class="modal-content"><div class="modal-header"><h3 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Peringatan Stok Rendah</h3><button class="modal-close-btn" data-action="close-modal">&times;</button></div><div class="modal-body"><div style="position: relative; height:60vh;"><canvas id="lowStockChart"></canvas></div></div></div></div>`;
+            const ctx = document.getElementById('lowStockChart').getContext('2d');
+            new Chart(ctx, { type: 'bar', data: { labels: lowStockItems.map(item => `${item.name} (${item.unit})`), datasets: [{ label: 'Stok Saat Ini', data: lowStockItems.map(item => item.stock), backgroundColor: 'rgba(56, 161, 105, 0.7)' }, { label: 'Stok Minimum', data: lowStockItems.map(item => item.minStock), backgroundColor: 'rgba(229, 62, 62, 0.7)' }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } });
+        },
+        closeModal() { document.getElementById('modal-container').innerHTML = ''; },
         showToast(message, type = 'success') {
             const container = document.getElementById('toast-container'); const toast = document.createElement('div');
-            toast.className = `toast ${type}`; const icon = { success: 'fa-check-circle', error: 'fa-times-circle' }[type] || 'fa-info-circle';
-            toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><span>${message}</span>`;
+            toast.className = `toast ${type}`; toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 4000);
+        },
+        
+        Pages: {
+            'page-dashboard': () => `<div class="dashboard-grid">
+                <a href="#" class="dashboard-card" data-page="page-input-belanja-datang"><i class="fas fa-truck-loading"></i><h3>Input Belanja Datang</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-input-menu-keluar"><i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-laporan-harian"><i class="fas fa-chart-line"></i><h3>Laporan Harian</h3></a>
+            </div>`,
+            'page-input-belanja': () => {
+                const { masterItems } = RestoApp.AppState; const categories = [...new Set(masterItems.map(item => item.category))];
+                let formHTML = categories.map(cat => {
+                    let itemsHTML = masterItems.filter(item => item.category === cat).sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(item => `<div class="item-row"><label for="shopitem-${item.id}" class="item-label">${item.name}<div class="stock-hint">Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}</div></label><input type="number" id="shopitem-${item.id}" class="form-control" placeholder="Jumlah" min="0" step="any" data-item-id="${item.id}"><span class="item-unit">${item.purchaseUnit || item.unit}</span></div>`).join('');
+                    return `<div class="card"><h3 class="card-title">${cat}</h3><div class="item-list">${itemsHTML}</div></div>`;
+                }).join('');
+                return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-shopping-cart"></i><span>Buat List Belanja</span></div><button class="btn btn-sm" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${formHTML}<button class="btn btn-primary" style="width:100%" data-action="save-shopping-list"><i class="fas fa-save"></i> Simpan List Belanja</button></div>`;
+            },
+            'page-input-belanja-datang': (data) => {
+                if(data) return RestoApp.UI.Pages.stockInDetail(data);
+                const { shoppingLists } = RestoApp.AppState;
+                let content = (shoppingLists.length === 0) ? `<p>Tidak ada list belanja yang pending.</p>` : shoppingLists.map(list => `<div class="card" style="cursor:pointer;" data-action="select-pending-list" data-date="${list.date}"><strong>List Belanja - ${new Date(list.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</strong></div>`).join('');
+                return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-truck-loading"></i><span>Pilih List Belanja</span></div><button class="btn btn-sm" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div>${content}</div>`;
+            },
+            'stockInDetail': (listDate) => {
+                const shoppingList = RestoApp.AppState.shoppingLists.find(l => l.date === listDate); if (!shoppingList) return `Error: List not found.`;
+                const itemsHTML = shoppingList.items.map(item => { const masterItem = RestoApp.AppState.masterItems.find(mi => mi.id === item.id); if (!masterItem) return '';
+                    return `<div class="item-row"><label for="stockin-${item.id}" class="item-label">${masterItem.name}</label><input type="number" id="stockin-${item.id}" class="form-control" value="${item.qty}" min="0" step="any"><span class="item-unit">${masterItem.purchaseUnit || masterItem.unit}</span></div>`; }).join('');
+                return `<div class="card"><div class="card-header"><div class="card-title"><span>Konfirmasi Barang Datang</span></div><button class="btn btn-sm" data-page="page-input-belanja-datang"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list">${itemsHTML}</div><div style="display:flex; gap: 10px; margin-top:1rem;"><button class="btn btn-primary" style="flex-grow:1;" data-action="process-stock-in" data-date="${listDate}">Proses</button><button class="btn btn-danger" data-action="cancel-shopping-list" data-date="${listDate}">Batalkan</button></div></div>`;
+            },
+            'page-input-menu-keluar': () => RestoApp.UI.Pages.stockOutPage('menu'),
+            'page-ambil-gudang': () => RestoApp.UI.Pages.stockOutPage('gudang'),
+            'stockOutPage': (type) => {
+                const { masterItems, recipes, gudangItemIds, menuKeluarActive } = RestoApp.AppState; let itemsToRender, title, icon;
+                if (type === 'gudang') { title = "Ambil dari Gudang"; icon = "fa-warehouse"; itemsToRender = masterItems.filter(item => gudangItemIds.includes(item.id)).sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)); } 
+                else { title = "Input Menu Keluar"; icon = "fa-utensils"; itemsToRender = menuKeluarActive.map(key => ({ name: key, ...recipes[key] })).sort((a,b) => a.name.localeCompare(b.name)); }
+                let formHTML = itemsToRender.map(item => {
+                    const stockHint = (type === 'gudang') ? `Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}` : `Stok cukup untuk: ${RestoApp.Utils.calculateAvailablePortions(item.name)} ${item.unit}`;
+                    return `<div class="item-row"><label class="item-label">${item.name}<div class="stock-hint">${stockHint}</div></label><input type="number" class="form-control" data-name="${item.name}" placeholder="Jumlah" min="0" step="any"><span class="item-unit">${item.unit}</span></div>`;
+                }).join('');
+                return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas ${icon}"></i><span>${title}</span></div><button class="btn btn-sm" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list" id="stockout-list" data-type="${type}">${formHTML}</div><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="process-stock-out"><i class="fas fa-check"></i> Proses</button></div>`;
+            },
+            'page-riwayat-stok': () => {
+                const { stockTransactions, masterItems } = RestoApp.AppState;
+                const rows = [...stockTransactions].reverse().map(t => { const item = masterItems.find(i => i.id === t.itemId); const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
+                    let itemName = 'N/A'; if (item) { itemName = item.name; } else if (t.type === 'Produksi Menu') { itemName = t.details; }
+                    return `<tr><td>${new Date(t.date).toLocaleString('id-ID')}</td><td>${itemName}</td><td>${t.type}</td><td style="${changeClass}">${t.change > 0 ? '+' : ''}${t.change.toFixed(2)}</td><td>${(t.newStock !== null ? t.newStock.toFixed(2) : '-')}</td></tr>`; }).join('');
+                return `<div class="card"><div class="card-header"><div class="card-title"><span>Riwayat Stok</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Waktu</th><th>Item/Menu</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+            },
+            'page-laporan-harian': () => {
+                const report = RestoApp.Utils.generateDailyReport(); const createListHTML = (data, unit = '') => (data.length === 0) ? `<p>Tidak ada data.</p>` : `<ul>${data.map(item => `<li>${item[0]}: <strong>${parseFloat(item[1]).toFixed(1)} ${unit}</strong></li>`).join('')}</ul>`;
+                return `<div class="card"><div class="card-header"><div class="card-title"><span>Laporan Harian</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div><p>Laporan 24 jam terakhir (dibuat ${report.reportDate.toLocaleTimeString('id-ID')})</p><div class="card"><h4>Top Menu</h4>${createListHTML(report.topMenus, 'porsi')}</div><div class="card"><h4>Top Bahan Terpakai</h4>${createListHTML(report.topBahan)}</div></div>`;
+            },
+            'page-manager-area': () => `<div class="card"><div class="card-header"><div class="card-title"><span>Manager Area</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div><div class="dashboard-grid">
+                <a href="#" class="dashboard-card" data-page="page-manager-items"><i class="fas fa-database"></i><h3>Database Barang</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-manager-recipes"><i class="fas fa-book-open"></i><h3>Manajemen Resep</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-manager-display"><i class="fas fa-desktop"></i><h3>Atur Tampilan</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-manager-backup"><i class="fas fa-cloud-upload-alt"></i><h3>Cadangkan Data</h3></a>
+            </div></div>`,
+            'page-manager-items': () => {
+                const itemsHTML = RestoApp.AppState.masterItems.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm" data-action="edit-item" data-id="${item.id}"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+                return `<div class="card"><div class="card-header"><div class="card-title"><span>Database Barang</span></div><button class="btn btn-sm" data-page="page-manager-area">Kembali</button></div>
+                <div class="card"><h3 class="card-title">Tambah / Edit Barang</h3><form id="add-item-form"><input type="hidden" id="edit-item-id"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;"><div class="form-group"><label class="form-label">Nama Barang</label><input class="form-control" type="text" id="item-name" required></div><div class="form-group"><label class="form-label">Kategori</label><input class="form-control" type="text" id="item-category" list="category-suggestions" required></div><div class="form-group"><label class="form-label">Satuan Stok</label><input class="form-control" type="text" id="item-unit" required></div><div class="form-group"><label class="form-label">Satuan Beli</label><input class="form-control" type="text" id="item-purchase-unit"></div><div class="form-group"><label class="form-label">Konversi</label><input class="form-control" type="number" id="item-conversion" min="0" step="any"></div><div class="form-group"><label class="form-label">Stok Minimum</label><input class="form-control" type="number" id="item-min-stock" min="0" step="any"></div></div><div style="display:flex; gap:10px; margin-top: 1rem;"><button type="button" class="btn btn-primary" data-action="save-item" id="save-item-btn" style="flex-grow:1;">Simpan</button><button type="button" class="btn" data-action="cancel-edit" id="cancel-edit-btn" style="display:none;">Batal</button></div></form><datalist id="category-suggestions"></datalist></div>
+                <div class="card"><div class="card-header"><h3 class="card-title">Daftar Barang</h3><button class="btn btn-sm btn-primary" data-action="save-item-order">Simpan Urutan</button></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody">${itemsHTML}</tbody></table></div></div></div>`;
+            },
+            'page-manager-recipes': (data) => {
+                if(data) return RestoApp.UI.Pages.recipeEditor(data);
+                const { recipes } = RestoApp.AppState;
+                const listHTML = Object.keys(recipes).sort().map(name => `<div class="item-row"><span>${name}</span><span>${recipes[name].unit}</span><div style="display:flex;gap:0.5rem;"><button class="btn btn-sm" data-action="edit-recipe" data-name="${name}">Edit</button><button class="btn btn-sm btn-danger" data-action="delete-recipe" data-name="${name}">Hapus</button></div></div>`).join('') || '<p>Belum ada resep.</p>';
+                return `<div class="card"><div class="card-header"><div class="card-title"><span>Manajemen Resep</span></div><button class="btn btn-sm" data-page="page-manager-area">Kembali</button></div><div class="card-header"><h3>Daftar Resep</h3><button class="btn btn-sm btn-primary" data-action="add-recipe"><i class="fas fa-plus"></i> Tambah</button></div><div class="item-list">${listHTML}</div></div>`;
+            },
+            'recipeEditor': (recipeName = null) => {
+                const isEditing = recipeName != null; const { recipes, masterItems } = RestoApp.AppState; const recipe = isEditing ? recipes[recipeName] : { unit: '', ingredients: [] };
+                const itemOptions = masterItems.sort((a, b) => a.name.localeCompare(b.name)).map(item => `<option value="${item.id}">${item.name} (${item.unit})</option>`).join('');
+                let ingredientsHTML = recipe.ingredients.map(ing => { const item = masterItems.find(mi => mi.id === ing.itemId); return `<div class="item-row ingredient-item" data-item-id="${ing.itemId}"><span>${item ? item.name : 'N/A'}</span><input type="number" class="form-control" value="${ing.qty}" step="any" min="0"><div><span>${item ? item.unit : ''}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div></div>`; }).join('');
+                return `<div class="card"><div class="card-header"><h2 class="card-title">${isEditing ? 'Edit' : 'Tambah'} Resep</h2><button class="btn btn-sm" data-page="page-manager-recipes">Kembali</button></div>
+                    <div class="form-group"><label class="form-label">Nama Menu</label><input type="text" id="recipe-name" class="form-control" value="${isEditing ? recipeName : ''}" ${isEditing ? 'readonly' : ''}></div>
+                    <div class="form-group"><label class="form-label">Satuan Hasil</label><input type="text" id="recipe-unit" class="form-control" value="${recipe.unit}"></div>
+                    <div class="card"><h3 class="card-title">Bahan</h3><div id="ingredients-list">${ingredientsHTML}</div><div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed #ccc;display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:center;"><select id="new-ingredient-item" class="form-control">${itemOptions}</select><input type="number" id="new-ingredient-qty" class="form-control" placeholder="Jumlah"><button class="btn btn-primary" data-action="add-ingredient">+</button></div></div>
+                    <button class="btn btn-primary" style="width:100%;margin-top:1rem;" data-action="save-recipe" data-original-name="${isEditing ? recipeName : ''}">Simpan</button></div>`;
+            },
+            'page-manager-display': () => `<div class="card"><div class="card-header"><div class="card-title"><span>Atur Tampilan</span></div><button class="btn btn-sm" data-page="page-manager-area">Kembali</button></div><div id="display-config-container"></div></div>`,
+            'page-manager-backup': () => `<div class="card"><div class="card-header"><div class="card-title"><span>Cadangkan Data</span></div><button class="btn btn-sm" data-page="page-manager-area">Kembali</button></div><p>Simpan atau muat semua data dari file JSON. Import akan menimpa data saat ini.</p><div style="display:flex; gap:10px;"><button class="btn btn-primary" data-action="export-data">Export</button><button class="btn btn-warning" data-action="import-data">Import</button></div></div>`,
         }
     },
-
-    // #############################################################################
-    // --- Events: Penanganan Aksi dan Interaksi ---
-    // #############################################################################
+    
     Events: {
-        setupDraggableList(tbody) {
-            let draggedItem = null;
-            const handleDragOver = (e) => {
-                e.preventDefault();
-                const y = e.clientY || e.touches[0].clientY;
-                const afterElement = getDragAfterElement(tbody, y);
-                if (afterElement == null) { tbody.appendChild(draggedItem); } 
-                else { tbody.insertBefore(draggedItem, afterElement); }
-            };
-            const getDragAfterElement = (container, y) => {
-                const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
-                return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element;
-            };
-            tbody.addEventListener('dragstart', e => { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); });
-            tbody.addEventListener('dragend', e => { e.target.classList.remove('dragging'); draggedItem = null; });
-            tbody.addEventListener('dragover', handleDragOver);
-            tbody.addEventListener('touchstart', e => { if (e.target.closest('.drag-handle')) { draggedItem = e.target.closest('tr'); draggedItem.classList.add('dragging'); } });
-            tbody.addEventListener('touchend', () => { if (draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } });
-            tbody.addEventListener('touchmove', e => { if (draggedItem) handleDragOver(e); });
+        handle(event) {
+            const target = event.target.closest('[data-action], [data-page]'); if (!target) return;
+            event.preventDefault(); const { action, page } = target.dataset;
+            if (page) { RestoApp.UI.renderPage(page); return; }
+            if (action) { const handler = RestoApp.Events.ActionHandlers[action]; if (handler) handler({target}); }
         },
-
         ActionHandlers: {
             'logout': () => RestoApp.Auth.logout(),
-            'toggle-theme': () => {
-                document.body.classList.toggle('dark-mode');
-                document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
-            },
             'toggle-sidebar': () => document.getElementById('sidebar').classList.toggle('open'),
-            'save-item-order': async ({ target }) => {
-                target.disabled = true; target.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                try {
-                    const rows = document.querySelectorAll('#db-editor-tbody tr');
-                    const newMasterItems = [...RestoApp.AppState.masterItems];
-                    const idOrderMap = new Map();
-                    rows.forEach((row, index) => { idOrderMap.set(parseInt(row.dataset.id), index); });
-                    newMasterItems.forEach(item => { if (idOrderMap.has(item.id)) { item.sortOrder = idOrderMap.get(item.id); } });
-                    await RestoApp.API.setKey('masterItems', newMasterItems);
-                    RestoApp.UI.showToast('Urutan barang berhasil disimpan!', 'success');
-                } catch (e) { console.error("Save order error:", e); } 
-                finally { target.disabled = false; target.innerHTML = '<i class="fas fa-save"></i> Simpan Urutan'; }
+            'show-low-stock-modal': () => RestoApp.UI.showLowStockModal(),
+            'close-modal': ({target}) => { if (target.classList.contains('modal-backdrop') || target.closest('.modal-close-btn')) RestoApp.UI.closeModal(); },
+            'save-shopping-list': async () => {
+                const items = Array.from(document.querySelectorAll('#page-input-belanja input[data-item-id]')).map(input => ({ id: parseInt(input.dataset.itemId), qty: parseFloat(input.value) })).filter(item => item.qty > 0);
+                if (items.length === 0) return RestoApp.UI.showToast('List belanja kosong.', 'info');
+                const shoppingLists = RestoApp.AppState.shoppingLists || []; shoppingLists.push({ date: new Date().toISOString(), items });
+                await RestoApp.API.setKey('shoppingLists', shoppingLists); RestoApp.UI.showToast('List belanja disimpan!', 'success'); RestoApp.UI.renderPage('page-dashboard');
+            },
+            'select-pending-list': ({target}) => RestoApp.UI.renderPage('page-input-belanja-datang', target.closest('[data-date]').dataset.date),
+            'process-stock-in': async ({target}) => {
+                const date = target.dataset.date; const shoppingList = RestoApp.AppState.shoppingLists.find(l => l.date === date); let { masterItems, stockTransactions } = RestoApp.AppState;
+                shoppingList.items.forEach(item => {
+                    const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
+                    if (qtyReceived > 0) {
+                        const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
+                        if (itemIndex > -1) {
+                            const stockIncrease = qtyReceived * (masterItems[itemIndex].purchaseUnitConversion || 1); masterItems[itemIndex].stock = (masterItems[itemIndex].stock || 0) + stockIncrease;
+                            stockTransactions.push({ date: new Date().toISOString(), itemId: item.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItems[itemIndex].stock });
+                        }
+                    }
+                });
+                await RestoApp.API.set({ shoppingLists: RestoApp.AppState.shoppingLists.filter(l => l.date !== date), masterItems, stockTransactions });
+                RestoApp.UI.showToast('Stok diperbarui!', 'success'); RestoApp.UI.renderPage('page-dashboard');
+            },
+            'cancel-shopping-list': async ({target}) => { if (!confirm('Batalkan list ini?')) return; await RestoApp.API.setKey('shoppingLists', RestoApp.AppState.shoppingLists.filter(l => l.date !== target.dataset.date)); RestoApp.UI.showToast('List belanja dibatalkan.', 'success'); RestoApp.UI.renderPage('page-input-belanja-datang'); },
+            'process-stock-out': async ({target}) => {
+                const type = document.getElementById('stockout-list').dataset.type; let { masterItems, recipes, stockTransactions } = RestoApp.AppState; const txDate = new Date().toISOString();
+                document.querySelectorAll('#stockout-list input[data-name]').forEach(input => {
+                    const qty = parseFloat(input.value); if (qty > 0) { const itemName = input.dataset.name;
+                        if (type === 'menu') {
+                            stockTransactions.push({ date: txDate, itemId: null, type: 'Produksi Menu', change: qty, newStock: null, details: itemName });
+                            recipes[itemName].ingredients.forEach(ing => {
+                                const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId); if (itemIndex > -1) {
+                                    const stockDecrease = ing.qty * qty; masterItems[itemIndex].stock -= stockDecrease;
+                                    stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock });
+                                }
+                            });
+                        } else {
+                            const itemIndex = masterItems.findIndex(mi => mi.name === itemName); if (itemIndex > -1) {
+                                masterItems[itemIndex].stock -= qty;
+                                stockTransactions.push({ date: txDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -qty, newStock: masterItems[itemIndex].stock });
+                            }
+                        }
+                    }
+                });
+                await RestoApp.API.set({ masterItems, stockTransactions }); RestoApp.UI.showToast('Stok dikeluarkan!', 'success'); RestoApp.UI.renderPage(type === 'menu' ? 'page-input-menu-keluar' : 'page-ambil-gudang');
             },
             'save-item': async () => {
                 const id = document.getElementById('edit-item-id').value;
                 const newItemData = {
-                    name: document.getElementById('item-name').value.trim(), category: document.getElementById('item-category').value.trim(),
-                    unit: document.getElementById('item-unit').value.trim(), hargaBeli: parseFloat(document.getElementById('item-harga-beli').value) || 0,
-                    minStock: parseFloat(document.getElementById('item-min-stock').value) || 0,
+                    name: document.getElementById('item-name').value.trim(), category: document.getElementById('item-category').value.trim() || 'Lainnya', unit: document.getElementById('item-unit').value.trim(), 
+                    purchaseUnit: document.getElementById('item-purchase-unit').value.trim() || document.getElementById('item-unit').value.trim(), 
+                    purchaseUnitConversion: parseFloat(document.getElementById('item-conversion').value) || 1, minStock: parseFloat(document.getElementById('item-min-stock').value) || 0
                 };
-                if (!newItemData.name || !newItemData.category || !newItemData.unit) return RestoApp.UI.showToast('Nama, Kategori, dan Satuan harus diisi!', 'error');
-                
-                const masterItems = [...RestoApp.AppState.masterItems];
+                if (!newItemData.name) return RestoApp.UI.showToast('Nama harus diisi!', 'error');
+                let masterItems = RestoApp.AppState.masterItems;
                 if (id) {
-                    const index = masterItems.findIndex(item => item.id == id);
-                    if (index > -1) { masterItems[index] = { ...masterItems[index], ...newItemData }; }
+                    const index = masterItems.findIndex(i => i.id == id); masterItems[index] = { ...masterItems[index], ...newItemData };
                 } else {
-                    masterItems.push({ ...newItemData, id: Date.now(), stock: 0, sortOrder: masterItems.length });
+                    const newId = masterItems.length > 0 ? Math.max(...masterItems.map(i => i.id)) + 1 : 1;
+                    masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: masterItems.length });
                 }
-                await RestoApp.API.setKey('masterItems', masterItems);
-                RestoApp.UI.showToast(`Barang berhasil ${id ? 'diperbarui' : 'ditambahkan'}!`, 'success');
-                RestoApp.Events.ActionHandlers['cancel-edit']();
+                await RestoApp.API.setKey('masterItems', masterItems); RestoApp.UI.showToast('Barang disimpan!', 'success'); this['cancel-edit'](); RestoApp.UI.renderPage('page-manager-items');
             },
-            'edit-item': ({ id }) => {
-                const item = RestoApp.AppState.masterItems.find(i => i.id == id); if (!item) return;
-                document.getElementById('edit-item-id').value = item.id; document.getElementById('item-name').value = item.name;
-                document.getElementById('item-category').value = item.category; document.getElementById('item-unit').value = item.unit;
-                document.getElementById('item-harga-beli').value = item.hargaBeli || 0; document.getElementById('item-min-stock').value = item.minStock || 0;
-                document.getElementById('item-form-title').textContent = 'Edit Barang'; document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-check"></i> Update Barang';
-                document.getElementById('cancel-edit-btn').style.display = 'inline-flex'; document.getElementById('add-item-form').scrollIntoView({ behavior: 'smooth' });
+            'edit-item': ({target}) => {
+                const id = target.closest('[data-id]').dataset.id; const item = RestoApp.AppState.masterItems.find(i => i.id == id); if(!item) return;
+                document.getElementById('edit-item-id').value = item.id; document.getElementById('item-name').value = item.name; document.getElementById('item-category').value = item.category; document.getElementById('item-unit').value = item.unit; document.getElementById('item-purchase-unit').value = item.purchaseUnit; document.getElementById('item-conversion').value = item.purchaseUnitConversion; document.getElementById('item-min-stock').value = item.minStock;
+                document.getElementById('save-item-btn').innerHTML = 'Update'; document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
             },
-            'cancel-edit': () => {
-                document.getElementById('add-item-form').reset(); document.getElementById('edit-item-id').value = '';
-                document.getElementById('item-form-title').textContent = 'Tambah Barang Baru'; document.getElementById('save-item-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Barang';
-                document.getElementById('cancel-edit-btn').style.display = 'none';
+            'cancel-edit': () => { document.getElementById('add-item-form').reset(); document.getElementById('edit-item-id').value = ''; document.getElementById('save-item-btn').innerHTML = 'Simpan'; document.getElementById('cancel-edit-btn').style.display = 'none'; },
+            'delete-item': async ({target}) => {
+                const id = target.closest('[data-id]').dataset.id; const item = RestoApp.AppState.masterItems.find(i => i.id == id);
+                if ((item.stock || 0) > 0) return RestoApp.UI.showToast('Tidak bisa hapus, barang masih ada stok.', 'error');
+                if (Object.values(RestoApp.AppState.recipes).some(r => r.ingredients.some(i => i.itemId == id))) return RestoApp.UI.showToast(`Gagal! "${item.name}" masih digunakan di resep.`, 'error');
+                if (!confirm(`Hapus "${item.name}"?`)) return; 
+                await RestoApp.API.setKey('masterItems', RestoApp.AppState.masterItems.filter(i => i.id != id)); RestoApp.UI.renderPage('page-manager-items'); RestoApp.UI.showToast('Barang dihapus.', 'success');
             },
-            'delete-item': async ({ id }) => {
-                const itemId = parseInt(id);
-                const item = RestoApp.AppState.masterItems.find(i => i.id === itemId); if (!item) return;
-                const isInUse = Object.values(RestoApp.AppState.recipes).some(r => r.ingredients.some(i => i.itemId === itemId));
-                if (isInUse) return RestoApp.UI.showToast(`"${item.name}" masih digunakan dalam resep.`, 'error');
-                if (confirm(`Yakin ingin menghapus "${item.name}"?`)) {
-                    const updatedItems = RestoApp.AppState.masterItems.filter(i => i.id !== itemId);
-                    await RestoApp.API.setKey('masterItems', updatedItems);
-                    RestoApp.UI.showToast(`"${item.name}" telah dihapus.`, 'success');
-                }
+            'save-item-order': async () => {
+                const masterItems = RestoApp.AppState.masterItems; document.querySelectorAll('#db-editor-tbody tr').forEach((row, index) => { const item = masterItems.find(i => i.id == row.dataset.id); if (item) item.sortOrder = index; });
+                await RestoApp.API.setKey('masterItems', masterItems); RestoApp.UI.showToast('Urutan disimpan!', 'success');
+            },
+            'add-recipe': () => RestoApp.UI.renderPage('page-manager-recipes', null),
+            'edit-recipe': ({target}) => RestoApp.UI.renderPage('page-manager-recipes', target.dataset.name),
+            'delete-recipe': async ({target}) => {
+                const name = target.dataset.name; if (!confirm(`Hapus resep "${name}"?`)) return; let { recipes, menuKeluarActive } = RestoApp.AppState;
+                delete recipes[name]; menuKeluarActive = menuKeluarActive.filter(menu => menu !== name);
+                await RestoApp.API.set({ recipes, menuKeluarActive }); RestoApp.UI.showToast('Resep dihapus.', 'success'); RestoApp.UI.renderPage('page-manager-recipes');
+            },
+            'add-ingredient': () => {
+                const list = document.getElementById('ingredients-list'); const itemId = document.getElementById('new-ingredient-item').value; const qty = parseFloat(document.getElementById('new-ingredient-qty').value);
+                if (!itemId || !(qty > 0)) return RestoApp.UI.showToast('Pilih barang dan isi jumlah.', 'error');
+                const item = RestoApp.AppState.masterItems.find(mi => mi.id == itemId); const newIngredientHTML = document.createElement('div');
+                newIngredientHTML.className = 'item-row ingredient-item'; newIngredientHTML.dataset.itemId = item.id;
+                newIngredientHTML.innerHTML = `<span>${item.name}</span><input type="number" class="form-control" value="${qty}" step="any" min="0"><div><span>${item.unit}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient"><i class="fas fa-trash"></i></button></div>`;
+                list.appendChild(newIngredientHTML); document.getElementById('new-ingredient-qty').value = '';
+            },
+            'remove-ingredient': ({target}) => target.closest('.ingredient-item').remove(),
+            'save-recipe': async ({target}) => {
+                const originalName = target.dataset.originalName; const newName = document.getElementById('recipe-name').value.trim(); const unit = document.getElementById('recipe-unit').value.trim();
+                if (!newName || !unit) return RestoApp.UI.showToast('Nama dan satuan harus diisi.', 'error');
+                const ingredients = Array.from(document.querySelectorAll('.ingredient-item')).map(el => ({ itemId: parseInt(el.dataset.itemId), qty: parseFloat(el.querySelector('input').value) }));
+                let { recipes, menuKeluarActive } = RestoApp.AppState; if (!originalName && recipes[newName]) return RestoApp.UI.showToast('Nama menu sudah ada.', 'error');
+                if (originalName && originalName !== newName) { delete recipes[originalName]; menuKeluarActive = menuKeluarActive.map(m => m === originalName ? newName : m); }
+                recipes[newName] = { unit, ingredients }; if (!originalName && !menuKeluarActive.includes(newName)) menuKeluarActive.push(newName);
+                await RestoApp.API.set({ recipes, menuKeluarActive }); RestoApp.UI.showToast(`Resep "${newName}" disimpan.`, 'success'); RestoApp.UI.renderPage('page-manager-recipes');
+            },
+            'save-display-config': async () => {
+                const container = document.getElementById('display-config-container');
+                const menuKeluarActive = Array.from(container.querySelectorAll('input[data-type="menu"]:checked')).map(cb => cb.value); const gudangItemIds = Array.from(container.querySelectorAll('input[data-type="gudang"]:checked')).map(cb => parseInt(cb.value));
+                await RestoApp.API.set({ menuKeluarActive, gudangItemIds }); RestoApp.UI.showToast('Tampilan disimpan!', 'success');
+            },
+            'export-data': () => {
+                const dataStr = JSON.stringify({ ...RestoApp.AppState, currentUser: undefined }, null, 2);
+                const a = document.createElement('a'); a.href = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                a.download = `restoapp_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+            },
+            'import-data': () => {
+                const fileInput = document.getElementById('import-file-input');
+                fileInput.onchange = e => { const file = e.target.files[0]; if (!file || !confirm("Ini akan menimpa semua data Anda. Lanjutkan?")) return;
+                    const reader = new FileReader();
+                    reader.onload = async event => {
+                        try {
+                            const data = JSON.parse(event.target.result); await RestoApp.API.set(data);
+                            RestoApp.UI.showToast('Impor berhasil! Memuat ulang...', 'success'); setTimeout(() => window.location.reload(), 1500);
+                        } catch (error) { RestoApp.UI.showToast('Gagal impor: ' + error.message, 'error'); }
+                    };
+                    reader.readAsText(file);
+                };
+                fileInput.click();
             },
         },
     },
 
-    // #############################################################################
-    // --- App: Titik Masuk Utama dan Inisialisasi ---
-    // #############################################################################
     App: {
         init() {
             RestoApp.Auth.listen();
-            
             document.addEventListener('submit', async (e) => {
                 if (e.target.id === 'login-form') {
-                    e.preventDefault();
-                    const button = e.target.querySelector('button[type="submit"]');
-                    const errorEl = document.getElementById('login-error');
-                    button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    errorEl.style.display = 'none';
-                    try {
-                        await RestoApp.Auth.login(document.getElementById('email').value, document.getElementById('password').value);
-                    } catch (error) {
-                        console.error("Login error:", error);
-                        errorEl.textContent = "Login Gagal: " + error.message;
-                        errorEl.style.display = 'block';
-                    } finally {
-                        button.disabled = false; button.innerHTML = 'Login';
-                    }
-                } else if (e.target.id === 'add-item-form') {
-                    e.preventDefault();
-                    RestoApp.Events.ActionHandlers['save-item']();
+                    e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const errorEl = document.getElementById('login-error');
+                    button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; errorEl.style.display = 'none';
+                    try { await RestoApp.Auth.login(document.getElementById('email').value, document.getElementById('password').value); } 
+                    catch (error) { errorEl.textContent = "Login Gagal: " + error.message; errorEl.style.display = 'block'; } 
+                    finally { button.disabled = false; button.innerHTML = 'Login'; }
                 }
             });
-
-            document.addEventListener('click', (e) => {
-                const actionTarget = e.target.closest('[data-action]');
-                const pageTarget = e.target.closest('[data-page]');
-                if (actionTarget) {
-                    e.preventDefault();
-                    const { action, id } = actionTarget.dataset;
-                    const handler = RestoApp.Events.ActionHandlers[action];
-                    if (handler) handler({ target: actionTarget, id });
-                } else if (pageTarget) {
-                    e.preventDefault();
-                    document.getElementById('sidebar').classList.remove('open');
-                    RestoApp.UI.renderPage(pageTarget.dataset.page);
-                }
-            });
-            
-            window.addEventListener('hashchange', () => RestoApp.UI.renderPage(location.hash.substring(1)));
+            document.addEventListener('click', (e) => RestoApp.Events.handle(e));
+            window.addEventListener('hashchange', () => RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard'));
         },
         initOnLogin() {
             RestoApp.UI.renderSidebar();
-            RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard');
+            // PERBAIKAN: Listener hanya merender halaman sekali, lalu hanya update konten dinamis
             RestoApp.API.listenToData(() => {
-                RestoApp.UI.updateDynamicContent();
+                const isInitialLoad = !document.getElementById('main-content').hasChildNodes();
+                if (isInitialLoad) {
+                    const pageId = location.hash.substring(1) || 'page-dashboard';
+                    RestoApp.UI.renderPage(pageId);
+                } else {
+                    RestoApp.UI.updateDynamicContent();
+                }
             });
-        }
+        },
     }
 };
 
-// --- Menjalankan Aplikasi ---
 RestoApp.App.init();
-
 </script>
 </body>
 </html>
