@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RestoApp - V7.9 Reactive UI</title>
+    <title>RestoApp - V8.0 Robust Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -33,6 +33,7 @@
         #app-container { flex-grow: 1; transition: margin-left 0.3s ease-in-out; padding-left: var(--sidebar-width); }
         .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
         header { background-color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
         header h2 { font-weight: 600; font-size: 1.5rem; color: var(--primary-color); margin: 0; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
         #header-alerts { position: relative; cursor: pointer; }
@@ -88,7 +89,7 @@
 
     <div id="login-page">
         <div class="card" id="login-card">
-            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V7.9</h1>
+            <h1 style="justify-content: center; color: var(--primary-color); margin-bottom: 2rem; display:flex; align-items:center; gap: 0.75rem;"><i class="fas fa-utensils"></i> RestoApp V8.0</h1>
             <form id="login-form">
                 <div class="form-group" style="text-align: left;"><label for="email" class="form-label">Email</label><input type="email" id="email" class="form-control" required></div>
                 <div class="form-group" style="text-align: left;"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
@@ -113,10 +114,12 @@
             <div id="modal-container"></div>
             <div class="container">
                 <header>
-                    <h2 id="page-title">Dashboard</h2>
+                    <div class="header-left">
+                        <button class="mobile-menu-toggle btn btn-primary" data-action="toggle-sidebar" style="display: none;"><i class="fas fa-bars"></i></button>
+                        <h2 id="page-title">Dashboard</h2>
+                    </div>
                     <div class="header-actions">
                         <div id="header-alerts"></div>
-                        <button class="mobile-menu-toggle btn btn-primary" data-action="toggle-sidebar" style="display: none;"><i class="fas fa-bars"></i></button>
                     </div>
                 </header>
                 <main id="main-content"></main>
@@ -126,6 +129,7 @@
     
     <div id="toast-container"></div>
     <input type="file" id="import-file-input" accept=".json" style="display:none;">
+    <input type="file" id="sales-report-input" accept=".csv" style="display:none;">
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -145,7 +149,7 @@ const auth = firebase.auth();
 const firestore = firebase.firestore();
 
 window.RestoApp = {
-    AppState: { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], gudangItemIds: [], menuKeluarActive: [], isDataLoaded: false, unsubscribe: null },
+    AppState: { currentUser: null, masterItems: [], recipes: {}, shoppingLists: [], stockTransactions: [], gudangItemIds: [], menuKeluarActive: [], salesReports: [], isDataLoaded: false, unsubscribe: null, reportPeriod: '24h' },
 
     Utils: {
         formatCurrency: (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0),
@@ -159,21 +163,45 @@ window.RestoApp = {
             });
             return minPortions === Infinity ? 0 : minPortions;
         },
-        generateDailyReport() {
-            /** PERBAIKAN BUG: Logika laporan harian disederhanakan dan diperbaiki */
-            const { stockTransactions } = RestoApp.AppState;
+        generateConsolidatedReport(period = '24h') {
             const now = new Date();
-            const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-            const recentTransactions = (stockTransactions || []).filter(t => new Date(t.date) > yesterday);
+            let startDate;
+
+            if (period === 'today') {
+                startDate = new Date(now);
+                startDate.setHours(0, 0, 0, 0);
+            } else if (period === 'yesterday') {
+                startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 1);
+                startDate.setHours(0, 0, 0, 0);
+                now.setDate(now.getDate() - 1);
+                now.setHours(23, 59, 59, 999);
+            } else { // 24h
+                startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            }
             
-            const menuProduksi = recentTransactions.filter(t => t.type === 'Produksi Menu');
-            const menuCount = menuProduksi.reduce((acc, t) => {
-                acc[t.details] = (acc[t.details] || 0) + t.change;
-                return acc;
-            }, {});
-            const topMenus = Object.entries(menuCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            
-            return { topMenus, reportDate: now };
+            const { salesReports, stockTransactions } = RestoApp.AppState;
+            const consolidated = {};
+            const addToConsolidated = (name, type, qty) => {
+                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0 };
+                consolidated[name][type] += qty;
+            };
+
+            (salesReports || []).filter(r => new Date(r.date) >= startDate && new Date(r.date) <= now).forEach(report => {
+                Object.entries(report.items).forEach(([itemName, qty]) => addToConsolidated(itemName, 'pos', qty));
+            });
+            (stockTransactions || []).filter(t => new Date(t.date) >= startDate && new Date(t.date) <= now).forEach(t => {
+                if (t.type === 'Produksi Menu' && t.details) addToConsolidated(t.details, 'manual', t.change);
+                else if (t.type === 'Waste' && t.details) addToConsolidated(t.details, 'waste', t.change);
+            });
+
+            const reportData = Object.entries(consolidated).map(([name, data]) => {
+                const totalShouldBe = data.pos + data.waste;
+                const discrepancy = data.manual - totalShouldBe;
+                return { name, ...data, totalShouldBe, discrepancy };
+            }).sort((a, b) => a.name.localeCompare(b.name));
+
+            return { reportData, reportDate: new Date() };
         },
         addDragDropHandlers(container) {
             container.addEventListener('dragstart', e => e.target.classList.add('dragging'));
@@ -202,6 +230,46 @@ window.RestoApp = {
                 button.innerHTML = originalHTML;
             }
         },
+        // Robust CSV parser to handle commas inside quoted fields
+        parseCsv(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                if (inQuotes) {
+                    if (char === '"') {
+                        if (i + 1 < csvText.length && csvText[i + 1] === '"') {
+                            currentField += '"'; i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        currentField += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        currentRow.push(currentField);
+                        currentField = '';
+                    } else if (char === '\n' || char === '\r') {
+                        if (i > 0 && csvText[i-1] !== '\n' && csvText[i-1] !== '\r') {
+                             currentRow.push(currentField);
+                             rows.push(currentRow);
+                             currentRow = [];
+                             currentField = '';
+                        }
+                    } else {
+                        currentField += char;
+                    }
+                }
+            }
+            if(currentField) currentRow.push(currentField);
+            if(currentRow.length > 0) rows.push(currentRow);
+            return rows;
+        }
     },
 
     API: {
@@ -212,7 +280,7 @@ window.RestoApp = {
                 const wasDataLoaded = AppState.isDataLoaded;
                 if (doc.exists) {
                     const data = doc.data(); 
-                    Object.keys(AppState).forEach(key => { if(data[key] !== undefined) AppState[key] = data[key]; });
+                    Object.keys(AppState).forEach(key => { if(data[key] !== undefined && key !== 'reportPeriod') AppState[key] = data[key]; });
                 } else {
                     this.initializeDefaultData();
                 }
@@ -224,7 +292,8 @@ window.RestoApp = {
                     loader.addEventListener('transitionend', () => loader.style.display = 'none');
                     RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard');
                 } else {
-                    RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard', null, true);
+                    const currentPage = location.hash.substring(1) || 'page-dashboard';
+                    RestoApp.UI.renderPage(currentPage, null, true);
                 }
                 RestoApp.UI.lowStockAlerts();
             }, error => {
@@ -235,7 +304,7 @@ window.RestoApp = {
         async set(data) { if (!RestoApp.AppState.currentUser) return; await firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid).set(data, { merge: true }); },
         async setKey(key, value) { if (!RestoApp.AppState.currentUser) return; await firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid).set({ [key]: value }, { merge: true }); },
         async initializeDefaultData() {
-            const initialData = { masterItems: [], recipes: {}, gudangItemIds: [], menuKeluarActive: [], shoppingLists: [], stockTransactions: [] };
+            const initialData = { masterItems: [], recipes: {}, gudangItemIds: [], menuKeluarActive: [], shoppingLists: [], stockTransactions: [], salesReports: [] };
             await this.set(initialData); RestoApp.UI.showToast("Selamat datang! Data awal telah disiapkan.", "success");
             Object.assign(RestoApp.AppState, initialData);
         }
@@ -266,7 +335,10 @@ window.RestoApp = {
     UI: {
         menuConfig: [
             { id: 'page-dashboard', icon: 'fa-tachometer-alt', text: 'Dashboard' },
+            { id: 'page-input-penjualan', icon: 'fa-file-invoice-dollar', text: 'Input Penjualan' },
             { id: 'page-input-belanja', icon: 'fa-shopping-cart', text: 'Buat List Belanja' },
+            { id: 'page-input-waste', icon: 'fa-trash-alt', text: 'Input Waste' },
+            { id: 'page-laporan-analisa', icon: 'fa-chart-pie', text: 'Laporan Analisa' },
             { id: 'page-riwayat-stok', icon: 'fa-history', text: 'Riwayat Stok' },
             { id: 'page-manager-area', icon: 'fa-user-tie', text: 'Manager Area' },
         ],
@@ -307,14 +379,41 @@ window.RestoApp = {
             container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 4000);
         },
+        showSalesConfirmationModal(matchedItems, unmatchedItems, salesData) {
+            const matchedHTML = Object.keys(matchedItems).length > 0 ? Object.entries(matchedItems).map(([name, qty]) => `<li>${name}: <strong>${qty} porsi</strong></li>`).join('') : '<li>Tidak ada item yang cocok.</li>';
+            const unmatchedHTML = unmatchedItems.length > 0 ? unmatchedItems.map(item => `<li>${item.name} (Qty: ${item.qty})</li>`).join('') : '<li>Semua item berhasil dicocokkan.</li>';
+
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `<div class="modal-backdrop show" data-action="close-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title"><i class="fas fa-check-double"></i> Konfirmasi Proses Penjualan</h3>
+                        <button class="modal-close-btn" data-action="close-modal" aria-label="Tutup">&times;</button>
+                    </div>
+                    <div class="modal-body" style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div><h4><i class="fas fa-check" style="color:var(--success-color)"></i> Item Cocok & Akan Diproses</h4><ul>${matchedHTML}</ul></div>
+                        <div><h4><i class="fas fa-times" style="color:var(--danger-color)"></i> Item Tidak Ditemukan di Resep</h4><ul>${unmatchedHTML}</ul></div>
+                    </div>
+                    <div class="modal-footer" style="margin-top: 1.5rem; display:flex; justify-content:flex-end; gap: 1rem;">
+                         <button class="btn" data-action="close-modal">Batal</button>
+                         <button class="btn btn-primary" id="confirm-process-sales-btn">Konfirmasi & Potong Stok</button>
+                    </div>
+                </div>
+            </div>`;
+
+            document.getElementById('confirm-process-sales-btn').addEventListener('click', (e) => {
+                 RestoApp.Utils.handleAsyncButton(e.target, () => RestoApp.Events.ActionHandlers.executeSalesReport(salesData));
+            });
+        },
         
         Pages: {
             'page-dashboard': () => `<div class="dashboard-grid">
                 <a href="#" class="dashboard-card" data-page="page-input-belanja-datang"><i class="fas fa-truck-loading"></i><h3>Input Belanja Datang</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-input-menu-keluar"><i class="fas fa-utensils"></i><h3>Input Menu Keluar</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a>
-                <a href="#" class="dashboard-card" data-page="page-laporan-harian"><i class="fas fa-chart-line"></i><h3>Laporan Harian</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-laporan-analisa"><i class="fas fa-chart-pie"></i><h3>Laporan Analisa</h3></a>
             </div>`,
+             'page-input-penjualan': () => `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-file-invoice-dollar"></i><span>Input Laporan Penjualan (CSV)</span></div><button class="btn btn-sm" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="card-body"><p>Unggah file CSV dari sistem kasir Anda untuk sinkronisasi data penjualan dan pemotongan stok otomatis. Pastikan format file memiliki kolom 'Item Name' dan 'Item Sold'.</p><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="trigger-sales-upload"><i class="fas fa-upload"></i> Pilih dan Proses File Laporan</button></div></div>`,
             'page-input-belanja': () => {
                 const { masterItems } = RestoApp.AppState; const categories = [...new Set(masterItems.map(item => item.category))];
                 let formHTML = categories.map(cat => {
@@ -337,30 +436,58 @@ window.RestoApp = {
             },
             'page-input-menu-keluar': () => RestoApp.UI.Pages.stockOutPage('menu'),
             'page-ambil-gudang': () => RestoApp.UI.Pages.stockOutPage('gudang'),
+            'page-input-waste': () => RestoApp.UI.Pages.stockOutPage('waste'),
             'stockOutPage': (type) => {
-                const { masterItems, recipes, gudangItemIds, menuKeluarActive } = RestoApp.AppState; let itemsToRender, title, icon;
-                if (type === 'gudang') { title = "Ambil dari Gudang"; icon = "fa-warehouse"; itemsToRender = masterItems.filter(item => gudangItemIds.includes(item.id)).sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)); } 
-                else { title = "Input Menu Keluar"; icon = "fa-utensils"; itemsToRender = menuKeluarActive.map(key => ({ name: key, ...recipes[key] })).sort((a,b) => a.name.localeCompare(b.name)); }
-                let formHTML = itemsToRender.map(item => {
-                    const stockHint = (type === 'gudang') ? `Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}` : `Stok cukup untuk: ${RestoApp.Utils.calculateAvailablePortions(item.name)} ${item.unit}`;
+                const { masterItems, recipes, gudangItemIds, menuKeluarActive } = RestoApp.AppState;
+                const pageConfigs = {
+                    gudang: { title: "Ambil dari Gudang", icon: "fa-warehouse", action: "process-consumption", items: masterItems.filter(item => gudangItemIds.includes(item.id)).sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)) },
+                    menu: { title: "Input Menu Keluar", icon: "fa-utensils", action: "process-consumption", items: menuKeluarActive.map(key => ({ name: key, ...recipes[key] })).sort((a,b) => a.name.localeCompare(b.name)) },
+                    waste: { title: "Input Waste", icon: "fa-trash-alt", action: "process-consumption", items: Object.keys(recipes).map(key => ({ name: key, ...recipes[key] })).sort((a,b) => a.name.localeCompare(b.name)) }
+                };
+                const config = pageConfigs[type];
+
+                let formHTML = config.items.map(item => {
+                    let stockHint = `Stok cukup untuk: ${RestoApp.Utils.calculateAvailablePortions(item.name)} ${item.unit}`;
+                    if(type === 'gudang') stockHint = `Stok: ${(item.stock || 0).toFixed(2)} ${item.unit}`;
+
                     return `<div class="item-row"><label class="item-label">${item.name}<div class="stock-hint">${stockHint}</div></label><input type="number" class="form-control" data-name="${item.name}" placeholder="Jumlah" min="0" step="any"><span class="item-unit">${item.unit}</span></div>`;
                 }).join('');
-                if (itemsToRender.length === 0) formHTML = `<div class="empty-state">Tidak ada item untuk ditampilkan. Atur di Manager Area -> Atur Tampilan.</div>`;
-                return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas ${icon}"></i><span>${title}</span></div><button class="btn btn-sm" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list" id="stockout-list" data-type="${type}">${formHTML}</div><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="process-stock-out"><i class="fas fa-check"></i> Proses</button></div>`;
+                if (config.items.length === 0) formHTML = `<div class="empty-state">Tidak ada item untuk ditampilkan.</div>`;
+                return `<div class="card"><div class="card-header"><div class="card-title"><i class="fas ${config.icon}"></i><span>${config.title}</span></div><button class="btn btn-sm" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="item-list" id="stockout-list" data-type="${type}">${formHTML}</div><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="${config.action}"><i class="fas fa-check"></i> Proses</button></div>`;
             },
             'page-riwayat-stok': () => {
                 const { stockTransactions, masterItems } = RestoApp.AppState;
                 const rows = [...(stockTransactions || [])].reverse().map(t => { const item = masterItems.find(i => i.id === t.itemId); const changeClass = t.change > 0 ? 'color: var(--success-color);' : 'color: var(--danger-color);';
-                    let itemName = item ? item.name : (t.type === 'Produksi Menu' ? t.details : 'Item Dihapus');
+                    let itemName = item ? item.name : (t.details || 'Item Dihapus');
                     return `<tr><td>${new Date(t.date).toLocaleString('id-ID', {dateStyle: 'short', timeStyle: 'short'})}</td><td>${itemName}</td><td>${t.type}</td><td style="${changeClass}">${t.change > 0 ? '+' : ''}${t.change.toFixed(2)}</td><td>${(t.newStock !== null && t.newStock !== undefined ? t.newStock.toFixed(2) : '-')}</td></tr>`; }).join('');
                 const tableContent = rows.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Waktu</th><th>Item/Menu</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Belum ada riwayat transaksi stok.</div>`;
                 return `<div class="card"><div class="card-header"><div class="card-title"><span>Riwayat Stok</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div>${tableContent}</div>`;
             },
-            'page-laporan-harian': () => {
-                /** PERBAIKAN BUG: Render laporan harian yang sudah diperbaiki */
-                const report = RestoApp.Utils.generateDailyReport(); 
-                const createListHTML = (data, unit = '') => (data.length === 0) ? `<p>Tidak ada data.</p>` : `<ul>${data.map(item => `<li>${item[0]}: <strong>${parseFloat(item[1]).toFixed(1)} ${unit}</strong></li>`).join('')}</ul>`;
-                return `<div class="card"><div class="card-header"><div class="card-title"><span>Laporan Harian</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div><p>Laporan 24 jam terakhir (dibuat ${report.reportDate.toLocaleTimeString('id-ID')})</p><div class="card"><h4>Top Menu Terjual</h4>${createListHTML(report.topMenus, 'porsi')}</div></div>`;
+            'page-laporan-analisa': () => {
+                const report = RestoApp.Utils.generateConsolidatedReport(RestoApp.AppState.reportPeriod);
+                const getDiscrepancyClass = (d) => d < 0 ? 'color: var(--danger-color); font-weight: bold;' : (d > 0 ? 'color: var(--warning-color);' : '');
+                
+                const rows = report.reportData.map(item => `<tr><td>${item.name}</td><td>${item.pos.toFixed(1)}</td><td>${item.waste.toFixed(1)}</td><td><strong>${item.totalShouldBe.toFixed(1)}</strong></td><td>${item.manual.toFixed(1)}</td><td style="${getDiscrepancyClass(item.discrepancy)}">${item.discrepancy.toFixed(1)}</td></tr>`).join('');
+                
+                const tableContent = report.reportData.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Menu</th><th>Terjual (POS)</th><th>Waste</th><th>Total Seharusnya</th><th>Dicatat Manual</th><th>Selisih</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Tidak ada data untuk dianalisa.</div>`;
+                const period = RestoApp.AppState.reportPeriod;
+
+                return `<div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i><span>Laporan Analisa Stok</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div>
+                    <div class="card-body">
+                         <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                            <button class="btn btn-sm ${period === '24h' ? 'btn-primary' : ''}" data-action="set-report-period" data-period="24h">24 Jam Terakhir</button>
+                            <button class="btn btn-sm ${period === 'today' ? 'btn-primary' : ''}" data-action="set-report-period" data-period="today">Hari Ini</button>
+                            <button class="btn btn-sm ${period === 'yesterday' ? 'btn-primary' : ''}" data-action="set-report-period" data-period="yesterday">Kemarin</button>
+                         </div>
+                        <p>Laporan ini membandingkan data sesuai periode yang dipilih.</p>
+                        <ul style="font-size: 0.9rem;">
+                            <li><strong>Selisih Negatif (Merah):</strong> Produksi manual lebih sedikit dari yang seharusnya. Indikasi ada penjualan/waste yang tidak tercatat.</li>
+                            <li><strong>Selisih Positif (Oranye):</strong> Produksi manual lebih banyak dari yang seharusnya. Indikasi kesalahan input atau over-produksi.</li>
+                        </ul>
+                    </div>
+                    ${tableContent}
+                </div>`;
             },
             'page-manager-area': () => `<div class="card"><div class="card-header"><div class="card-title"><span>Manager Area</span></div><button class="btn btn-sm" data-page="page-dashboard">Kembali</button></div><div class="dashboard-grid">
                 <a href="#" class="dashboard-card" data-page="page-manager-items"><i class="fas fa-database"></i><h3>Database Barang</h3></a>
@@ -372,8 +499,6 @@ window.RestoApp = {
                 const { masterItems } = RestoApp.AppState;
                 const itemsHTML = masterItems.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle" aria-label="Urutkan"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm" data-action="edit-item" data-id="${item.id}" aria-label="Edit"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}" aria-label="Hapus"><i class="fas fa-trash"></i></button></td></tr>`).join('');
                 const tableContent = masterItems.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Urutan</th><th>Nama</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="db-editor-tbody">${itemsHTML}</tbody></table></div>` : `<div class="empty-state">Database barang masih kosong. Silakan tambahkan barang baru.</div>`;
-                
-                /** PERBAIKAN BUG: Tombol Simpan Urutan hanya muncul jika ada item */
                 const saveOrderButton = masterItems.length > 0 ? `<button class="btn btn-sm btn-primary" data-action="save-item-order">Simpan Urutan</button>` : '';
 
                 return `<div class="card"><div class="card-header"><div class="card-title"><span>Database Barang</span></div><button class="btn btn-sm" data-page="page-manager-area">Kembali</button></div>
@@ -390,11 +515,14 @@ window.RestoApp = {
                 const isEditing = recipeName != null; const { recipes, masterItems } = RestoApp.AppState; const recipe = isEditing ? recipes[recipeName] : { unit: '', ingredients: [] };
                 const itemOptions = masterItems.sort((a, b) => a.name.localeCompare(b.name)).map(item => `<option value="${item.id}">${item.name} (${item.unit})</option>`).join('');
                 let ingredientsHTML = recipe.ingredients.map(ing => { const item = masterItems.find(mi => mi.id === ing.itemId); return `<div class="item-row ingredient-item" data-item-id="${ing.itemId}"><span>${item ? item.name : 'N/A'}</span><input type="number" class="form-control" value="${ing.qty}" step="any" min="0"><div><span>${item ? item.unit : ''}</span><button class="btn btn-sm btn-danger" data-action="remove-ingredient" aria-label="Hapus Bahan"><i class="fas fa-trash"></i></button></div></div>`; }).join('');
-                return `<div class="card"><div class="card-header"><h2 class="card-title">${isEditing ? 'Edit' : 'Tambah'} Resep</h2><button class="btn btn-sm" data-page="page-manager-recipes">Kembali</button></div>
+                return `<div class="card"><div class="card-header"><h2 class="card-title">${isEditing ? 'Edit' : 'Tambah'} Resep</h2><button class="btn btn-sm" data-action="cancel-recipe-edit">Kembali</button></div>
                     <div class="form-group"><label class="form-label">Nama Menu</label><input type="text" id="recipe-name" class="form-control" value="${isEditing ? recipeName : ''}" ${isEditing ? 'readonly' : ''}></div>
                     <div class="form-group"><label class="form-label">Satuan Hasil</label><input type="text" id="recipe-unit" class="form-control" value="${recipe.unit}"></div>
                     <div class="card"><h3 class="card-title">Bahan</h3><div id="ingredients-list">${ingredientsHTML}</div><div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed #ccc;display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:center;"><select id="new-ingredient-item" class="form-control">${itemOptions}</select><input type="number" id="new-ingredient-qty" class="form-control" placeholder="Jumlah"><button class="btn btn-primary" data-action="add-ingredient">+</button></div></div>
-                    <button class="btn btn-primary" style="width:100%;margin-top:1rem;" data-action="save-recipe" data-original-name="${isEditing ? recipeName : ''}">Simpan</button></div>`;
+                    <div style="display:flex; gap:10px; margin-top: 1rem;">
+                        <button class="btn" data-action="cancel-recipe-edit" style="flex-grow:1;">Batal</button>
+                        <button class="btn btn-primary" style="flex-grow:2;" data-action="save-recipe" data-original-name="${isEditing ? recipeName : ''}">Simpan Resep</button>
+                    </div></div>`;
             },
             'page-manager-display': () => {
                 const { masterItems, recipes, menuKeluarActive, gudangItemIds } = RestoApp.AppState;
@@ -415,16 +543,17 @@ window.RestoApp = {
         handle(event) {
             const target = event.target.closest('[data-action], [data-page]'); if (!target) return;
             event.preventDefault(); const { action, page, ...data } = target.dataset;
-            if (page) { RestoApp.UI.renderPage(page); return; }
+            if (page) {
+                RestoApp.UI.renderPage(page);
+                if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+                return;
+            }
             if (action) { 
                 const handler = RestoApp.Events.ActionHandlers[action]; 
                 if (handler) {
                     const isAsync = handler.constructor.name === 'AsyncFunction';
-                    if (isAsync && event.target.tagName === 'BUTTON') {
-                        RestoApp.Utils.handleAsyncButton(event.target, () => handler({ target, ...data }));
-                    } else {
-                        handler({ target, ...data });
-                    }
+                    if (isAsync && event.target.tagName === 'BUTTON') RestoApp.Utils.handleAsyncButton(event.target, () => handler({ target, ...data }));
+                    else handler({ target, ...data });
                 }
             }
         },
@@ -448,7 +577,7 @@ window.RestoApp = {
                         const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
                         if (itemIndex > -1) {
                             const stockIncrease = qtyReceived * (masterItems[itemIndex].purchaseUnitConversion || 1); masterItems[itemIndex].stock = (masterItems[itemIndex].stock || 0) + stockIncrease;
-                            stockTransactions.push({ date: new Date().toISOString(), itemId: item.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItems[itemIndex].stock });
+                            stockTransactions.push({ date: new Date().toISOString(), itemId: item.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItems[itemIndex].stock, details: masterItems[itemIndex].name });
                         }
                     }
                 });
@@ -456,34 +585,137 @@ window.RestoApp = {
                 RestoApp.UI.showToast('Stok diperbarui!', 'success'); RestoApp.UI.renderPage('page-dashboard');
             },
             'cancel-shopping-list': async ({date}) => {
-                /** PERBAIKAN: Menambahkan konfirmasi sebelum membatalkan */
                 if (!confirm('Anda yakin ingin membatalkan list belanja ini? Aksi ini tidak dapat diurungkan.')) return; 
                 await RestoApp.API.setKey('shoppingLists', RestoApp.AppState.shoppingLists.filter(l => l.date !== date)); 
                 RestoApp.UI.showToast('List belanja dibatalkan.', 'success');
             },
-            'process-stock-out': async () => {
-                const type = document.getElementById('stockout-list').dataset.type; let { masterItems, recipes, stockTransactions } = RestoApp.AppState; const txDate = new Date().toISOString();
-                document.querySelectorAll('#stockout-list input[data-name]').forEach(input => {
-                    const qty = parseFloat(input.value); if (qty > 0) { const itemName = input.dataset.name;
-                        if (type === 'menu') {
-                            stockTransactions.push({ date: txDate, itemId: null, type: 'Produksi Menu', change: qty, newStock: null, details: itemName });
-                            recipes[itemName].ingredients.forEach(ing => {
-                                const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId); if (itemIndex > -1) {
-                                    const stockDecrease = ing.qty * qty; masterItems[itemIndex].stock -= stockDecrease;
-                                    stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `Menu: ${itemName}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock });
-                                }
-                            });
-                        } else {
-                            const itemIndex = masterItems.findIndex(mi => mi.name === itemName); if (itemIndex > -1) {
-                                masterItems[itemIndex].stock -= qty;
-                                stockTransactions.push({ date: txDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -qty, newStock: masterItems[itemIndex].stock });
+            'process-consumption': async () => {
+                const type = document.getElementById('stockout-list').dataset.type;
+                const transactionTypes = { menu: 'Produksi Menu', waste: 'Waste', gudang: 'Gudang' };
+                let { masterItems, recipes, stockTransactions } = RestoApp.AppState;
+                const itemsToProcess = Array.from(document.querySelectorAll('#stockout-list input[data-name]')).map(input => ({ name: input.dataset.name, qty: parseFloat(input.value) || 0 })).filter(item => item.qty > 0);
+
+                if (itemsToProcess.length === 0) return RestoApp.UI.showToast('Tidak ada jumlah yang diinput.', 'info');
+                
+                // Check for sufficient stock BEFORE processing
+                const requiredStock = {};
+                for (const item of itemsToProcess) {
+                    if (type === 'menu' || type === 'waste') {
+                        recipes[item.name].ingredients.forEach(ing => {
+                            requiredStock[ing.itemId] = (requiredStock[ing.itemId] || 0) + (ing.qty * item.qty);
+                        });
+                    } else if (type === 'gudang') {
+                        const masterItem = masterItems.find(mi => mi.name === item.name);
+                        if (masterItem) requiredStock[masterItem.id] = (requiredStock[masterItem.id] || 0) + item.qty;
+                    }
+                }
+
+                for (const [itemId, requiredQty] of Object.entries(requiredStock)) {
+                    const item = masterItems.find(mi => mi.id == itemId);
+                    if (!item || (item.stock || 0) < requiredQty) {
+                        throw new Error(`Stok tidak cukup untuk ${item.name}. Dibutuhkan: ${requiredQty.toFixed(2)}, Tersedia: ${(item.stock || 0).toFixed(2)}.`);
+                    }
+                }
+
+                // Process if stock is sufficient
+                const txDate = new Date().toISOString();
+                itemsToProcess.forEach(item => {
+                    const mainTransactionType = transactionTypes[type];
+                    stockTransactions.push({ date: txDate, itemId: null, type: mainTransactionType, change: item.qty, newStock: null, details: item.name });
+
+                    if (type === 'menu' || type === 'waste') {
+                        recipes[item.name].ingredients.forEach(ing => {
+                            const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
+                            if (itemIndex > -1) {
+                                const stockDecrease = ing.qty * item.qty;
+                                masterItems[itemIndex].stock -= stockDecrease;
+                                stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `${mainTransactionType}: ${item.name}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: item.name });
                             }
+                        });
+                    } else if (type === 'gudang') {
+                        const itemIndex = masterItems.findIndex(mi => mi.name === item.name);
+                        if (itemIndex > -1) {
+                            masterItems[itemIndex].stock -= item.qty;
+                            stockTransactions.push({ date: txDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -item.qty, newStock: masterItems[itemIndex].stock, details: item.name });
                         }
                     }
                 });
-                await RestoApp.API.set({ masterItems, stockTransactions }); 
-                RestoApp.UI.showToast('Stok dikeluarkan!', 'success'); 
+
+                await RestoApp.API.set({ masterItems, stockTransactions });
+                RestoApp.UI.showToast('Stok berhasil diproses!', 'success');
                 document.querySelectorAll('#stockout-list input').forEach(input => input.value = '');
+            },
+            'trigger-sales-upload': () => document.getElementById('sales-report-input').click(),
+            'analyzeSalesReport': (csvText) => {
+                const { recipes, masterItems } = RestoApp.AppState;
+                const normalize = (str) => str.toLowerCase().split(/[\s,._-]+/).filter(Boolean);
+                const recipeSearchList = Object.keys(recipes)
+                    .map(name => ({ name, words: normalize(name) }))
+                    .sort((a, b) => b.words.length - a.words.length);
+
+                const lines = RestoApp.Utils.parseCsv(csvText);
+                const salesData = {};
+                const unmatchedItems = [];
+
+                lines.slice(1).forEach(columns => { // Skip header
+                    if (columns.length > 4) {
+                        const itemName = columns[0].trim();
+                        const itemSold = parseInt(columns[4]);
+                        if (itemName && !isNaN(itemSold) && itemSold > 0) {
+                            const saleWords = normalize(itemName);
+                            let foundMatch = false;
+                            for (const recipe of recipeSearchList) {
+                                if (recipe.words.every(word => saleWords.includes(word))) {
+                                    salesData[recipe.name] = (salesData[recipe.name] || 0) + itemSold;
+                                    foundMatch = true;
+                                    break; 
+                                }
+                            }
+                            if (!foundMatch) unmatchedItems.push({ name: itemName, qty: itemSold });
+                        }
+                    }
+                });
+                
+                if (Object.keys(salesData).length === 0 && unmatchedItems.length === 0) {
+                    throw new Error("File CSV kosong atau formatnya salah. Periksa kembali file Anda.");
+                }
+
+                RestoApp.UI.showSalesConfirmationModal(salesData, unmatchedItems, salesData);
+            },
+            'executeSalesReport': async(salesData) => {
+                const { masterItems, recipes, stockTransactions, salesReports } = RestoApp.AppState;
+                
+                // Final check for sufficient stock
+                const requiredStock = {};
+                Object.entries(salesData).forEach(([recipeName, qty]) => {
+                     recipes[recipeName].ingredients.forEach(ing => {
+                        requiredStock[ing.itemId] = (requiredStock[ing.itemId] || 0) + (ing.qty * qty);
+                    });
+                });
+                for (const [itemId, requiredQty] of Object.entries(requiredStock)) {
+                    const item = masterItems.find(mi => mi.id == itemId);
+                    if (!item || (item.stock || 0) < requiredQty) {
+                        throw new Error(`Stok tidak cukup untuk ${item.name} saat memproses penjualan. Dibutuhkan: ${requiredQty.toFixed(2)}, Tersedia: ${(item.stock || 0).toFixed(2)}.`);
+                    }
+                }
+
+                const txDate = new Date().toISOString();
+                Object.entries(salesData).forEach(([recipeName, qty]) => {
+                    recipes[recipeName].ingredients.forEach(ing => {
+                        const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
+                        if (itemIndex > -1) {
+                            const stockDecrease = ing.qty * qty;
+                            masterItems[itemIndex].stock -= stockDecrease;
+                            stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `Penjualan (POS)`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: recipeName });
+                        }
+                    });
+                });
+                
+                salesReports.push({ date: txDate, items: salesData });
+                await RestoApp.API.set({ masterItems, stockTransactions, salesReports });
+                RestoApp.UI.closeModal();
+                RestoApp.UI.showToast(`${Object.keys(salesData).length} item penjualan berhasil diproses!`, 'success');
+                RestoApp.UI.renderPage('page-laporan-analisa');
             },
             'save-item': async () => {
                 const newName = document.getElementById('item-name').value.trim(); const id = document.getElementById('edit-item-id').value;
@@ -527,6 +759,7 @@ window.RestoApp = {
             },
             'add-recipe': () => RestoApp.UI.renderPage('page-manager-recipes', 'new'),
             'edit-recipe': ({name}) => RestoApp.UI.renderPage('page-manager-recipes', name),
+            'cancel-recipe-edit': () => RestoApp.UI.renderPage('page-manager-recipes'),
             'delete-recipe': async ({name}) => {
                 if (!confirm(`Hapus resep "${name}"?`)) return; let { recipes, menuKeluarActive } = RestoApp.AppState;
                 delete recipes[name]; menuKeluarActive = menuKeluarActive.filter(menu => menu !== name);
@@ -548,11 +781,7 @@ window.RestoApp = {
                 if (ingredients.length === 0) throw new Error('Resep harus memiliki minimal 1 bahan.');
                 
                 let { recipes, menuKeluarActive } = RestoApp.AppState;
-                
-                /** PERBAIKAN BUG: Validasi duplikasi nama resep yang lebih ketat */
-                if ((originalName !== newName) && recipes[newName]) {
-                    throw new Error('Nama menu sudah ada.');
-                }
+                if ((originalName !== newName) && recipes[newName]) throw new Error('Nama menu sudah ada.');
                 
                 if (originalName && originalName !== 'new' && originalName !== newName) { delete recipes[originalName]; menuKeluarActive = menuKeluarActive.map(m => m === originalName ? newName : m); }
                 recipes[newName] = { unit, ingredients }; if (originalName === 'new' && !menuKeluarActive.includes(newName)) menuKeluarActive.push(newName);
@@ -567,7 +796,7 @@ window.RestoApp = {
             },
             'export-data': () => {
                 const dataToExport = { ...RestoApp.AppState };
-                ['currentUser', 'isDataLoaded', 'unsubscribe'].forEach(key => delete dataToExport[key]);
+                ['currentUser', 'isDataLoaded', 'unsubscribe', 'reportPeriod'].forEach(key => delete dataToExport[key]);
                 const dataStr = JSON.stringify(dataToExport, null, 2);
                 const a = document.createElement('a'); a.href = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
                 a.download = `restoapp_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
@@ -586,6 +815,10 @@ window.RestoApp = {
                 };
                 fileInput.click();
             },
+            'set-report-period': ({period}) => {
+                RestoApp.AppState.reportPeriod = period;
+                RestoApp.UI.renderPage('page-laporan-analisa', null, true);
+            }
         },
     },
 
@@ -611,6 +844,21 @@ window.RestoApp = {
             });
             document.addEventListener('click', (e) => RestoApp.Events.handle(e));
             window.addEventListener('hashchange', () => RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard'));
+
+            const salesReportInput = document.getElementById('sales-report-input');
+            salesReportInput.onchange = e => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async event => {
+                    try {
+                        RestoApp.Events.ActionHandlers.analyzeSalesReport(event.target.result);
+                    } catch (error) {
+                        RestoApp.UI.showToast('Gagal menganalisa laporan: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+                salesReportInput.value = ''; 
+            };
         },
         initOnLogin() {
             RestoApp.UI.renderSidebar();
