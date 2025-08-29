@@ -231,6 +231,7 @@ window.RestoApp = {
             });
             return minPortions === Infinity ? 0 : minPortions;
         },
+        // [DIUBAH] Fungsi laporan diperbarui untuk menyertakan data Stok Opname
         generateConsolidatedReport(period = '24h') {
             const now = new Date();
             let startDate;
@@ -248,10 +249,16 @@ window.RestoApp = {
                 startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
             }
             
-            const { salesReports, stockTransactions } = RestoApp.AppState;
+            const { salesReports, stockTransactions, masterItems, recipes } = RestoApp.AppState;
             const consolidated = {};
+
+            // Inisialisasi item menu dari resep
+            Object.keys(recipes).forEach(name => {
+                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0, opname: 0 };
+            });
+            
             const addToConsolidated = (name, type, qty) => {
-                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0 };
+                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0, opname: 0 };
                 consolidated[name][type] += qty;
             };
 
@@ -261,13 +268,28 @@ window.RestoApp = {
             (stockTransactions || []).filter(t => new Date(t.date) >= startDate && new Date(t.date) <= now).forEach(t => {
                 if (t.type === 'Produksi Menu' && t.details) addToConsolidated(t.details, 'manual', t.change);
                 else if (t.type === 'Waste' && t.details) addToConsolidated(t.details, 'waste', t.change);
+                else if (t.type === 'Stok Opname') {
+                    const item = masterItems.find(mi => mi.id === t.itemId);
+                    if (item) {
+                         // Cari resep mana yang menggunakan item ini dan distribusikan nilai opname
+                        Object.keys(recipes).forEach(recipeName => {
+                            if (recipes[recipeName].ingredients.some(ing => ing.itemId === item.id)) {
+                                // Ini adalah simplifikasi; untuk akurasi penuh memerlukan logika distribusi yang kompleks.
+                                // Untuk saat ini, kita akan menambahkan penyesuaian opname ke setiap menu yang relevan.
+                                // CATATAN: Ini akan menampilkan nilai opname penuh di setiap menu yang terpengaruh.
+                                addToConsolidated(recipeName, 'opname', t.change);
+                            }
+                        });
+                    }
+                }
             });
 
             const reportData = Object.entries(consolidated).map(([name, data]) => {
                 const totalShouldBe = data.pos + data.waste;
-                const discrepancy = data.manual - totalShouldBe;
+                const discrepancy = (data.manual + data.opname) - totalShouldBe; // Rumus selisih diperbarui
                 return { name, ...data, totalShouldBe, discrepancy };
-            }).sort((a, b) => a.name.localeCompare(b.name));
+            }).filter(item => item.pos > 0 || item.manual > 0 || item.waste > 0 || item.opname !== 0)
+              .sort((a, b) => a.name.localeCompare(b.name));
 
             return { reportData, reportDate: new Date() };
         },
@@ -472,6 +494,32 @@ window.RestoApp = {
                  RestoApp.Utils.handleAsyncButton(e.target, () => RestoApp.Events.ActionHandlers.executeSalesReport(salesData));
             });
         },
+        // [BARU] Fungsi helper untuk mengupdate tampilan selisih di halaman opname secara real-time
+        updateOpnameDifference(inputElement) {
+            const row = inputElement.closest('tr');
+            const systemStock = parseFloat(row.dataset.systemStock);
+            const physicalStock = parseFloat(inputElement.value);
+            const differenceCell = row.querySelector('.opname-difference');
+            
+            if (isNaN(physicalStock)) {
+                differenceCell.textContent = '-';
+                differenceCell.style.color = 'inherit';
+                return;
+            }
+
+            const difference = physicalStock - systemStock;
+            differenceCell.textContent = difference.toFixed(2);
+            if (difference < 0) {
+                differenceCell.style.color = 'var(--danger-color)';
+                differenceCell.style.fontWeight = 'bold';
+            } else if (difference > 0) {
+                differenceCell.style.color = 'var(--success-color)';
+                differenceCell.style.fontWeight = 'bold';
+            } else {
+                differenceCell.style.color = 'inherit';
+                differenceCell.style.fontWeight = 'normal';
+            }
+        },
         
         Pages: {
             'page-dashboard': () => `<div class="dashboard-grid">
@@ -530,13 +578,14 @@ window.RestoApp = {
                 const tableContent = rows.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Waktu</th><th>Item/Menu</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Belum ada riwayat transaksi stok.</div>`;
                 return `<div class="card"><div class="card-header"><div class="card-title"><span>Riwayat Stok</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard">Kembali</button></div>${tableContent}</div>`;
             },
+            // [DIUBAH] Halaman Laporan Analisa diperbarui
             'page-laporan-analisa': () => {
                 const report = RestoApp.Utils.generateConsolidatedReport(RestoApp.AppState.reportPeriod);
                 const getDiscrepancyClass = (d) => d < 0 ? 'color: var(--danger-color); font-weight: bold;' : (d > 0 ? `color: var(--accent-color); font-weight: bold;` : '');
                 
-                const rows = report.reportData.map(item => `<tr><td>${item.name}</td><td>${item.pos.toFixed(1)}</td><td>${item.waste.toFixed(1)}</td><td><strong>${item.totalShouldBe.toFixed(1)}</strong></td><td>${item.manual.toFixed(1)}</td><td style="${getDiscrepancyClass(item.discrepancy)}">${item.discrepancy.toFixed(1)}</td></tr>`).join('');
+                const rows = report.reportData.map(item => `<tr><td>${item.name}</td><td>${item.pos.toFixed(1)}</td><td>${item.waste.toFixed(1)}</td><td><strong>${item.totalShouldBe.toFixed(1)}</strong></td><td>${item.manual.toFixed(1)}</td><td>${item.opname.toFixed(1)}</td><td style="${getDiscrepancyClass(item.discrepancy)}">${item.discrepancy.toFixed(1)}</td></tr>`).join('');
                 
-                const tableContent = report.reportData.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Menu</th><th>Terjual (POS)</th><th>Waste</th><th>Total Seharusnya</th><th>Dicatat Manual</th><th>Selisih</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Tidak ada data untuk dianalisa.</div>`;
+                const tableContent = report.reportData.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Menu</th><th>Terjual (POS)</th><th>Waste</th><th>Total Seharusnya</th><th>Dicatat Manual</th><th>Penyesuaian (Opname)</th><th>Selisih</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Tidak ada data untuk dianalisa.</div>`;
                 const period = RestoApp.AppState.reportPeriod;
 
                 return `<div class="card">
@@ -547,21 +596,59 @@ window.RestoApp = {
                             <button class="btn btn-sm ${period === 'today' ? 'btn-primary' : 'btn-secondary'}" data-action="set-report-period" data-period="today">Hari Ini</button>
                             <button class="btn btn-sm ${period === 'yesterday' ? 'btn-primary' : 'btn-secondary'}" data-action="set-report-period" data-period="yesterday">Kemarin</button>
                          </div>
-                        <p>Laporan ini membandingkan data sesuai periode yang dipilih.</p>
+                        <p>Laporan ini membandingkan data sesuai periode yang dipilih. <strong>Selisih</strong> dihitung dari <code>(Dicatat Manual + Penyesuaian Opname) - Total Seharusnya</code>.</p>
                         <ul style="font-size: 0.9rem;">
-                            <li><strong>Selisih Negatif (Merah):</strong> Produksi manual lebih sedikit dari yang seharusnya. Indikasi ada penjualan/waste yang tidak tercatat.</li>
-                            <li><strong>Selisih Positif (Oranye):</strong> Produksi manual lebih banyak dari yang seharusnya. Indikasi kesalahan input atau over-produksi.</li>
+                            <li><strong>Selisih Negatif (Merah):</strong> Total yang tercatat (manual + opname) lebih sedikit dari yang seharusnya. Indikasi ada penjualan/waste yang tidak tercatat.</li>
+                            <li><strong>Selisih Positif (Oranye):</strong> Total yang tercatat (manual + opname) lebih banyak dari yang seharusnya. Indikasi kesalahan input atau over-produksi.</li>
                         </ul>
                     </div>
                     ${tableContent}
                 </div>`;
             },
+            // [DIUBAH] Halaman Manager Area diperbarui dengan tombol Stok Opname
             'page-manager-area': () => `<div class="card"><div class="card-header"><div class="card-title"><span>Manager Area</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard">Kembali</button></div><div class="dashboard-grid">
                 <a href="#" class="dashboard-card" data-page="page-manager-items"><i class="fas fa-database"></i><h3>Database Barang</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-manager-recipes"><i class="fas fa-book-open"></i><h3>Manajemen Resep</h3></a>
+                <a href="#" class="dashboard-card" data-page="page-manager-opname"><i class="fas fa-clipboard-check"></i><h3>Stok Opname</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-manager-display"><i class="fas fa-desktop"></i><h3>Atur Tampilan</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-manager-backup"><i class="fas fa-cloud-upload-alt"></i><h3>Cadangkan Data</h3></a>
             </div></div>`,
+            // [BARU] Halaman baru untuk melakukan Stok Opname
+            'page-manager-opname': () => {
+                const { masterItems } = RestoApp.AppState;
+                const sortedItems = [...masterItems].sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                const rowsHTML = sortedItems.map(item => `
+                    <tr data-item-id="${item.id}" data-system-stock="${item.stock || 0}">
+                        <td>${item.name}<div class="stock-hint">${item.category}</div></td>
+                        <td>${(item.stock || 0).toFixed(2)} ${item.unit}</td>
+                        <td style="width: 150px;"><input type="number" class="form-control form-control-sm" placeholder="Stok Fisik" oninput="RestoApp.UI.updateOpnameDifference(this)" min="0" step="any"></td>
+                        <td class="opname-difference" style="width: 100px; text-align:right;">-</td>
+                    </tr>
+                `).join('');
+
+                const tableContent = sortedItems.length > 0 ? `
+                    <div style="overflow-x:auto;">
+                        <table class="table">
+                            <thead><tr><th>Nama Barang</th><th>Stok Sistem</th><th>Stok Fisik</th><th style="text-align:right;">Selisih</th></tr></thead>
+                            <tbody id="opname-list-tbody">${rowsHTML}</tbody>
+                        </table>
+                    </div>
+                ` : `<div class="empty-state">Tidak ada barang di database untuk dilakukan opname.</div>`;
+
+                return `<div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-clipboard-check"></i><span>Stok Opname</span></div><button class="btn btn-sm btn-secondary" data-page="page-manager-area">Kembali</button></div>
+                    <div class="card-body">
+                        <p>Masukkan jumlah stok fisik (hasil hitungan nyata) pada kolom yang tersedia. Biarkan kosong jika tidak ada perubahan atau tidak dihitung. Sistem akan otomatis membuat transaksi penyesuaian untuk setiap selisih yang ada.</p>
+                    </div>
+                    ${tableContent}
+                    <div class="card-footer" style="margin-top: 1.5rem; text-align: right;">
+                         <button class="btn btn-primary" data-action="process-stock-opname" ${sortedItems.length === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-save"></i> Simpan Hasil Opname & Sesuaikan Stok
+                         </button>
+                    </div>
+                </div>`;
+            },
             'page-manager-items': () => {
                 const { masterItems } = RestoApp.AppState;
                 const itemsHTML = masterItems.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(item => `<tr data-id="${item.id}" draggable="true"><td class="drag-handle" aria-label="Urutkan"><i class="fas fa-grip-vertical"></i></td><td>${item.name}<div class="stock-hint">${item.category}</div></td><td>${(item.stock || 0).toFixed(2)} ${item.unit}</td><td style="display:flex;gap:0.5rem;"><button class="btn btn-sm btn-secondary" data-action="edit-item" data-id="${item.id}" aria-label="Edit"><i class="fas fa-pencil-alt"></i></button><button class="btn btn-sm btn-danger" data-action="delete-item" data-id="${item.id}" aria-label="Hapus"><i class="fas fa-trash"></i></button></td></tr>`).join('');
@@ -651,7 +738,8 @@ window.RestoApp = {
                     }
                 });
                 await RestoApp.API.set({ shoppingLists: RestoApp.AppState.shoppingLists.filter(l => l.date !== date), masterItems, stockTransactions });
-                RestoApp.UI.showToast('Stok diperbarui!', 'success'); RestoApp.UI.renderPage('page-dashboard');
+                RestoApp.UI.showToast('Stok diperbarui!', 'success');
+                RestoApp.UI.renderPage('page-dashboard');
             },
             'cancel-shopping-list': async ({date}) => {
                 if (!confirm('Anda yakin ingin membatalkan list belanja ini? Aksi ini tidak dapat diurungkan.')) return; 
@@ -712,6 +800,54 @@ window.RestoApp = {
                 await RestoApp.API.set({ masterItems, stockTransactions });
                 RestoApp.UI.showToast('Stok berhasil diproses!', 'success');
                 RestoApp.UI.renderPage(document.location.hash.substring(1));
+            },
+            // [BARU] Aksi untuk memproses hasil stok opname
+            'process-stock-opname': async () => {
+                if (!confirm("Anda yakin ingin menyimpan hasil opname? Ini akan memperbarui stok sistem dan membuat transaksi penyesuaian.")) return;
+
+                let { masterItems, stockTransactions } = RestoApp.AppState;
+                const updatedMasterItems = JSON.parse(JSON.stringify(masterItems)); // Deep copy
+                const newTransactions = [];
+                const txDate = new Date().toISOString();
+                let changesMade = 0;
+
+                document.querySelectorAll('#opname-list-tbody tr').forEach(row => {
+                    const itemId = parseInt(row.dataset.itemId);
+                    const input = row.querySelector('input');
+                    const physicalStockStr = input.value;
+
+                    if (physicalStockStr !== '') {
+                        const physicalStock = parseFloat(physicalStockStr);
+                        const itemIndex = updatedMasterItems.findIndex(item => item.id === itemId);
+
+                        if (itemIndex !== -1 && !isNaN(physicalStock)) {
+                            const systemStock = updatedMasterItems[itemIndex].stock || 0;
+                            const adjustment = physicalStock - systemStock;
+
+                            if (adjustment !== 0) {
+                                changesMade++;
+                                updatedMasterItems[itemIndex].stock = physicalStock;
+                                newTransactions.push({
+                                    date: txDate,
+                                    itemId: itemId,
+                                    type: 'Stok Opname',
+                                    change: adjustment,
+                                    newStock: physicalStock,
+                                    details: 'Penyesuaian stok'
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                if (changesMade === 0) {
+                    return RestoApp.UI.showToast("Tidak ada perubahan stok yang diinput.", "info");
+                }
+                
+                const allTransactions = [...stockTransactions, ...newTransactions];
+                await RestoApp.API.set({ masterItems: updatedMasterItems, stockTransactions: allTransactions });
+                RestoApp.UI.showToast(`Stok opname berhasil disimpan! ${changesMade} barang disesuaikan.`, 'success');
+                RestoApp.UI.renderPage('page-manager-area');
             },
             'trigger-sales-upload': () => document.getElementById('sales-report-input').click(),
             'analyzeSalesReport': (csvText) => {
