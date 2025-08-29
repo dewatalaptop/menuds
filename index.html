@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dolan Sawah ORC - V8.0 Stable</title>
+    <title>Dolan Sawah ORC - V8.1 Corrected</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
-        /* [DIUBAH] Skema Warna Baru */
         :root {
             --primary-color: #2a9d8f;      /* Teal Utama */
             --primary-light: #3bc3b3;      /* Teal Lebih Terang (Penyesuaian) */
@@ -35,7 +35,6 @@
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* [DIUBAH] Body dengan Background Image dan Overlay */
         body { 
             font-family: 'Poppins', sans-serif; 
             background-color: #f5f5f5; 
@@ -51,7 +50,6 @@
             background-color: rgba(255, 255, 255, 0.92); z-index: -1;
         }
         
-        /* [BARU] Header Utama */
         header {
             background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
             color: white; padding: 25px 20px; text-align: center;
@@ -86,7 +84,6 @@
         #main-wrapper { padding-left: var(--sidebar-width); transition: margin-left 0.3s ease-in-out; }
         .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
         
-        /* Sub-header untuk judul halaman dinamis */
         .app-header {
             background-color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius);
             box-shadow: var(--shadow-md); margin-bottom: 1.5rem; display: flex;
@@ -116,6 +113,8 @@
         .form-label { display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-color); }
         .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); }
         .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent); }
+        /* [BARU] Style untuk feedback input opname */
+        .form-control.input-changed { border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
         #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.75rem; max-width: 350px; }
         .toast { background-color: var(--text-color); color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 1rem; }
         .toast.show { opacity: 1; transform: translateX(0); }
@@ -203,7 +202,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
 <script>
-// [DIKEMBALIKAN] Menggunakan logika JavaScript dari kode lama yang stabil.
+// Harap ganti dengan konfigurasi Firebase Anda sendiri
 const firebaseConfig = {
     apiKey: "AIzaSyBqpro-gmPkgE8cZVZ5LG0mjoyl5GUYVl8",
     authDomain: "restoapp-v6.firebaseapp.com",
@@ -231,7 +230,8 @@ window.RestoApp = {
             });
             return minPortions === Infinity ? 0 : minPortions;
         },
-        // [DIUBAH] Fungsi laporan diperbarui untuk menyertakan data Stok Opname
+        // [DIPERBAIKI] Logika laporan dirombak total untuk akurasi.
+        // Kini memisahkan laporan selisih MENU dan laporan penyesuaian BAHAN (Opname).
         generateConsolidatedReport(period = '24h') {
             const now = new Date();
             let startDate;
@@ -251,47 +251,48 @@ window.RestoApp = {
             
             const { salesReports, stockTransactions, masterItems, recipes } = RestoApp.AppState;
             const consolidated = {};
+            const opnameAdjustments = {};
 
             // Inisialisasi item menu dari resep
             Object.keys(recipes).forEach(name => {
-                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0, opname: 0 };
+                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0 };
             });
             
             const addToConsolidated = (name, type, qty) => {
-                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0, opname: 0 };
+                if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0 };
                 consolidated[name][type] += qty;
             };
 
             (salesReports || []).filter(r => new Date(r.date) >= startDate && new Date(r.date) <= now).forEach(report => {
                 Object.entries(report.items).forEach(([itemName, qty]) => addToConsolidated(itemName, 'pos', qty));
             });
+            
             (stockTransactions || []).filter(t => new Date(t.date) >= startDate && new Date(t.date) <= now).forEach(t => {
                 if (t.type === 'Produksi Menu' && t.details) addToConsolidated(t.details, 'manual', t.change);
                 else if (t.type === 'Waste' && t.details) addToConsolidated(t.details, 'waste', t.change);
                 else if (t.type === 'Stok Opname') {
                     const item = masterItems.find(mi => mi.id === t.itemId);
                     if (item) {
-                         // Cari resep mana yang menggunakan item ini dan distribusikan nilai opname
-                        Object.keys(recipes).forEach(recipeName => {
-                            if (recipes[recipeName].ingredients.some(ing => ing.itemId === item.id)) {
-                                // Ini adalah simplifikasi; untuk akurasi penuh memerlukan logika distribusi yang kompleks.
-                                // Untuk saat ini, kita akan menambahkan penyesuaian opname ke setiap menu yang relevan.
-                                // CATATAN: Ini akan menampilkan nilai opname penuh di setiap menu yang terpengaruh.
-                                addToConsolidated(recipeName, 'opname', t.change);
-                            }
-                        });
+                        const key = `${item.name} (${item.unit})`;
+                        opnameAdjustments[key] = (opnameAdjustments[key] || 0) + t.change;
                     }
                 }
             });
 
             const reportData = Object.entries(consolidated).map(([name, data]) => {
                 const totalShouldBe = data.pos + data.waste;
-                const discrepancy = (data.manual + data.opname) - totalShouldBe; // Rumus selisih diperbarui
+                const discrepancy = data.manual - totalShouldBe; // Rumus selisih yang benar untuk menu
                 return { name, ...data, totalShouldBe, discrepancy };
-            }).filter(item => item.pos > 0 || item.manual > 0 || item.waste > 0 || item.opname !== 0)
+            }).filter(item => item.pos > 0 || item.manual > 0 || item.waste > 0)
               .sort((a, b) => a.name.localeCompare(b.name));
 
-            return { reportData, reportDate: new Date() };
+            const opnameData = Object.entries(opnameAdjustments)
+                .map(([name, change]) => ({ name, change }))
+                .filter(item => item.change !== 0)
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+
+            return { reportData, opnameData, reportDate: new Date() };
         },
         addDragDropHandlers(container) {
             container.addEventListener('dragstart', e => e.target.classList.add('dragging'));
@@ -320,45 +321,6 @@ window.RestoApp = {
                 button.innerHTML = originalHTML;
             }
         },
-        parseCsv(csvText) {
-            const rows = [];
-            let currentRow = [];
-            let currentField = '';
-            let inQuotes = false;
-            for (let i = 0; i < csvText.length; i++) {
-                const char = csvText[i];
-                if (inQuotes) {
-                    if (char === '"') {
-                        if (i + 1 < csvText.length && csvText[i + 1] === '"') {
-                            currentField += '"'; i++;
-                        } else {
-                            inQuotes = false;
-                        }
-                    } else {
-                        currentField += char;
-                    }
-                } else {
-                    if (char === '"') {
-                        inQuotes = true;
-                    } else if (char === ',') {
-                        currentRow.push(currentField);
-                        currentField = '';
-                    } else if (char === '\n' || char === '\r') {
-                        if (i > 0 && csvText[i-1] !== '\n' && csvText[i-1] !== '\r') {
-                             currentRow.push(currentField);
-                             rows.push(currentRow);
-                             currentRow = [];
-                             currentField = '';
-                        }
-                    } else {
-                        currentField += char;
-                    }
-                }
-            }
-            if(currentField) currentRow.push(currentField);
-            if(currentRow.length > 0) rows.push(currentRow);
-            return rows;
-        }
     },
 
     API: {
@@ -494,12 +456,18 @@ window.RestoApp = {
                  RestoApp.Utils.handleAsyncButton(e.target, () => RestoApp.Events.ActionHandlers.executeSalesReport(salesData));
             });
         },
-        // [BARU] Fungsi helper untuk mengupdate tampilan selisih di halaman opname secara real-time
+        // [DIPERBAIKI] Fungsi diupdate untuk menambahkan/menghapus class visual feedback
         updateOpnameDifference(inputElement) {
             const row = inputElement.closest('tr');
             const systemStock = parseFloat(row.dataset.systemStock);
             const physicalStock = parseFloat(inputElement.value);
             const differenceCell = row.querySelector('.opname-difference');
+            
+            if (inputElement.value.trim() === '') {
+                inputElement.classList.remove('input-changed');
+            } else {
+                inputElement.classList.add('input-changed');
+            }
             
             if (isNaN(physicalStock)) {
                 differenceCell.textContent = '-';
@@ -528,7 +496,7 @@ window.RestoApp = {
                 <a href="#" class="dashboard-card" data-page="page-ambil-gudang"><i class="fas fa-warehouse"></i><h3>Ambil dari Gudang</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-laporan-analisa"><i class="fas fa-chart-pie"></i><h3>Laporan Analisa</h3></a>
             </div>`,
-             'page-input-penjualan': () => `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-file-invoice-dollar"></i><span>Input Laporan Penjualan (CSV)</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="card-body"><p>Unggah file CSV dari sistem kasir Anda untuk sinkronisasi data penjualan dan pemotongan stok otomatis. Pastikan format file memiliki kolom 'Item Name' dan 'Item Sold'.</p><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="trigger-sales-upload"><i class="fas fa-upload"></i> Pilih dan Proses File Laporan</button></div></div>`,
+            'page-input-penjualan': () => `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-file-invoice-dollar"></i><span>Input Laporan Penjualan (CSV)</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard"><i class="fas fa-arrow-left"></i> Kembali</button></div><div class="card-body"><p>Unggah file CSV dari sistem kasir Anda untuk sinkronisasi data penjualan dan pemotongan stok otomatis. Pastikan format file memiliki kolom header (baris pertama) untuk 'Nama Item' dan 'Jumlah Terjual'.</p><button class="btn btn-primary" style="width:100%; margin-top:1rem;" data-action="trigger-sales-upload"><i class="fas fa-upload"></i> Pilih dan Proses File Laporan</button></div></div>`,
             'page-input-belanja': () => {
                 const { masterItems } = RestoApp.AppState; const categories = [...new Set(masterItems.map(item => item.category))];
                 let formHTML = categories.map(cat => {
@@ -578,14 +546,19 @@ window.RestoApp = {
                 const tableContent = rows.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Waktu</th><th>Item/Menu</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Belum ada riwayat transaksi stok.</div>`;
                 return `<div class="card"><div class="card-header"><div class="card-title"><span>Riwayat Stok</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard">Kembali</button></div>${tableContent}</div>`;
             },
-            // [DIUBAH] Halaman Laporan Analisa diperbarui
+            // [DIPERBAIKI] Halaman Laporan Analisa dirombak untuk menampilkan data yang akurat
             'page-laporan-analisa': () => {
-                const report = RestoApp.Utils.generateConsolidatedReport(RestoApp.AppState.reportPeriod);
+                const { reportData, opnameData } = RestoApp.Utils.generateConsolidatedReport(RestoApp.AppState.reportPeriod);
                 const getDiscrepancyClass = (d) => d < 0 ? 'color: var(--danger-color); font-weight: bold;' : (d > 0 ? `color: var(--accent-color); font-weight: bold;` : '');
                 
-                const rows = report.reportData.map(item => `<tr><td>${item.name}</td><td>${item.pos.toFixed(1)}</td><td>${item.waste.toFixed(1)}</td><td><strong>${item.totalShouldBe.toFixed(1)}</strong></td><td>${item.manual.toFixed(1)}</td><td>${item.opname.toFixed(1)}</td><td style="${getDiscrepancyClass(item.discrepancy)}">${item.discrepancy.toFixed(1)}</td></tr>`).join('');
+                // Tabel untuk selisih Menu
+                const menuRows = reportData.map(item => `<tr><td>${item.name}</td><td>${item.pos.toFixed(1)}</td><td>${item.waste.toFixed(1)}</td><td><strong>${item.totalShouldBe.toFixed(1)}</strong></td><td>${item.manual.toFixed(1)}</td><td style="${getDiscrepancyClass(item.discrepancy)}">${item.discrepancy.toFixed(1)}</td></tr>`).join('');
+                const menuTable = reportData.length > 0 ? `<div class="card"><div class="card-header"><h3 class="card-title">Laporan Selisih Menu</h3></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Menu</th><th>Terjual (POS)</th><th>Waste</th><th>Total Seharusnya</th><th>Dicatat Manual</th><th>Selisih</th></tr></thead><tbody>${menuRows}</tbody></table></div></div>` : `<div class="card"><div class="card-header"><h3 class="card-title">Laporan Selisih Menu</h3></div><div class="empty-state">Tidak ada data menu untuk dianalisa.</div></div>`;
                 
-                const tableContent = report.reportData.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Menu</th><th>Terjual (POS)</th><th>Waste</th><th>Total Seharusnya</th><th>Dicatat Manual</th><th>Penyesuaian (Opname)</th><th>Selisih</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Tidak ada data untuk dianalisa.</div>`;
+                // Tabel untuk penyesuaian Stok Opname
+                const opnameRows = opnameData.map(item => `<tr style="${getDiscrepancyClass(item.change)}"><td>${item.name}</td><td>${item.change > 0 ? '+' : ''}${item.change.toFixed(2)}</td></tr>`).join('');
+                const opnameTable = opnameData.length > 0 ? `<div class="card" style="margin-top: 2rem;"><div class="card-header"><h3 class="card-title">Laporan Penyesuaian Stok Opname</h3></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Bahan Baku</th><th>Perubahan (+/-)</th></tr></thead><tbody>${opnameRows}</tbody></table></div></div>` : `<div class="card" style="margin-top: 2rem;"><div class="card-header"><h3 class="card-title">Laporan Penyesuaian Stok Opname</h3></div><div class="empty-state">Tidak ada penyesuaian stok opname pada periode ini.</div></div>`;
+
                 const period = RestoApp.AppState.reportPeriod;
 
                 return `<div class="card">
@@ -596,16 +569,12 @@ window.RestoApp = {
                             <button class="btn btn-sm ${period === 'today' ? 'btn-primary' : 'btn-secondary'}" data-action="set-report-period" data-period="today">Hari Ini</button>
                             <button class="btn btn-sm ${period === 'yesterday' ? 'btn-primary' : 'btn-secondary'}" data-action="set-report-period" data-period="yesterday">Kemarin</button>
                          </div>
-                        <p>Laporan ini membandingkan data sesuai periode yang dipilih. <strong>Selisih</strong> dihitung dari <code>(Dicatat Manual + Penyesuaian Opname) - Total Seharusnya</code>.</p>
-                        <ul style="font-size: 0.9rem;">
-                            <li><strong>Selisih Negatif (Merah):</strong> Total yang tercatat (manual + opname) lebih sedikit dari yang seharusnya. Indikasi ada penjualan/waste yang tidak tercatat.</li>
-                            <li><strong>Selisih Positif (Oranye):</strong> Total yang tercatat (manual + opname) lebih banyak dari yang seharusnya. Indikasi kesalahan input atau over-produksi.</li>
-                        </ul>
+                        <p>Laporan ini membandingkan data sesuai periode yang dipilih. <strong>Selisih Menu</strong> dihitung dari <code>(Dicatat Manual) - (Terjual di POS + Waste)</code>.</p>
                     </div>
-                    ${tableContent}
-                </div>`;
+                </div>
+                ${menuTable}
+                ${opnameTable}`;
             },
-            // [DIUBAH] Halaman Manager Area diperbarui dengan tombol Stok Opname
             'page-manager-area': () => `<div class="card"><div class="card-header"><div class="card-title"><span>Manager Area</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard">Kembali</button></div><div class="dashboard-grid">
                 <a href="#" class="dashboard-card" data-page="page-manager-items"><i class="fas fa-database"></i><h3>Database Barang</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-manager-recipes"><i class="fas fa-book-open"></i><h3>Manajemen Resep</h3></a>
@@ -613,7 +582,6 @@ window.RestoApp = {
                 <a href="#" class="dashboard-card" data-page="page-manager-display"><i class="fas fa-desktop"></i><h3>Atur Tampilan</h3></a>
                 <a href="#" class="dashboard-card" data-page="page-manager-backup"><i class="fas fa-cloud-upload-alt"></i><h3>Cadangkan Data</h3></a>
             </div></div>`,
-            // [BARU] Halaman baru untuk melakukan Stok Opname
             'page-manager-opname': () => {
                 const { masterItems } = RestoApp.AppState;
                 const sortedItems = [...masterItems].sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -724,20 +692,40 @@ window.RestoApp = {
                 await RestoApp.API.setKey('shoppingLists', shoppingLists); RestoApp.UI.showToast('List belanja disimpan!', 'success'); RestoApp.UI.renderPage('page-dashboard');
             },
             'select-pending-list': ({date}) => RestoApp.UI.renderPage('page-input-belanja-datang', date),
+            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'process-stock-in': async ({date}) => {
-                const shoppingList = RestoApp.AppState.shoppingLists.find(l => l.date === date); let { masterItems, stockTransactions } = RestoApp.AppState;
-                shoppingList.items.forEach(item => {
-                    const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
-                    if (!isNaN(qtyReceived) && qtyReceived > 0) {
-                        const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
-                        if (itemIndex > -1) {
-                            const stockIncrease = qtyReceived * (masterItems[itemIndex].purchaseUnitConversion || 1);
-                            masterItems[itemIndex].stock = (masterItems[itemIndex].stock || 0) + stockIncrease;
-                            stockTransactions.push({ date: new Date().toISOString(), itemId: item.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItems[itemIndex].stock, details: masterItems[itemIndex].name });
+                const docRef = firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid);
+                await firestore.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(docRef);
+                    if (!doc.exists) throw new Error("Dokumen tidak ditemukan.");
+                    
+                    const remoteData = doc.data();
+                    let masterItems = remoteData.masterItems || [];
+                    let stockTransactions = remoteData.stockTransactions || [];
+                    let shoppingLists = remoteData.shoppingLists || [];
+
+                    const shoppingList = shoppingLists.find(l => l.date === date);
+                    if (!shoppingList) throw new Error("List belanja tidak ditemukan.");
+
+                    shoppingList.items.forEach(item => {
+                        const qtyReceived = parseFloat(document.getElementById(`stockin-${item.id}`).value);
+                        if (!isNaN(qtyReceived) && qtyReceived > 0) {
+                            const itemIndex = masterItems.findIndex(mi => mi.id === item.id);
+                            if (itemIndex > -1) {
+                                const stockIncrease = qtyReceived * (masterItems[itemIndex].purchaseUnitConversion || 1);
+                                masterItems[itemIndex].stock = (masterItems[itemIndex].stock || 0) + stockIncrease;
+                                stockTransactions.push({ date: new Date().toISOString(), itemId: item.id, type: 'Stok Masuk', change: stockIncrease, newStock: masterItems[itemIndex].stock, details: masterItems[itemIndex].name });
+                            }
                         }
-                    }
+                    });
+                    
+                    transaction.update(docRef, { 
+                        shoppingLists: shoppingLists.filter(l => l.date !== date), 
+                        masterItems, 
+                        stockTransactions 
+                    });
                 });
-                await RestoApp.API.set({ shoppingLists: RestoApp.AppState.shoppingLists.filter(l => l.date !== date), masterItems, stockTransactions });
+                
                 RestoApp.UI.showToast('Stok diperbarui!', 'success');
                 RestoApp.UI.renderPage('page-dashboard');
             },
@@ -747,147 +735,173 @@ window.RestoApp = {
                 RestoApp.UI.showToast('List belanja dibatalkan.', 'success');
                 RestoApp.UI.renderPage('page-input-belanja-datang');
             },
+            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'process-consumption': async () => {
                 const type = document.getElementById('stockout-list').dataset.type;
-                const transactionTypes = { menu: 'Produksi Menu', waste: 'Waste', gudang: 'Gudang' };
-                let { masterItems, recipes, stockTransactions } = RestoApp.AppState;
                 const itemsToProcess = Array.from(document.querySelectorAll('#stockout-list input[data-name]')).map(input => ({ name: input.dataset.name, qty: parseFloat(input.value) || 0 })).filter(item => item.qty > 0);
-
-                if (itemsToProcess.length === 0) return RestoApp.UI.showToast('Tidak ada jumlah yang diinput.', 'info');
-                
-                const requiredStock = {};
-                for (const item of itemsToProcess) {
-                    if (type === 'menu' || type === 'waste') {
-                        recipes[item.name].ingredients.forEach(ing => {
-                            requiredStock[ing.itemId] = (requiredStock[ing.itemId] || 0) + (ing.qty * item.qty);
-                        });
-                    } else if (type === 'gudang') {
-                        const masterItem = masterItems.find(mi => mi.name === item.name);
-                        if (masterItem) requiredStock[masterItem.id] = (requiredStock[masterItem.id] || 0) + item.qty;
-                    }
+                if (itemsToProcess.length === 0) {
+                    RestoApp.UI.showToast('Tidak ada jumlah yang diinput.', 'info');
+                    return;
                 }
 
-                for (const [itemId, requiredQty] of Object.entries(requiredStock)) {
-                    const item = masterItems.find(mi => mi.id == itemId);
-                    if (!item || (item.stock || 0) < requiredQty) {
-                        throw new Error(`Stok tidak cukup untuk ${item.name}. Dibutuhkan: ${requiredQty.toFixed(2)}, Tersedia: ${(item.stock || 0).toFixed(2)}.`);
-                    }
-                }
+                const docRef = firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid);
+                await firestore.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(docRef);
+                    if (!doc.exists) throw new Error("Dokumen tidak ditemukan.");
 
-                const txDate = new Date().toISOString();
-                itemsToProcess.forEach(item => {
-                    const mainTransactionType = transactionTypes[type];
-                    stockTransactions.push({ date: txDate, itemId: null, type: mainTransactionType, change: item.qty, newStock: null, details: item.name });
+                    const { masterItems, recipes, stockTransactions } = doc.data();
+                    const transactionTypes = { menu: 'Produksi Menu', waste: 'Waste', gudang: 'Gudang' };
+                    const requiredStock = {};
 
-                    if (type === 'menu' || type === 'waste') {
-                        recipes[item.name].ingredients.forEach(ing => {
-                            const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
-                            if (itemIndex > -1) {
-                                const stockDecrease = ing.qty * item.qty;
-                                masterItems[itemIndex].stock -= stockDecrease;
-                                stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `${mainTransactionType}: ${item.name}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: item.name });
-                            }
-                        });
-                    } else if (type === 'gudang') {
-                        const itemIndex = masterItems.findIndex(mi => mi.name === item.name);
-                        if (itemIndex > -1) {
-                            masterItems[itemIndex].stock -= item.qty;
-                            stockTransactions.push({ date: txDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -item.qty, newStock: masterItems[itemIndex].stock, details: item.name });
+                    for (const item of itemsToProcess) {
+                        if (type === 'menu' || type === 'waste') {
+                            recipes[item.name].ingredients.forEach(ing => {
+                                requiredStock[ing.itemId] = (requiredStock[ing.itemId] || 0) + (ing.qty * item.qty);
+                            });
+                        } else if (type === 'gudang') {
+                            const masterItem = masterItems.find(mi => mi.name === item.name);
+                            if (masterItem) requiredStock[masterItem.id] = (requiredStock[masterItem.id] || 0) + item.qty;
                         }
                     }
+
+                    for (const [itemId, requiredQty] of Object.entries(requiredStock)) {
+                        const item = masterItems.find(mi => mi.id == itemId);
+                        if (!item || (item.stock || 0) < requiredQty) {
+                            throw new Error(`Stok tidak cukup untuk ${item.name}. Dibutuhkan: ${requiredQty.toFixed(2)}, Tersedia: ${(item.stock || 0).toFixed(2)}.`);
+                        }
+                    }
+
+                    const txDate = new Date().toISOString();
+                    itemsToProcess.forEach(item => {
+                        const mainTransactionType = transactionTypes[type];
+                        stockTransactions.push({ date: txDate, itemId: null, type: mainTransactionType, change: item.qty, newStock: null, details: item.name });
+
+                        if (type === 'menu' || type === 'waste') {
+                            recipes[item.name].ingredients.forEach(ing => {
+                                const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
+                                if (itemIndex > -1) {
+                                    const stockDecrease = ing.qty * item.qty;
+                                    masterItems[itemIndex].stock -= stockDecrease;
+                                    stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `${mainTransactionType}: ${item.name}`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: item.name });
+                                }
+                            });
+                        } else if (type === 'gudang') {
+                            const itemIndex = masterItems.findIndex(mi => mi.name === item.name);
+                            if (itemIndex > -1) {
+                                masterItems[itemIndex].stock -= item.qty;
+                                stockTransactions.push({ date: txDate, itemId: masterItems[itemIndex].id, type: 'Gudang', change: -item.qty, newStock: masterItems[itemIndex].stock, details: item.name });
+                            }
+                        }
+                    });
+                    
+                    transaction.update(docRef, { masterItems, stockTransactions });
                 });
 
-                await RestoApp.API.set({ masterItems, stockTransactions });
                 RestoApp.UI.showToast('Stok berhasil diproses!', 'success');
                 RestoApp.UI.renderPage(document.location.hash.substring(1));
             },
-            // [BARU] Aksi untuk memproses hasil stok opname
+            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'process-stock-opname': async () => {
                 if (!confirm("Anda yakin ingin menyimpan hasil opname? Ini akan memperbarui stok sistem dan membuat transaksi penyesuaian.")) return;
 
-                let { masterItems, stockTransactions } = RestoApp.AppState;
-                const updatedMasterItems = JSON.parse(JSON.stringify(masterItems)); // Deep copy
-                const newTransactions = [];
-                const txDate = new Date().toISOString();
+                const changesToProcess = [];
+                document.querySelectorAll('#opname-list-tbody tr').forEach(row => {
+                    const physicalStockStr = row.querySelector('input').value;
+                    if (physicalStockStr !== '') {
+                        changesToProcess.push({
+                            itemId: parseInt(row.dataset.itemId),
+                            physicalStock: parseFloat(physicalStockStr)
+                        });
+                    }
+                });
+
+                if (changesToProcess.length === 0) {
+                    return RestoApp.UI.showToast("Tidak ada perubahan stok yang diinput.", "info");
+                }
+
+                const docRef = firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid);
                 let changesMade = 0;
 
-                document.querySelectorAll('#opname-list-tbody tr').forEach(row => {
-                    const itemId = parseInt(row.dataset.itemId);
-                    const input = row.querySelector('input');
-                    const physicalStockStr = input.value;
+                await firestore.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(docRef);
+                    if (!doc.exists) throw new Error("Dokumen tidak ditemukan.");
+                    
+                    const { masterItems, stockTransactions } = doc.data();
+                    const txDate = new Date().toISOString();
 
-                    if (physicalStockStr !== '') {
-                        const physicalStock = parseFloat(physicalStockStr);
-                        const itemIndex = updatedMasterItems.findIndex(item => item.id === itemId);
-
-                        if (itemIndex !== -1 && !isNaN(physicalStock)) {
-                            const systemStock = updatedMasterItems[itemIndex].stock || 0;
-                            const adjustment = physicalStock - systemStock;
+                    changesToProcess.forEach(change => {
+                        const itemIndex = masterItems.findIndex(item => item.id === change.itemId);
+                        if (itemIndex !== -1 && !isNaN(change.physicalStock)) {
+                            const systemStock = masterItems[itemIndex].stock || 0;
+                            const adjustment = change.physicalStock - systemStock;
 
                             if (adjustment !== 0) {
                                 changesMade++;
-                                updatedMasterItems[itemIndex].stock = physicalStock;
-                                newTransactions.push({
+                                masterItems[itemIndex].stock = change.physicalStock;
+                                stockTransactions.push({
                                     date: txDate,
-                                    itemId: itemId,
+                                    itemId: change.itemId,
                                     type: 'Stok Opname',
                                     change: adjustment,
-                                    newStock: physicalStock,
+                                    newStock: change.physicalStock,
                                     details: 'Penyesuaian stok'
                                 });
                             }
                         }
+                    });
+
+                    if (changesMade > 0) {
+                        transaction.update(docRef, { masterItems, stockTransactions });
                     }
                 });
                 
-                if (changesMade === 0) {
-                    return RestoApp.UI.showToast("Tidak ada perubahan stok yang diinput.", "info");
+                if (changesMade > 0) {
+                    RestoApp.UI.showToast(`Stok opname berhasil disimpan! ${changesMade} barang disesuaikan.`, 'success');
+                    RestoApp.UI.renderPage('page-manager-area');
+                } else {
+                    RestoApp.UI.showToast("Tidak ada selisih stok yang perlu disesuaikan.", "info");
                 }
-                
-                const allTransactions = [...stockTransactions, ...newTransactions];
-                await RestoApp.API.set({ masterItems: updatedMasterItems, stockTransactions: allTransactions });
-                RestoApp.UI.showToast(`Stok opname berhasil disimpan! ${changesMade} barang disesuaikan.`, 'success');
-                RestoApp.UI.renderPage('page-manager-area');
             },
             'trigger-sales-upload': () => document.getElementById('sales-report-input').click(),
-            'analyzeSalesReport': (csvText) => {
+            // [DIPERBAIKI] Logika parsing dipindahkan ke event listener input file.
+            // Kini menggunakan Papa Parse yang lebih andal.
+            'analyzeSalesReport': (parsedData) => {
                 const { recipes } = RestoApp.AppState;
-                const lines = RestoApp.Utils.parseCsv(csvText);
-                if (lines.length < 2) throw new Error("File CSV kosong atau tidak valid.");
-
-                const headers = lines[0].map(h => h.toLowerCase());
-                const findColumnIndex = (possibleNames) => {
+                if (!parsedData || parsedData.length === 0) throw new Error("File CSV kosong atau tidak valid.");
+                
+                // Cari nama kolom yang paling mungkin.
+                const headers = Object.keys(parsedData[0]);
+                const findHeader = (possibleNames) => {
                     for (const name of possibleNames) {
-                        const index = headers.indexOf(name.toLowerCase());
-                        if (index !== -1) return index;
+                        const found = headers.find(h => h.toLowerCase().replace(/[\s_]/g, '') === name);
+                        if (found) return found;
                     }
-                    return -1;
+                    return null;
                 };
 
-                const itemNameIndex = findColumnIndex(['item name', 'nama item', 'nama produk', 'menu']);
-                const itemSoldIndex = findColumnIndex(['item sold', 'sold', 'terjual', 'jumlah terjual', 'qty']);
+                const nameHeader = findHeader(['itemname', 'namaitem', 'namaproduk', 'menu']);
+                const qtyHeader = findHeader(['itemsold', 'sold', 'terjual', 'jumlahterjual', 'qty']);
 
-                if (itemNameIndex === -1) throw new Error("Kolom 'Nama Item' tidak ditemukan di file CSV.");
-                if (itemSoldIndex === -1) throw new Error("Kolom 'Jumlah Terjual' tidak ditemukan di file CSV.");
-
-                const normalize = (str) => str.toLowerCase().split(/[\s,._-]+/).filter(Boolean);
+                if (!nameHeader) throw new Error("Kolom 'Nama Item' tidak ditemukan di header CSV.");
+                if (!qtyHeader) throw new Error("Kolom 'Jumlah Terjual' tidak ditemukan di header CSV.");
+                
+                const normalize = (str) => String(str).toLowerCase().split(/[\s,._-]+/).filter(Boolean);
                 const recipeSearchList = Object.keys(recipes).map(name => ({ name, words: normalize(name) })).sort((a, b) => b.words.length - a.words.length);
                 
                 const salesData = {}; const unmatchedItems = [];
-                lines.slice(1).forEach(columns => {
-                    if (columns.length > Math.max(itemNameIndex, itemSoldIndex)) {
-                        const itemName = columns[itemNameIndex].trim();
-                        const itemSold = parseInt(columns[itemSoldIndex]);
-                        if (itemName && !isNaN(itemSold) && itemSold > 0) {
-                            const saleWords = normalize(itemName); let foundMatch = false;
-                            for (const recipe of recipeSearchList) {
-                                if (recipe.words.every(word => saleWords.includes(word))) {
-                                    salesData[recipe.name] = (salesData[recipe.name] || 0) + itemSold;
-                                    foundMatch = true; break; 
-                                }
+                parsedData.forEach(row => {
+                    const itemName = row[nameHeader]?.trim();
+                    const itemSold = parseInt(row[qtyHeader]);
+
+                    if (itemName && !isNaN(itemSold) && itemSold > 0) {
+                        const saleWords = normalize(itemName); let foundMatch = false;
+                        for (const recipe of recipeSearchList) {
+                            if (recipe.words.every(word => saleWords.includes(word))) {
+                                salesData[recipe.name] = (salesData[recipe.name] || 0) + itemSold;
+                                foundMatch = true; break; 
                             }
-                            if (!foundMatch) unmatchedItems.push({ name: itemName, qty: itemSold });
                         }
+                        if (!foundMatch) unmatchedItems.push({ name: itemName, qty: itemSold });
                     }
                 });
                 
@@ -896,33 +910,42 @@ window.RestoApp = {
                 }
                 RestoApp.UI.showSalesConfirmationModal(salesData, unmatchedItems, salesData);
             },
+            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'executeSalesReport': async(salesData) => {
-                const { masterItems, recipes, stockTransactions, salesReports } = RestoApp.AppState;
-                const requiredStock = {};
-                Object.entries(salesData).forEach(([recipeName, qty]) => {
-                     recipes[recipeName].ingredients.forEach(ing => {
-                        requiredStock[ing.itemId] = (requiredStock[ing.itemId] || 0) + (ing.qty * qty);
+                const docRef = firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid);
+                await firestore.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(docRef);
+                    if (!doc.exists) throw new Error("Dokumen tidak ditemukan.");
+
+                    const { masterItems, recipes, stockTransactions, salesReports } = doc.data();
+                    const requiredStock = {};
+                    Object.entries(salesData).forEach(([recipeName, qty]) => {
+                        recipes[recipeName].ingredients.forEach(ing => {
+                            requiredStock[ing.itemId] = (requiredStock[ing.itemId] || 0) + (ing.qty * qty);
+                        });
                     });
-                });
-                for (const [itemId, requiredQty] of Object.entries(requiredStock)) {
-                    const item = masterItems.find(mi => mi.id == itemId);
-                    if (!item || (item.stock || 0) < requiredQty) {
-                        throw new Error(`Stok tidak cukup untuk ${item.name}. Dibutuhkan: ${requiredQty.toFixed(2)}, Tersedia: ${(item.stock || 0).toFixed(2)}.`);
-                    }
-                }
-                const txDate = new Date().toISOString();
-                Object.entries(salesData).forEach(([recipeName, qty]) => {
-                    recipes[recipeName].ingredients.forEach(ing => {
-                        const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
-                        if (itemIndex > -1) {
-                            const stockDecrease = ing.qty * qty;
-                            masterItems[itemIndex].stock -= stockDecrease;
-                            stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `Penjualan (POS)`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: recipeName });
+                    for (const [itemId, requiredQty] of Object.entries(requiredStock)) {
+                        const item = masterItems.find(mi => mi.id == itemId);
+                        if (!item || (item.stock || 0) < requiredQty) {
+                            throw new Error(`Stok tidak cukup untuk ${item.name}. Dibutuhkan: ${requiredQty.toFixed(2)}, Tersedia: ${(item.stock || 0).toFixed(2)}.`);
                         }
+                    }
+                    const txDate = new Date().toISOString();
+                    Object.entries(salesData).forEach(([recipeName, qty]) => {
+                        recipes[recipeName].ingredients.forEach(ing => {
+                            const itemIndex = masterItems.findIndex(mi => mi.id === ing.itemId);
+                            if (itemIndex > -1) {
+                                const stockDecrease = ing.qty * qty;
+                                masterItems[itemIndex].stock -= stockDecrease;
+                                stockTransactions.push({ date: txDate, itemId: ing.itemId, type: `Penjualan (POS)`, change: -stockDecrease, newStock: masterItems[itemIndex].stock, details: recipeName });
+                            }
+                        });
                     });
+                    salesReports.push({ date: txDate, items: salesData });
+                    
+                    transaction.update(docRef, { masterItems, stockTransactions, salesReports });
                 });
-                salesReports.push({ date: txDate, items: salesData });
-                await RestoApp.API.set({ masterItems, stockTransactions, salesReports });
+
                 RestoApp.UI.closeModal();
                 RestoApp.UI.showToast(`${Object.keys(salesData).length} item penjualan berhasil diproses!`, 'success');
                 RestoApp.UI.renderPage('page-laporan-analisa');
@@ -1055,18 +1078,26 @@ window.RestoApp = {
             document.addEventListener('click', (e) => RestoApp.Events.handle(e));
             window.addEventListener('hashchange', () => RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard'));
 
+            // [DIPERBAIKI] Event listener untuk input file CSV sekarang menggunakan Papa Parse.
             const salesReportInput = document.getElementById('sales-report-input');
             salesReportInput.onchange = e => {
                 const file = e.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async event => {
-                    try {
-                        RestoApp.Events.ActionHandlers.analyzeSalesReport(event.target.result);
-                    } catch (error) {
-                        RestoApp.UI.showToast('Gagal menganalisa laporan: ' + error.message, 'error');
+                
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        try {
+                            RestoApp.Events.ActionHandlers.analyzeSalesReport(results.data);
+                        } catch(error) {
+                            RestoApp.UI.showToast('Gagal menganalisa laporan: ' + error.message, 'error');
+                        }
+                    },
+                    error: (err) => {
+                        RestoApp.UI.showToast('Gagal mem-parsing file CSV: ' + err.message, 'error');
                     }
-                };
-                reader.readAsText(file);
+                });
+
                 salesReportInput.value = ''; 
             };
         },
