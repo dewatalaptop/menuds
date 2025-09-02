@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dolan Sawah ORC - V8.1 Corrected</title>
+    <title>Dolan Sawah ORC - V8.2 Fixed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -113,7 +113,6 @@
         .form-label { display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-color); }
         .form-control { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 0.9rem; transition: var(--transition); }
         .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent); }
-        /* [BARU] Style untuk feedback input opname */
         .form-control.input-changed { border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
         #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.75rem; max-width: 350px; }
         .toast { background-color: var(--text-color); color: var(--white-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 1rem; }
@@ -230,8 +229,6 @@ window.RestoApp = {
             });
             return minPortions === Infinity ? 0 : minPortions;
         },
-        // [DIPERBAIKI] Logika laporan dirombak total untuk akurasi.
-        // Kini memisahkan laporan selisih MENU dan laporan penyesuaian BAHAN (Opname).
         generateConsolidatedReport(period = '24h') {
             const now = new Date();
             let startDate;
@@ -253,7 +250,6 @@ window.RestoApp = {
             const consolidated = {};
             const opnameAdjustments = {};
 
-            // Inisialisasi item menu dari resep
             Object.keys(recipes).forEach(name => {
                 if (!consolidated[name]) consolidated[name] = { pos: 0, manual: 0, waste: 0 };
             });
@@ -281,7 +277,7 @@ window.RestoApp = {
 
             const reportData = Object.entries(consolidated).map(([name, data]) => {
                 const totalShouldBe = data.pos + data.waste;
-                const discrepancy = data.manual - totalShouldBe; // Rumus selisih yang benar untuk menu
+                const discrepancy = data.manual - totalShouldBe;
                 return { name, ...data, totalShouldBe, discrepancy };
             }).filter(item => item.pos > 0 || item.manual > 0 || item.waste > 0)
               .sort((a, b) => a.name.localeCompare(b.name));
@@ -290,7 +286,6 @@ window.RestoApp = {
                 .map(([name, change]) => ({ name, change }))
                 .filter(item => item.change !== 0)
                 .sort((a, b) => a.name.localeCompare(b.name));
-
 
             return { reportData, opnameData, reportDate: new Date() };
         },
@@ -456,7 +451,6 @@ window.RestoApp = {
                  RestoApp.Utils.handleAsyncButton(e.target, () => RestoApp.Events.ActionHandlers.executeSalesReport(salesData));
             });
         },
-        // [DIPERBAIKI] Fungsi diupdate untuk menambahkan/menghapus class visual feedback
         updateOpnameDifference(inputElement) {
             const row = inputElement.closest('tr');
             const systemStock = parseFloat(row.dataset.systemStock);
@@ -546,16 +540,13 @@ window.RestoApp = {
                 const tableContent = rows.length > 0 ? `<div style="overflow-x:auto;"><table class="table"><thead><tr><th>Waktu</th><th>Item/Menu</th><th>Jenis</th><th>+/-</th><th>Sisa</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty-state">Belum ada riwayat transaksi stok.</div>`;
                 return `<div class="card"><div class="card-header"><div class="card-title"><span>Riwayat Stok</span></div><button class="btn btn-sm btn-secondary" data-page="page-dashboard">Kembali</button></div>${tableContent}</div>`;
             },
-            // [DIPERBAIKI] Halaman Laporan Analisa dirombak untuk menampilkan data yang akurat
             'page-laporan-analisa': () => {
                 const { reportData, opnameData } = RestoApp.Utils.generateConsolidatedReport(RestoApp.AppState.reportPeriod);
                 const getDiscrepancyClass = (d) => d < 0 ? 'color: var(--danger-color); font-weight: bold;' : (d > 0 ? `color: var(--accent-color); font-weight: bold;` : '');
                 
-                // Tabel untuk selisih Menu
                 const menuRows = reportData.map(item => `<tr><td>${item.name}</td><td>${item.pos.toFixed(1)}</td><td>${item.waste.toFixed(1)}</td><td><strong>${item.totalShouldBe.toFixed(1)}</strong></td><td>${item.manual.toFixed(1)}</td><td style="${getDiscrepancyClass(item.discrepancy)}">${item.discrepancy.toFixed(1)}</td></tr>`).join('');
                 const menuTable = reportData.length > 0 ? `<div class="card"><div class="card-header"><h3 class="card-title">Laporan Selisih Menu</h3></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Menu</th><th>Terjual (POS)</th><th>Waste</th><th>Total Seharusnya</th><th>Dicatat Manual</th><th>Selisih</th></tr></thead><tbody>${menuRows}</tbody></table></div></div>` : `<div class="card"><div class="card-header"><h3 class="card-title">Laporan Selisih Menu</h3></div><div class="empty-state">Tidak ada data menu untuk dianalisa.</div></div>`;
                 
-                // Tabel untuk penyesuaian Stok Opname
                 const opnameRows = opnameData.map(item => `<tr style="${getDiscrepancyClass(item.change)}"><td>${item.name}</td><td>${item.change > 0 ? '+' : ''}${item.change.toFixed(2)}</td></tr>`).join('');
                 const opnameTable = opnameData.length > 0 ? `<div class="card" style="margin-top: 2rem;"><div class="card-header"><h3 class="card-title">Laporan Penyesuaian Stok Opname</h3></div><div style="overflow-x:auto;"><table class="table"><thead><tr><th>Bahan Baku</th><th>Perubahan (+/-)</th></tr></thead><tbody>${opnameRows}</tbody></table></div></div>` : `<div class="card" style="margin-top: 2rem;"><div class="card-header"><h3 class="card-title">Laporan Penyesuaian Stok Opname</h3></div><div class="empty-state">Tidak ada penyesuaian stok opname pada periode ini.</div></div>`;
 
@@ -686,13 +677,21 @@ window.RestoApp = {
             'show-low-stock-modal': () => RestoApp.UI.showLowStockModal(),
             'close-modal': ({target}) => { if (target.classList.contains('modal-backdrop') || target.closest('.modal-close-btn')) RestoApp.UI.closeModal(); },
             'save-shopping-list': async () => {
-                const items = Array.from(document.querySelectorAll('#page-input-belanja input[data-item-id]')).map(input => ({ id: parseInt(input.dataset.itemId), qty: parseFloat(input.value) })).filter(item => item.qty > 0);
+                // [FIXED] Selector diubah dari '#page-input-belanja' ke '#main-content'.
+                // Alasan: Konten halaman dirender di dalam '#main-content', dan tidak ada elemen
+                // dengan ID '#page-input-belanja'. Selector lama tidak menemukan input apapun.
+                const items = Array.from(document.querySelectorAll('#main-content input[data-item-id]'))
+                    .map(input => ({ id: parseInt(input.dataset.itemId), qty: parseFloat(input.value) }))
+                    .filter(item => item.qty > 0);
+
                 if (items.length === 0) return RestoApp.UI.showToast('List belanja kosong.', 'info');
-                const shoppingLists = RestoApp.AppState.shoppingLists || []; shoppingLists.push({ date: new Date().toISOString(), items });
-                await RestoApp.API.setKey('shoppingLists', shoppingLists); RestoApp.UI.showToast('List belanja disimpan!', 'success'); RestoApp.UI.renderPage('page-dashboard');
+                const shoppingLists = RestoApp.AppState.shoppingLists || []; 
+                shoppingLists.push({ date: new Date().toISOString(), items });
+                await RestoApp.API.setKey('shoppingLists', shoppingLists); 
+                RestoApp.UI.showToast('List belanja disimpan!', 'success'); 
+                RestoApp.UI.renderPage('page-dashboard');
             },
             'select-pending-list': ({date}) => RestoApp.UI.renderPage('page-input-belanja-datang', date),
-            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'process-stock-in': async ({date}) => {
                 const docRef = firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid);
                 await firestore.runTransaction(async (transaction) => {
@@ -735,7 +734,6 @@ window.RestoApp = {
                 RestoApp.UI.showToast('List belanja dibatalkan.', 'success');
                 RestoApp.UI.renderPage('page-input-belanja-datang');
             },
-            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'process-consumption': async () => {
                 const type = document.getElementById('stockout-list').dataset.type;
                 const itemsToProcess = Array.from(document.querySelectorAll('#stockout-list input[data-name]')).map(input => ({ name: input.dataset.name, qty: parseFloat(input.value) || 0 })).filter(item => item.qty > 0);
@@ -800,7 +798,6 @@ window.RestoApp = {
                 RestoApp.UI.showToast('Stok berhasil diproses!', 'success');
                 RestoApp.UI.renderPage(document.location.hash.substring(1));
             },
-            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'process-stock-opname': async () => {
                 if (!confirm("Anda yakin ingin menyimpan hasil opname? Ini akan memperbarui stok sistem dan membuat transaksi penyesuaian.")) return;
 
@@ -863,13 +860,10 @@ window.RestoApp = {
                 }
             },
             'trigger-sales-upload': () => document.getElementById('sales-report-input').click(),
-            // [DIPERBAIKI] Logika parsing dipindahkan ke event listener input file.
-            // Kini menggunakan Papa Parse yang lebih andal.
             'analyzeSalesReport': (parsedData) => {
                 const { recipes } = RestoApp.AppState;
                 if (!parsedData || parsedData.length === 0) throw new Error("File CSV kosong atau tidak valid.");
                 
-                // Cari nama kolom yang paling mungkin.
                 const headers = Object.keys(parsedData[0]);
                 const findHeader = (possibleNames) => {
                     for (const name of possibleNames) {
@@ -910,7 +904,6 @@ window.RestoApp = {
                 }
                 RestoApp.UI.showSalesConfirmationModal(salesData, unmatchedItems, salesData);
             },
-            // [DIPERBAIKI] Menggunakan Firestore Transaction untuk keamanan data
             'executeSalesReport': async(salesData) => {
                 const docRef = firestore.collection('restaurants').doc(RestoApp.AppState.currentUser.uid);
                 await firestore.runTransaction(async (transaction) => {
@@ -965,7 +958,10 @@ window.RestoApp = {
                 if (id) {
                     const index = masterItems.findIndex(i => i.id == id); masterItems[index] = { ...masterItems[index], ...newItemData };
                 } else {
-                    const newId = masterItems.length > 0 ? Math.max(...masterItems.map(i => i.id)) + 1 : 1;
+                    // [FIXED] Mekanisme pembuatan ID diubah untuk mencegah duplikasi.
+                    // Alasan: `Math.max` bisa menghasilkan ID yang sama dengan item yang
+                    // pernah dihapus. `Date.now()` memastikan ID selalu unik.
+                    const newId = Date.now();
                     masterItems.push({ ...newItemData, id: newId, stock: 0, sortOrder: masterItems.length });
                 }
                 await RestoApp.API.setKey('masterItems', masterItems); 
@@ -1070,7 +1066,7 @@ window.RestoApp = {
                         } catch(error) {
                             errorEl.textContent = "Login Gagal: Periksa kembali email dan password Anda.";
                             errorEl.style.display = 'block';
-                            throw error;
+                            throw error; // Melempar error lagi agar handleAsyncButton tahu operasinya gagal
                         }
                     });
                 }
@@ -1078,7 +1074,6 @@ window.RestoApp = {
             document.addEventListener('click', (e) => RestoApp.Events.handle(e));
             window.addEventListener('hashchange', () => RestoApp.UI.renderPage(location.hash.substring(1) || 'page-dashboard'));
 
-            // [DIPERBAIKI] Event listener untuk input file CSV sekarang menggunakan Papa Parse.
             const salesReportInput = document.getElementById('sales-report-input');
             salesReportInput.onchange = e => {
                 const file = e.target.files[0]; if (!file) return;
